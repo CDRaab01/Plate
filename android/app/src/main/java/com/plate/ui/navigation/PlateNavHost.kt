@@ -12,6 +12,7 @@ import com.plate.ui.about.AboutScreen
 import com.plate.ui.auth.ForgotPasswordScreen
 import com.plate.ui.auth.LoginScreen
 import com.plate.ui.auth.RegisterScreen
+import com.plate.ui.coach.CoachScreen
 import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
@@ -31,6 +32,7 @@ object Routes {
     const val SCAN = "scan"
     const val GOALS = "goals"
     const val ABOUT = "about"
+    const val COACH = "coach"
 }
 
 @Composable
@@ -69,6 +71,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
                     onNavigateToGoals = { navController.navigate(Routes.GOALS) },
                     onNavigateToAbout = { navController.navigate(Routes.ABOUT) },
+                    onNavigateToCoach = { navController.navigate(Routes.COACH) },
                     viewModel = diaryViewModel,
                 )
             }
@@ -101,6 +104,9 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
             }
             composable(Routes.ABOUT) {
                 AboutScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.COACH) {
+                CoachScreen(onBack = { navController.popBackStack() })
             }
         }
     }

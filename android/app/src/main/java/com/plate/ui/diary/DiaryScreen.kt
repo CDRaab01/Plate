@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
@@ -56,6 +57,7 @@ fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToGoals: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToCoach: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
@@ -65,6 +67,12 @@ fun DiaryScreen(
             TopAppBar(
                 title = { Text("Today") },
                 actions = {
+                    IconButton(onClick = onNavigateToCoach) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.Chat,
+                            contentDescription = "Coach",
+                        )
+                    }
                     IconButton(onClick = onNavigateToAbout) {
                         Icon(Icons.Outlined.Info, contentDescription = "About")
                     }

@@ -2,6 +2,8 @@ package com.plate.di
 
 import com.plate.data.repository.AuthRepository
 import com.plate.data.repository.AuthRepositoryImpl
+import com.plate.data.repository.CoachRepository
+import com.plate.data.repository.CoachRepositoryImpl
 import com.plate.data.repository.FoodRepository
 import com.plate.data.repository.FoodRepositoryImpl
 import com.plate.data.repository.GoalRepository
@@ -33,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindGoalRepository(impl: GoalRepositoryImpl): GoalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCoachRepository(impl: CoachRepositoryImpl): CoachRepository
 }
