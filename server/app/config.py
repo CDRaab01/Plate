@@ -61,5 +61,16 @@ class Settings(BaseSettings):
     # Generous timeout: the first request after a cold start pays the model-load cost.
     lm_studio_timeout: float = 60.0
 
+    # Photo logging (Phase 6, CLAUDE.md §6). The vision model estimates the foods + macros in a
+    # meal photo; the user always confirms before anything is logged (never auto-committed). Defaults
+    # to the same multimodal Gemma 3 the coach uses — override if a separate vision model is loaded.
+    lm_studio_vision_model: str = "google/gemma-3-12b"
+    # Reject uploads larger than this before sending to the model (a meal photo is comfortably under
+    # this; the cap bounds memory + the base64 payload to LM Studio).
+    photo_max_bytes: int = 8 * 1024 * 1024
+    # Estimates at or below this confidence (0–1) flag the draft as low-confidence so the client can
+    # nudge the user to refine or search manually (CLAUDE.md §6).
+    photo_low_confidence_threshold: float = 0.4
+
 
 settings = Settings()

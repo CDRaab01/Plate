@@ -26,6 +26,7 @@ server/
     models/          # User, Food, FoodLogEntry, UserGoal, DailyTarget
     schemas/         # pydantic request/response models
     services/        # auth_service, food_service (search/cache), log_service (CRUD/totals)
+                     #   services/ai/ — coach client + context + prompts, vision (photo logging)
     foods/           # FoodSource abstraction + USDA/OFF sources + normalization/dedup
     nutrition/       # pure macro math: portion scaling, daily totals (targets engine in Phase 3)
     routers/         # auth, users, foods, log
@@ -120,6 +121,30 @@ Config (server-side only, never in the APK): `LM_STUDIO_BASE_URL` (default
 `http://localhost:1234/v1`), `LM_STUDIO_MODEL` (default `google/gemma-3-12b`), `LM_STUDIO_TIMEOUT`.
 CI never reaches a real server — the HTTP client is injected with a mocked transport in tests
 (`tests/test_ai.py`).
+
+## Photo logging (Phase 6)
+
+Estimate the foods + macros in a **meal photo** using the **vision-capable Gemma 3 via LM Studio**
+(CLAUDE.md §3, §6). No bespoke CV model is trained — the multimodal model does the read, and the
+result is always an **estimate the user confirms**; nothing is ever auto-committed.
+
+- `POST /foods/photo` — multipart upload (`image`); returns an editable draft
+  `{items: [{name, est_grams, kcal, protein_g, carbs_g, fat_g, confidence}], low_confidence, note}`.
+  The endpoint **never writes to the database** — the client shows the draft for the user to
+  confirm/edit, then logs each item via the normal `POST /foods` + `POST /log` flow. Rate-limited to
+  10/minute since each call hits the model; rejects non-image uploads (`415`), empty (`400`), and
+  oversize (`413`, `PHOTO_MAX_BYTES`) bodies before any model call.
+- Robust parsing (`app/services/ai/photo_prompts.py`) tolerates the messiness of local-model output
+  — code fences, preamble prose, a single object instead of a list, a list nested under a key,
+  missing/mistyped fields, out-of-range confidence — and degrades unusable output to an empty,
+  low-confidence draft (with a "retake or search manually" note) rather than erroring. The vision
+  client (`app/services/ai/vision.py`) maps transport/HTTP failures the same way the coach does
+  (502/503/504).
+
+Config (server-side only): `LM_STUDIO_VISION_MODEL` (defaults to the same `google/gemma-3-12b`),
+`PHOTO_MAX_BYTES`, `PHOTO_LOW_CONFIDENCE_THRESHOLD`. CI never reaches a real server — the HTTP client
+is injected with a mocked transport, and parsing is covered exhaustively including malformed output
+(`tests/test_photo.py`).
 
 ## Data model (Phase 1)
 

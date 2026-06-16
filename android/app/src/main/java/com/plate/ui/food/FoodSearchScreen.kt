@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,6 +60,7 @@ fun FoodSearchScreen(
     onLogged: () -> Unit,
     onBack: () -> Unit,
     onScan: () -> Unit,
+    onPhoto: () -> Unit,
     searchViewModel: FoodSearchViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -84,6 +86,7 @@ fun FoodSearchScreen(
         results = results,
         onBack = onBack,
         onScan = onScan,
+        onPhoto = onPhoto,
         onPick = { selected = it },
     )
 }
@@ -97,6 +100,7 @@ fun FoodSearchContent(
     results: UiState<List<FoodOut>>,
     onBack: () -> Unit,
     onScan: () -> Unit,
+    onPhoto: () -> Unit,
     onPick: (FoodOut) -> Unit,
 ) {
     Scaffold(
@@ -109,6 +113,12 @@ fun FoodSearchContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onPhoto) {
+                        Icon(
+                            Icons.Outlined.AddAPhoto,
+                            contentDescription = "Log from photo",
+                        )
+                    }
                     IconButton(onClick = onScan) {
                         Icon(
                             Icons.Outlined.QrCodeScanner,

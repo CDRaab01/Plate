@@ -17,6 +17,7 @@ import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
 import com.plate.ui.goals.GoalScreen
+import com.plate.ui.photo.PhotoLogScreen
 import com.plate.ui.scan.BarcodeScanScreen
 
 object Routes {
@@ -30,6 +31,7 @@ object Routes {
     const val DIARY = "diary"
     const val SEARCH = "search"
     const val SCAN = "scan"
+    const val PHOTO = "photo"
     const val GOALS = "goals"
     const val ABOUT = "about"
     const val COACH = "coach"
@@ -82,6 +84,17 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     onLogged = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                     onScan = { navController.navigate(Routes.SCAN) },
+                    onPhoto = { navController.navigate(Routes.PHOTO) },
+                    diaryViewModel = diaryViewModel,
+                )
+            }
+            composable(Routes.PHOTO) { entry ->
+                val parent = remember(entry) { navController.getBackStackEntry(Routes.DIARY_GRAPH) }
+                val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
+                PhotoLogScreen(
+                    // Done returns straight to the diary, popping the search step too.
+                    onDone = { navController.popBackStack(Routes.DIARY, inclusive = false) },
+                    onBack = { navController.popBackStack() },
                     diaryViewModel = diaryViewModel,
                 )
             }
