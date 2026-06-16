@@ -20,6 +20,9 @@ import com.plate.data.remote.TotalsOut
 import com.plate.ui.about.AboutContent
 import com.plate.ui.auth.LoginContent
 import com.plate.ui.auth.RegisterContent
+import com.plate.ui.coach.CoachContent
+import com.plate.ui.coach.CoachMessage
+import com.plate.ui.coach.CoachUiState
 import com.plate.ui.diary.DiaryContent
 import com.plate.ui.food.FoodSearchContent
 import com.plate.ui.scan.PermissionRationale
@@ -81,6 +84,8 @@ class ScreenshotTest {
     @Test fun scan_error_dark() = capture("scan_error_dark", dark = true) {
         ScanStatusBar(state = UiState.Error("No product found for that barcode"), onRetry = {})
     }
+    @Test fun coach_light() = capture("coach_light", dark = false) { CoachScene() }
+    @Test fun coach_dark() = capture("coach_dark", dark = true) { CoachScene() }
 }
 
 @Composable
@@ -160,6 +165,24 @@ private fun searchFood(id: String, name: String, brand: String?, kcal: Double) =
     carbsGPer100g = 0.0,
     fatGPer100g = 0.0,
 )
+
+@Composable
+private fun CoachScene() {
+    CoachContent(
+        state = CoachUiState(
+            messages = listOf(
+                CoachMessage("user", "I have 600 kcal and 40g protein left. Snack ideas?"),
+                CoachMessage(
+                    "assistant",
+                    "Try Greek yogurt with berries (~150 kcal, 15g protein) or a tin of " +
+                        "tuna on toast (~250 kcal, 28g protein). Both leave room and hit protein.",
+                ),
+            ),
+        ),
+        onBack = {},
+        onSend = {},
+    )
+}
 
 @Composable
 private fun SearchScene() {

@@ -52,5 +52,14 @@ class Settings(BaseSettings):
     # True = SSL on port 465 (Outlook, Yahoo). False (default) = STARTTLS on port 587 (Gmail).
     smtp_use_ssl: bool = False
 
+    # AI coach via LM Studio serving Gemma 3 (CLAUDE.md §2, §6). Local-only inference — no hosted
+    # fallback. Mirrors Spotter's chat wiring: the OpenAI-compatible /chat/completions endpoint.
+    # The base URL includes the API prefix (LM Studio defaults to /v1). The URL/model are
+    # deployment config; CI never reaches a real server (the client is injected in tests).
+    lm_studio_base_url: str = "http://localhost:1234/v1"
+    lm_studio_model: str = "google/gemma-3-12b"
+    # Generous timeout: the first request after a cold start pays the model-load cost.
+    lm_studio_timeout: float = 60.0
+
 
 settings = Settings()

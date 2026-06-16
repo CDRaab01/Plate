@@ -101,6 +101,26 @@ ever display these numbers, never recompute them.
 `daily_targets` table exists but is written only from Phase 7 onward, when the training-day bump
 makes per-date snapshots worth persisting.
 
+## AI coach (Phase 5)
+
+Chat with a nutrition coach backed by **Gemma 3 via LM Studio** — same wiring as Spotter's chat
+(the OpenAI-compatible `/chat/completions` endpoint). Local-only inference; no hosted fallback.
+
+- `POST /ai/chat` — send the conversation so far (`{messages: [{role, content}]}`), get the coach's
+  reply (`{reply}`). Rate-limited to 20/minute since each call hits the model.
+- The coach reasons over the user's **remaining macros + goal for today**, derived **server-side**
+  from the active goal + the day's log (`app/services/ai/context_service.py`) — never trusted from
+  the client. Spotter's training-day bump layers into this context in Phase 7.
+- Guardrails (`app/services/ai/prompts.py`): a fixed system prompt scoped to food/recipes/macros, a
+  request guard that rejects prompt-injection and out-of-scope/medical content (checked on **every**
+  user turn, not just the latest), and a response scrub. Coach numbers are estimates the user
+  confirms — Phase 5 surfaces them as plain chat and never auto-logs.
+
+Config (server-side only, never in the APK): `LM_STUDIO_BASE_URL` (default
+`http://localhost:1234/v1`), `LM_STUDIO_MODEL` (default `google/gemma-3-12b`), `LM_STUDIO_TIMEOUT`.
+CI never reaches a real server — the HTTP client is injected with a mocked transport in tests
+(`tests/test_ai.py`).
+
 ## Data model (Phase 1)
 
 - `users` — account + reset-token fields (mirrors Spotter).

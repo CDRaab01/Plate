@@ -60,4 +60,9 @@ interface ApiService {
 
     @GET("goals/targets")
     suspend fun getTargets(@Query("date") date: String? = null): TargetsOut
+
+    // ── Phase 5: AI coach chat ───────────────────────────────────────────────
+
+    @POST("ai/chat")
+    suspend fun coachChat(@Body body: ChatRequest): ChatResponse
 }
