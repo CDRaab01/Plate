@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,12 +53,22 @@ private val MEAL_LABELS = mapOf(
 @Composable
 fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
+    onNavigateToGoals: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Today") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Today") },
+                actions = {
+                    IconButton(onClick = onNavigateToGoals) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Goals")
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToSearch) {
                 Icon(Icons.Filled.Add, contentDescription = "Add food")

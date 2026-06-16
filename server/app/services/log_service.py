@@ -17,6 +17,7 @@ from app.models.food_log_entry import FoodLogEntry
 from app.nutrition.constants import STATIC_DAILY_TARGET
 from app.nutrition.portions import MacroSnapshot, scale_food
 from app.nutrition.totals import sum_entries
+from app.services.goal_service import compute_targets_for
 from app.schemas.log import (
     DailyLog,
     LogEntryCreate,
@@ -194,7 +195,32 @@ async def get_day(
             )
         )
 
-    targets = TotalsOut(
+    targets = await _targets_out(db, user_id, day)
+    return DailyLog(date=day, meals=meals, totals=_totals_out(entries), targets=targets)
+
+
+async def _targets_out(
+    db: AsyncSession, user_id: uuid.UUID, day: datetime.date
+) -> TotalsOut:
+    """The day's macro targets: computed from the user's goal, or the static placeholder if none.
+
+    The Phase 3 engine sets only the four primary macros; secondary nutrients have no target, so
+    they surface as 0 (the client shows totals-only for those).
+    """
+    computed = await compute_targets_for(db, user_id, day)
+    if computed is not None:
+        return TotalsOut(
+            kcal=computed.kcal,
+            protein_g=computed.protein_g,
+            carbs_g=computed.carbs_g,
+            fat_g=computed.fat_g,
+            fiber_g=0.0,
+            sugar_g=0.0,
+            sat_fat_g=0.0,
+            cholesterol_mg=0.0,
+            sodium_mg=0.0,
+        )
+    return TotalsOut(
         kcal=STATIC_DAILY_TARGET.kcal,
         protein_g=STATIC_DAILY_TARGET.protein_g,
         carbs_g=STATIC_DAILY_TARGET.carbs_g,
@@ -205,4 +231,3 @@ async def get_day(
         cholesterol_mg=STATIC_DAILY_TARGET.cholesterol_mg,
         sodium_mg=STATIC_DAILY_TARGET.sodium_mg,
     )
-    return DailyLog(date=day, meals=meals, totals=_totals_out(entries), targets=targets)
