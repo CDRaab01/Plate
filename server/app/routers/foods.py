@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas.food import FoodCreate, FoodOut
 from app.security import CurrentUser
-from app.services.food_service import create_custom_food, get_food, search_foods
+from app.services.food_service import (
+    create_custom_food,
+    get_food,
+    lookup_barcode,
+    search_foods,
+)
 
 router = APIRouter(prefix="/foods", tags=["foods"])
 
@@ -22,6 +27,22 @@ async def search(
 ):
     """Local-cache-first food search. External sources are hit only on a cache miss."""
     return await search_foods(db, q)
+
+
+@router.get("/barcode/{code}", response_model=FoodOut)
+async def read_barcode(
+    code: str,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """Scan path: resolve a barcode via local cache → Open Food Facts, caching on first fetch."""
+    food = await lookup_barcode(db, code)
+    if food is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No product found for this barcode",
+        )
+    return food
 
 
 @router.post("", response_model=FoodOut, status_code=status.HTTP_201_CREATED)

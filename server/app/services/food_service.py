@@ -145,6 +145,55 @@ async def search_foods(
     return await cache_foods(db, items)
 
 
+async def _fetch_barcode(source: FoodSource, code: str) -> NormalizedFood | None:
+    """Resolve one barcode, treating a source failure as 'not found' rather than fatal."""
+    try:
+        return await source.fetch_barcode(code)
+    except Exception as exc:  # noqa: BLE001 — a flaky OFF call shouldn't 500 the scan path
+        log.warning("Barcode lookup failed for %r: %s", code, exc)
+        return None
+
+
+async def lookup_barcode(
+    db: AsyncSession,
+    barcode: str,
+    *,
+    source: FoodSource | None = None,
+) -> Food | None:
+    """Resolve a scanned barcode to a cached :class:`Food` (CLAUDE.md §6).
+
+    Local cache first: a barcode we've seen before never hits the network. On a miss we go straight
+    to Open Food Facts (the barcode authority — CLAUDE.md §5), normalize + cache the product, and
+    return it so the next scan is local.
+
+    ``source`` is injectable for tests; in production it's ``None`` and a live OFF source is built
+    on demand (and only when :data:`settings.food_search_live` is enabled).
+    """
+    code = barcode.strip()
+    if not code:
+        return None
+
+    existing = (
+        await db.execute(select(Food).where(Food.barcode == code))
+    ).scalars().first()
+    if existing is not None:
+        return existing
+
+    if source is not None:
+        normalized = await _fetch_barcode(source, code)
+    elif settings.food_search_live:
+        async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
+            off = OpenFoodFactsSource(client, settings.off_base_url, settings.off_user_agent)
+            normalized = await _fetch_barcode(off, code)
+    else:
+        return None
+
+    if normalized is None:
+        return None
+    cached = await cache_foods(db, [normalized])
+    return cached[0] if cached else None
+
+
 async def create_custom_food(db: AsyncSession, data: dict) -> Food:
     """Insert a user-defined food (``source='user'``)."""
     food = Food(source="user", **data)

@@ -19,3 +19,11 @@ class FoodSource(ABC):
     async def search(self, query: str, *, limit: int) -> list[NormalizedFood]:
         """Return up to ``limit`` foods matching ``query`` (best-effort; may be empty)."""
         raise NotImplementedError
+
+    async def fetch_barcode(self, barcode: str) -> NormalizedFood | None:
+        """Resolve a single product by barcode (the Phase 4 scan path).
+
+        Only Open Food Facts is barcode-addressable (CLAUDE.md §5/§6); other sources return
+        ``None`` so the lookup falls through cleanly.
+        """
+        return None

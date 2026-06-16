@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.plate.ui.about.AboutScreen
 import com.plate.ui.auth.ForgotPasswordScreen
 import com.plate.ui.auth.LoginScreen
 import com.plate.ui.auth.RegisterScreen
@@ -15,6 +16,7 @@ import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
 import com.plate.ui.goals.GoalScreen
+import com.plate.ui.scan.BarcodeScanScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -26,7 +28,9 @@ object Routes {
     const val DIARY_GRAPH = "diary_graph"
     const val DIARY = "diary"
     const val SEARCH = "search"
+    const val SCAN = "scan"
     const val GOALS = "goals"
+    const val ABOUT = "about"
 }
 
 @Composable
@@ -64,6 +68,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 DiaryScreen(
                     onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
                     onNavigateToGoals = { navController.navigate(Routes.GOALS) },
+                    onNavigateToAbout = { navController.navigate(Routes.ABOUT) },
                     viewModel = diaryViewModel,
                 )
             }
@@ -72,6 +77,17 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
                 FoodSearchScreen(
                     onLogged = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                    onScan = { navController.navigate(Routes.SCAN) },
+                    diaryViewModel = diaryViewModel,
+                )
+            }
+            composable(Routes.SCAN) { entry ->
+                val parent = remember(entry) { navController.getBackStackEntry(Routes.DIARY_GRAPH) }
+                val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
+                BarcodeScanScreen(
+                    // Logging from a scan returns straight to the diary, popping the search step too.
+                    onLogged = { navController.popBackStack(Routes.DIARY, inclusive = false) },
                     onBack = { navController.popBackStack() },
                     diaryViewModel = diaryViewModel,
                 )
@@ -82,6 +98,9 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                         navController.popBackStack()
                     },
                 )
+            }
+            composable(Routes.ABOUT) {
+                AboutScreen(onBack = { navController.popBackStack() })
             }
         }
     }

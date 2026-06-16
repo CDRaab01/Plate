@@ -35,6 +35,9 @@ private class FakeFoodRepository(
         failWith?.let { throw it }
         return results
     }
+
+    override suspend fun lookupBarcode(code: String): FoodOut =
+        results.firstOrNull() ?: throw IllegalStateException("no result")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

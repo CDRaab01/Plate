@@ -17,10 +17,13 @@ import com.plate.data.remote.FoodOut
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
+import com.plate.ui.about.AboutContent
 import com.plate.ui.auth.LoginContent
 import com.plate.ui.auth.RegisterContent
 import com.plate.ui.diary.DiaryContent
 import com.plate.ui.food.FoodSearchContent
+import com.plate.ui.scan.PermissionRationale
+import com.plate.ui.scan.ScanStatusBar
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import org.junit.Rule
@@ -68,6 +71,16 @@ class ScreenshotTest {
     @Test fun diary_dark() = capture("diary_dark", dark = true) { DiaryScene() }
     @Test fun search_light() = capture("search_light", dark = false) { SearchScene() }
     @Test fun search_dark() = capture("search_dark", dark = true) { SearchScene() }
+    @Test fun about_light() = capture("about_light", dark = false) { AboutContent(onBack = {}) }
+    @Test fun about_dark() = capture("about_dark", dark = true) { AboutContent(onBack = {}) }
+    @Test fun scan_permission_light() =
+        capture("scan_permission_light", dark = false) { PermissionRationale(onRequestPermission = {}) }
+    @Test fun scan_error_light() = capture("scan_error_light", dark = false) {
+        ScanStatusBar(state = UiState.Error("No product found for that barcode"), onRetry = {})
+    }
+    @Test fun scan_error_dark() = capture("scan_error_dark", dark = true) {
+        ScanStatusBar(state = UiState.Error("No product found for that barcode"), onRetry = {})
+    }
 }
 
 @Composable
@@ -162,6 +175,7 @@ private fun SearchScene() {
             ),
         ),
         onBack = {},
+        onScan = {},
         onPick = {},
     )
 }

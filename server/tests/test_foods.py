@@ -15,7 +15,7 @@ from app.foods.normalize import NormalizedFood, normalized_name
 from app.foods.off import OpenFoodFactsSource, normalize_off_product
 from app.foods.usda import UsdaFoodSource, normalize_usda_food
 from app.models.food import Food
-from app.services.food_service import cache_foods, search_foods
+from app.services.food_service import cache_foods, lookup_barcode, search_foods
 
 
 # ── Normalization ────────────────────────────────────────────────────────────
@@ -265,3 +265,115 @@ async def test_cache_dedups_against_existing_db_row_by_name():
 async def test_blank_query_returns_empty():
     async with AsyncSessionLocal() as db:
         assert await search_foods(db, "   ", sources=[FakeSource("off", [])]) == []
+
+
+# ── Barcode scan path (Phase 4) ──────────────────────────────────────────────
+
+
+class FakeBarcodeSource(FoodSource):
+    """OFF-like source that only answers barcode lookups (the Phase 4 scan path)."""
+
+    source_tag = "off"
+
+    def __init__(self, product: NormalizedFood | None):
+        self._product = product
+        self.calls = 0
+
+    async def search(self, query: str, *, limit: int) -> list[NormalizedFood]:
+        return []
+
+    async def fetch_barcode(self, barcode: str) -> NormalizedFood | None:
+        self.calls += 1
+        return self._product
+
+
+async def test_lookup_barcode_fetches_and_caches_on_miss():
+    barcode = uuid.uuid4().hex
+    name = f"Scanned Bar {uuid.uuid4().hex[:6]}"
+    source = FakeBarcodeSource(_normalized(name, barcode=barcode))
+
+    async with AsyncSessionLocal() as db:
+        first = await lookup_barcode(db, barcode, source=source)
+    assert first is not None
+    assert first.barcode == barcode
+    assert first.id is not None  # persisted
+    assert source.calls == 1
+
+    # Second scan of the same code is served from the local cache — OFF is not hit again.
+    async with AsyncSessionLocal() as db:
+        second = await lookup_barcode(db, barcode, source=source)
+    assert second is not None
+    assert second.id == first.id
+    assert source.calls == 1
+
+
+async def test_lookup_barcode_returns_none_when_off_has_no_product():
+    source = FakeBarcodeSource(None)
+    async with AsyncSessionLocal() as db:
+        result = await lookup_barcode(db, uuid.uuid4().hex, source=source)
+    assert result is None
+    assert source.calls == 1
+
+
+async def test_lookup_barcode_local_hit_skips_source():
+    barcode = uuid.uuid4().hex
+    async with AsyncSessionLocal() as db:
+        db.add(
+            Food(
+                source="off",
+                name=f"Cached Bar {uuid.uuid4().hex[:6]}",
+                barcode=barcode,
+                kcal_per_100g=50.0,
+                protein_g_per_100g=1.0,
+                carbs_g_per_100g=10.0,
+                fat_g_per_100g=0.0,
+            )
+        )
+        await db.commit()
+
+    source = FakeBarcodeSource(_normalized("Should not be used", barcode=barcode))
+    async with AsyncSessionLocal() as db:
+        found = await lookup_barcode(db, barcode, source=source)
+    assert found is not None
+    assert found.barcode == barcode
+    assert source.calls == 0
+
+
+async def test_lookup_barcode_blank_returns_none():
+    async with AsyncSessionLocal() as db:
+        assert await lookup_barcode(db, "   ", source=FakeBarcodeSource(None)) is None
+
+
+async def test_barcode_endpoint_unknown_returns_404(auth_client):
+    # Live lookups are disabled in the suite, so an uncached barcode resolves to nothing → 404.
+    resp = await auth_client.get(f"/foods/barcode/{uuid.uuid4().hex}")
+    assert resp.status_code == 404
+
+
+async def test_barcode_endpoint_returns_cached_food(auth_client):
+    barcode = uuid.uuid4().hex
+    name = f"Endpoint Bar {uuid.uuid4().hex[:6]}"
+    async with AsyncSessionLocal() as db:
+        db.add(
+            Food(
+                source="off",
+                name=name,
+                barcode=barcode,
+                kcal_per_100g=120.0,
+                protein_g_per_100g=3.0,
+                carbs_g_per_100g=20.0,
+                fat_g_per_100g=2.0,
+            )
+        )
+        await db.commit()
+
+    resp = await auth_client.get(f"/foods/barcode/{barcode}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["barcode"] == barcode
+    assert body["name"] == name
+
+
+async def test_barcode_endpoint_requires_auth(client):
+    resp = await client.get(f"/foods/barcode/{uuid.uuid4().hex}")
+    assert resp.status_code == 401

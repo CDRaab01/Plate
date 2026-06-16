@@ -108,6 +108,13 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
 
+    // Phase 4: on-device barcode scanning (CameraX preview + ML Kit decoder).
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.mlkit.barcode.scanning)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
