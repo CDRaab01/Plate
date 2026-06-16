@@ -95,9 +95,14 @@ class MealGroup(BaseModel):
 
 
 class DailyLog(BaseModel):
-    """A day's log split into meals, with per-meal and day totals plus the (static) targets."""
+    """A day's log split into meals, with per-meal and day totals plus the day's targets.
+
+    ``trained_today`` reflects Spotter-awareness (§7): when the user trained that day the targets
+    already include the training-day bump, and the client surfaces a "trained today" hint.
+    """
 
     date: datetime.date
     meals: list[MealGroup]
     totals: TotalsOut
     targets: TotalsOut
+    trained_today: bool = False

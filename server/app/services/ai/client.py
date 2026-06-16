@@ -30,6 +30,7 @@ async def chat(
     user_id: uuid.UUID,
     *,
     day: datetime.date | None = None,
+    trained: bool = False,
     client: httpx.AsyncClient | None = None,
 ) -> ChatResponse:
     # Guard every user turn, not just the latest — injection can hide in earlier history.
@@ -51,7 +52,9 @@ async def chat(
         )
 
     history = [m.model_dump() for m in req.messages[:-1]]
-    macro_context = await build_macro_context(db, user_id, day or datetime.date.today())
+    macro_context = await build_macro_context(
+        db, user_id, day or datetime.date.today(), trained=trained
+    )
     messages = build_messages(history, last_user, macro_context)
 
     # Reuse an injected client (tests) or open one per call (production).

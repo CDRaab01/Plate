@@ -6,12 +6,39 @@ conventions (FastAPI + async SQLAlchemy + Alembic + Postgres, JWT auth, `pip`/`h
 
 ## Spotter integration (§8) — decision of record
 
-The Plate spec's plan of record is a **shared backend + shared `users` table** with Spotter, but
-that is **gated and not yet confirmed** (CLAUDE.md §8 — confirm before building the integration in
-Phase 7). Until then, Phase 1 ships Plate's **own `users` table**, mirroring Spotter's auth
-mechanism exactly (bcrypt password hashing, HS256 access/refresh JWTs, identical register/login/
-refresh/forgot/reset flow). This keeps Plate self-contained and testable now and is reversible: if
-the shared-backend path is confirmed, Plate points at the shared table instead.
+**Confirmed (Phase 7): the read-only-endpoint path, NOT the shared backend.** The spec's plan of
+record was a shared backend + shared `users` table, but the two apps are built and deployed
+independently (separate FastAPI services, separate Postgres databases, separate `users` tables).
+Rather than merge them at Phase 7, Plate uses the documented fallback: Spotter exposes a small
+read-only endpoint and Plate calls it over HTTP. This keeps a **stable contract** (Spotter's
+internals can change freely), keeps both apps independently deployable, and avoids coupling Plate to
+Spotter's schema.
+
+### How it works
+
+- **Spotter** exposes `GET /workouts?date=` → `{date, trained, strength_sessions, cardio_sessions}`
+  (counts *completed* strength + cardio sessions for the day). Read-only; no Spotter writes.
+- **Auth across two user tables = shared JWT secret keyed on email.** Email is the only stable
+  identity the two independent `users` tables share. Plate mints a short-lived JWT signed with a
+  **`CROSS_APP_SECRET`** (carrying `{email, type:"cross_app"}`); Spotter validates it with the
+  *same* secret and resolves its own user by email. This secret is **separate from each app's own
+  `SECRET_KEY`**, so a normal Plate/Spotter access token can't reach the cross-app surface (and a
+  cross-app token can't act as a normal session).
+- **Plate side** lives behind a `WorkoutSource` abstraction (`app/services/workout_source.py`):
+  `SpotterWorkoutSource` (HTTP) when `SPOTTER_BASE_URL` + `CROSS_APP_SECRET` are set, else
+  `NullWorkoutSource` (never a training day — the default, and CI behaviour). The lookup is
+  **best-effort**: a Spotter outage degrades to "not a training day" rather than failing the diary
+  or coach.
+
+### Config
+
+| Env var | Where | Purpose |
+| --- | --- | --- |
+| `SPOTTER_BASE_URL` | Plate | Base URL of Spotter's API (unset ⇒ integration off). |
+| `CROSS_APP_SECRET` | **Both** | Shared HMAC secret for the cross-app token. Must match on both apps. |
+
+> Phase 1's own-`users`-table choice stands and is unchanged: Plate keeps its own accounts/auth
+> (bcrypt, HS256 access/refresh) and reads Spotter's *workout data* over this endpoint.
 
 ## Layout
 
@@ -26,10 +53,11 @@ server/
     models/          # User, Food, FoodLogEntry, UserGoal, DailyTarget
     schemas/         # pydantic request/response models
     services/        # auth_service, food_service (search/cache), log_service (CRUD/totals)
+                     #   goal_service (goals + computed targets), workout_source (Spotter-awareness)
                      #   services/ai/ — coach client + context + prompts, vision (photo logging)
     foods/           # FoodSource abstraction + USDA/OFF sources + normalization/dedup
-    nutrition/       # pure macro math: portion scaling, daily totals (targets engine in Phase 3)
-    routers/         # auth, users, foods, log
+    nutrition/       # pure macro math: portion scaling, daily totals, targets engine + training bump
+    routers/         # auth, users, foods, log, goals, ai
   alembic/           # migrations (0001 = initial tables)
   tests/             # auth, repository, nutrition, foods, log tests (Postgres)
 ```
@@ -99,8 +127,23 @@ ever display these numbers, never recompute them.
 - `GET /log?date=` targets are **live from the goal** when one is set; the static 2000 kcal
   placeholder is used only for goal-less users to preserve backward compatibility.
 
-`daily_targets` table exists but is written only from Phase 7 onward, when the training-day bump
-makes per-date snapshots worth persisting.
+## Spotter-awareness (Phase 7)
+
+When the user trained that day (read from Spotter — see "Spotter integration" above), the day's
+targets get a **training-day bump**: a carbs+protein-skewed fuel addition (`apply_training_day_bump`
+in `app/nutrition/targets.py`, constants in `constants.py`; fat is held). It's a pure function, so
+it's table-tested alongside the rest of the engine.
+
+- `GET /goals/targets` and `GET /log` now carry **`trained_today`**; when true, their kcal/macros
+  already include the bump. The Android diary shows a "trained today · targets bumped" hint.
+- The **AI coach** is told the user trained today and frames advice around refueling
+  (`build_macro_context`).
+- *Whether* the user trained is decided by `app/services/workout_source.is_training_day` (best-effort
+  — failures degrade to "not trained"), keeping the network out of the pure targets math.
+
+`daily_targets` table remains **unused/deferred**: targets stay a deterministic compute-on-read of
+(goal + Spotter training status), so per-date persistence is a future optimization, not required
+here.
 
 ## AI coach (Phase 5)
 

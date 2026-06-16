@@ -14,10 +14,12 @@ from app.services.log_service import (
     get_day,
     update_entry,
 )
+from app.services.workout_source import WorkoutSource, get_workout_source, is_training_day
 
 router = APIRouter(prefix="/log", tags=["log"])
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+Workouts = Annotated[WorkoutSource, Depends(get_workout_source)]
 
 
 @router.post("", response_model=LogEntryOut, status_code=status.HTTP_201_CREATED)
@@ -33,10 +35,12 @@ async def create(
 async def day(
     current_user: CurrentUser,
     db: DbSession,
+    workouts: Workouts,
     date: Annotated[datetime.date | None, Query(description="Defaults to today (UTC)")] = None,
 ):
     target_day = date or datetime.date.today()
-    return await get_day(db, current_user.id, target_day)
+    trained = await is_training_day(current_user.email, target_day, source=workouts)
+    return await get_day(db, current_user.id, target_day, trained=trained)
 
 
 @router.put("/{entry_id}", response_model=LogEntryOut)

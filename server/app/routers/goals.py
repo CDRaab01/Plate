@@ -14,10 +14,12 @@ from app.database import get_db
 from app.schemas.goal import GoalOut, GoalUpsert, TargetsOut
 from app.security import CurrentUser
 from app.services.goal_service import compute_targets_for, get_active_goal, set_goal
+from app.services.workout_source import WorkoutSource, get_workout_source, is_training_day
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+Workouts = Annotated[WorkoutSource, Depends(get_workout_source)]
 
 
 @router.put("", response_model=GoalOut)
@@ -45,11 +47,16 @@ async def read_goal(
 async def read_targets(
     current_user: CurrentUser,
     db: DbSession,
+    workouts: Workouts,
     date: Annotated[datetime.date | None, Query(description="Defaults to today (UTC)")] = None,
 ):
-    """Compute the day's kcal/macro targets from the active goal. 404 until a goal is set."""
+    """Compute the day's kcal/macro targets from the active goal. 404 until a goal is set.
+
+    Targets include the training-day bump (Spotter-awareness, §7) when the user trained that day.
+    """
     target_day = date or datetime.date.today()
-    targets = await compute_targets_for(db, current_user.id, target_day)
+    trained = await is_training_day(current_user.email, target_day, source=workouts)
+    targets = await compute_targets_for(db, current_user.id, target_day, trained=trained)
     if targets is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,4 +68,5 @@ async def read_targets(
         protein_g=targets.protein_g,
         carbs_g=targets.carbs_g,
         fat_g=targets.fat_g,
+        trained_today=trained,
     )

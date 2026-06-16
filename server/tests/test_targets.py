@@ -11,6 +11,7 @@ from app.nutrition.targets import (
     BodyProfile,
     Targets,
     activity_factor,
+    apply_training_day_bump,
     compute_targets,
     from_goal,
     goal_adjusted_kcal,
@@ -170,6 +171,60 @@ def test_compute_targets_maintain_keeps_tdee():
         goal_type="maintain",
         rate_kg_per_week=0.0,
     )
+    assert compute_targets(profile).kcal == pytest.approx(2759.0)
+
+
+# ── Training-day bump (Spotter-awareness, §7) ─────────────────────────────────
+
+
+def test_apply_training_day_bump_adds_carbs_and_protein_holds_fat():
+    base = Targets(kcal=2000.0, protein_g=150.0, carbs_g=200.0, fat_g=67.0)
+    bumped = apply_training_day_bump(base)
+    assert bumped.protein_g == pytest.approx(150.0 + c.TRAINING_DAY_PROTEIN_BUMP_G)
+    assert bumped.carbs_g == pytest.approx(200.0 + c.TRAINING_DAY_CARBS_BUMP_G)
+    assert bumped.fat_g == pytest.approx(67.0 + c.TRAINING_DAY_FAT_BUMP_G)
+
+
+def test_apply_training_day_bump_kcal_matches_added_macros():
+    base = Targets(kcal=2000.0, protein_g=150.0, carbs_g=200.0, fat_g=67.0)
+    bumped = apply_training_day_bump(base)
+    expected_added = (
+        c.TRAINING_DAY_PROTEIN_BUMP_G * c.KCAL_PER_G_PROTEIN
+        + c.TRAINING_DAY_CARBS_BUMP_G * c.KCAL_PER_G_CARB
+        + c.TRAINING_DAY_FAT_BUMP_G * c.KCAL_PER_G_FAT
+    )
+    assert bumped.kcal == pytest.approx(2000.0 + expected_added)
+
+
+def test_compute_targets_trained_raises_kcal_over_untrained():
+    profile = BodyProfile(
+        weight_kg=80.0,
+        height_cm=180.0,
+        age=30,
+        sex="male",
+        activity_level="moderate",
+        goal_type="cut",
+        rate_kg_per_week=-0.5,
+    )
+    untrained = compute_targets(profile)
+    trained = compute_targets(profile, trained=True)
+    assert trained.kcal > untrained.kcal
+    assert trained.protein_g > untrained.protein_g
+    assert trained.carbs_g > untrained.carbs_g
+    assert trained.fat_g == pytest.approx(untrained.fat_g)  # fat held on a training day
+
+
+def test_compute_targets_untrained_is_unchanged_default():
+    profile = BodyProfile(
+        weight_kg=80.0,
+        height_cm=180.0,
+        age=30,
+        sex="male",
+        activity_level="moderate",
+        goal_type="maintain",
+        rate_kg_per_week=0.0,
+    )
+    # Default (no training) keeps the plain TDEE-based number — the Phase 3 behaviour is preserved.
     assert compute_targets(profile).kcal == pytest.approx(2759.0)
 
 

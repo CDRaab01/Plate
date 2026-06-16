@@ -168,7 +168,7 @@ def _totals_out(entries) -> TotalsOut:
 
 
 async def get_day(
-    db: AsyncSession, user_id: uuid.UUID, day: datetime.date
+    db: AsyncSession, user_id: uuid.UUID, day: datetime.date, *, trained: bool = False
 ) -> DailyLog:
     result = await db.execute(
         select(FoodLogEntry)
@@ -195,19 +195,26 @@ async def get_day(
             )
         )
 
-    targets = await _targets_out(db, user_id, day)
-    return DailyLog(date=day, meals=meals, totals=_totals_out(entries), targets=targets)
+    targets = await _targets_out(db, user_id, day, trained=trained)
+    return DailyLog(
+        date=day,
+        meals=meals,
+        totals=_totals_out(entries),
+        targets=targets,
+        trained_today=trained,
+    )
 
 
 async def _targets_out(
-    db: AsyncSession, user_id: uuid.UUID, day: datetime.date
+    db: AsyncSession, user_id: uuid.UUID, day: datetime.date, *, trained: bool = False
 ) -> TotalsOut:
     """The day's macro targets: computed from the user's goal, or the static placeholder if none.
 
     The Phase 3 engine sets only the four primary macros; secondary nutrients have no target, so
-    they surface as 0 (the client shows totals-only for those).
+    they surface as 0 (the client shows totals-only for those). ``trained`` adds the training-day
+    bump (Spotter-awareness, §7) when the user worked out that day.
     """
-    computed = await compute_targets_for(db, user_id, day)
+    computed = await compute_targets_for(db, user_id, day, trained=trained)
     if computed is not None:
         return TotalsOut(
             kcal=computed.kcal,

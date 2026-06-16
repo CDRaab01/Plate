@@ -61,6 +61,20 @@ class Settings(BaseSettings):
     # Generous timeout: the first request after a cold start pays the model-load cost.
     lm_studio_timeout: float = 60.0
 
+    # Spotter-awareness (Phase 7, CLAUDE.md §7, §8). Plate reads the user's training status from
+    # Spotter's read-only GET /workouts and bumps that day's targets when they trained. Auth is a
+    # short-lived JWT signed with `cross_app_secret` carrying the user's email; Spotter validates it
+    # with the SAME secret and resolves its own user by email. Both settings unset ⇒ the integration
+    # is disabled (NullWorkoutSource: never a training day), which is the case in CI and any deploy
+    # without Spotter. `cross_app_secret` here MUST equal Spotter's `cross_app_secret`.
+    spotter_base_url: str | None = None
+    cross_app_secret: str | None = None
+    # TTL of the minted cross-app token — only needs to outlive a single request round-trip.
+    cross_app_token_ttl_seconds: int = 60
+    # Timeout (seconds) for the outbound call to Spotter. A failure degrades gracefully to
+    # "not a training day" rather than failing the user's request.
+    spotter_timeout_seconds: float = 8.0
+
     # Photo logging (Phase 6, CLAUDE.md §6). The vision model estimates the foods + macros in a
     # meal photo; the user always confirms before anything is logged (never auto-committed). Defaults
     # to the same multimodal Gemma 3 the coach uses — override if a separate vision model is loaded.

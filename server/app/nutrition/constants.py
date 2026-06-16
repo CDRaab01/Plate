@@ -56,3 +56,12 @@ DEFAULT_PROTEIN_G_PER_KG = 1.6
 # hormonal health; carbs then fill whatever kcal remain.
 FAT_FRACTION_OF_KCAL = 0.30
 FAT_FLOOR_G_PER_KG = 0.8
+
+# ── Training-day bump (Spotter-awareness, §7) ─────────────────────────────────
+# On a day the user trained (reported by Spotter), add fuel to refuel/recover. The bump is
+# expressed as gram additions skewed to carbs + protein — fat is left at its hormonal floor — and
+# the kcal increase is *derived* from those grams (4·protein + 4·carbs) so the macro and calorie
+# figures stay internally consistent. A single moderate session ≈ +220 kcal here.
+TRAINING_DAY_CARBS_BUMP_G = 40.0
+TRAINING_DAY_PROTEIN_BUMP_G = 15.0
+TRAINING_DAY_FAT_BUMP_G = 0.0

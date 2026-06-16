@@ -94,4 +94,7 @@ data class DailyLog(
     val meals: List<MealGroup>,
     val totals: TotalsOut,
     val targets: TotalsOut,
+    // Spotter-awareness (Phase 7): the user trained that day, so `targets` already include the
+    // training-day bump and the diary shows a "trained today" hint. Defaults false for older servers.
+    @SerialName("trained_today") val trainedToday: Boolean = false,
 )
