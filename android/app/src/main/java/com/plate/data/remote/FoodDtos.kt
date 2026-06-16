@@ -20,6 +20,22 @@ data class FoodOut(
     @SerialName("kcal_per_serving") val kcalPerServing: Double? = null,
 )
 
+/**
+ * A user-defined custom food (`source='user'`). Used when logging a confirmed photo estimate: the
+ * portion macros are stored as a one-serving food so the entry keeps a name + a stable snapshot.
+ */
+@Serializable
+data class FoodCreateRequest(
+    val name: String,
+    val brand: String? = null,
+    @SerialName("serving_size") val servingSize: Double? = null,
+    @SerialName("serving_unit") val servingUnit: String? = null,
+    @SerialName("kcal_per_100g") val kcalPer100g: Double,
+    @SerialName("protein_g_per_100g") val proteinGPer100g: Double,
+    @SerialName("carbs_g_per_100g") val carbsGPer100g: Double,
+    @SerialName("fat_g_per_100g") val fatGPer100g: Double,
+)
+
 @Serializable
 data class LogEntryCreate(
     @SerialName("food_id") val foodId: String,

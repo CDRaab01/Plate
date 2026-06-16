@@ -1,10 +1,13 @@
 package com.plate.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -37,6 +40,15 @@ interface ApiService {
     /** Phase 4: resolve a scanned barcode (local cache → Open Food Facts). 404 if unknown. */
     @GET("foods/barcode/{code}")
     suspend fun lookupBarcode(@Path("code") code: String): FoodOut
+
+    /** Create a user-defined custom food (used to persist a confirmed photo estimate). */
+    @POST("foods")
+    suspend fun createFood(@Body body: FoodCreateRequest): FoodOut
+
+    /** Phase 6: estimate the foods + macros in a meal photo. Returns an editable, never-logged draft. */
+    @Multipart
+    @POST("foods/photo")
+    suspend fun estimatePhoto(@Part image: MultipartBody.Part): PhotoEstimateResponse
 
     @POST("log")
     suspend fun createLogEntry(@Body body: LogEntryCreate): LogEntryOut

@@ -199,6 +199,7 @@ private fun SearchScene() {
         ),
         onBack = {},
         onScan = {},
+        onPhoto = {},
         onPick = {},
     )
 }
