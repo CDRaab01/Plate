@@ -1,6 +1,8 @@
 package com.plate.ui.scan
 
+import com.plate.data.remote.FoodCreateRequest
 import com.plate.data.remote.FoodOut
+import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.repository.FoodRepository
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
@@ -46,6 +48,12 @@ private class FakeFoodRepository(
         failWith?.let { throw it }
         return result ?: throw IllegalStateException("no result")
     }
+
+    override suspend fun createFood(req: FoodCreateRequest): FoodOut =
+        throw IllegalStateException("not used")
+
+    override suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse =
+        throw IllegalStateException("not used")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
