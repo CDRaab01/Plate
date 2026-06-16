@@ -8,8 +8,10 @@ Pure functions, exhaustively unit-tested with table cases. Phase 3 covers:
 * **goal adjustment** from the user's target rate of weight change (cut = deficit, bulk = surplus),
 * the **protein-first / fat-floor / carbs-remainder** macro split.
 
-The training-day bump (Spotter-awareness) layers on in Phase 7; :func:`compute_targets` already takes
-the inputs that bump will read, but applies no adjustment for it yet.
+The training-day bump (Spotter-awareness, Phase 7) layers on via :func:`apply_training_day_bump` /
+``compute_targets(..., trained=True)``: when Spotter reports a workout for the day, intake is bumped
+(skewed to carbs + protein) to refuel. The bump is a pure function too, so it's table-tested
+alongside the rest of the engine; *whether* the user trained is decided outside this module.
 """
 from dataclasses import dataclass
 
@@ -112,8 +114,30 @@ def macro_split(kcal: float, weight_kg: float, goal_type: str) -> tuple[float, f
     return protein_g, carbs_g, fat_g
 
 
-def compute_targets(profile: BodyProfile) -> Targets:
-    """Full pipeline: BMR → TDEE → goal-adjusted kcal → macro split."""
+def apply_training_day_bump(targets: Targets) -> Targets:
+    """Add the training-day fuel bump (Spotter-awareness, §7) on top of base targets.
+
+    Carbs + protein get a gram bump; fat is held; kcal rises by exactly the added macros' energy so
+    the returned :class:`Targets` stays internally consistent. Pure — the caller decides *whether*
+    the user trained (see :func:`compute_targets`).
+    """
+    protein_g = targets.protein_g + c.TRAINING_DAY_PROTEIN_BUMP_G
+    carbs_g = targets.carbs_g + c.TRAINING_DAY_CARBS_BUMP_G
+    fat_g = targets.fat_g + c.TRAINING_DAY_FAT_BUMP_G
+    kcal = targets.kcal + (
+        c.TRAINING_DAY_PROTEIN_BUMP_G * c.KCAL_PER_G_PROTEIN
+        + c.TRAINING_DAY_CARBS_BUMP_G * c.KCAL_PER_G_CARB
+        + c.TRAINING_DAY_FAT_BUMP_G * c.KCAL_PER_G_FAT
+    )
+    return Targets(kcal=kcal, protein_g=protein_g, carbs_g=carbs_g, fat_g=fat_g)
+
+
+def compute_targets(profile: BodyProfile, *, trained: bool = False) -> Targets:
+    """Full pipeline: BMR → TDEE → goal-adjusted kcal → macro split, plus the training-day bump.
+
+    When ``trained`` is true (Spotter reported a workout for the day), :func:`apply_training_day_bump`
+    layers a carbs+protein-skewed fuel bump over the base targets.
+    """
     maintenance = tdee(
         profile.weight_kg,
         profile.height_cm,
@@ -123,4 +147,7 @@ def compute_targets(profile: BodyProfile) -> Targets:
     )
     kcal = goal_adjusted_kcal(maintenance, profile.rate_kg_per_week)
     protein_g, carbs_g, fat_g = macro_split(kcal, profile.weight_kg, profile.goal_type)
-    return Targets(kcal=kcal, protein_g=protein_g, carbs_g=carbs_g, fat_g=fat_g)
+    targets = Targets(kcal=kcal, protein_g=protein_g, carbs_g=carbs_g, fat_g=fat_g)
+    if trained:
+        targets = apply_training_day_bump(targets)
+    return targets

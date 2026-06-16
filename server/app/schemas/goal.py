@@ -81,10 +81,15 @@ class GoalOut(BaseModel):
 
 
 class TargetsOut(BaseModel):
-    """The computed kcal/macro targets for a date — what the diary shows the totals against."""
+    """The computed kcal/macro targets for a date — what the diary shows the totals against.
+
+    ``trained_today`` reflects Spotter-awareness (§7): when set, the kcal/macros already include the
+    training-day bump for a day the user worked out.
+    """
 
     date: datetime.date
     kcal: float
     protein_g: float
     carbs_g: float
     fat_g: float
+    trained_today: bool = False

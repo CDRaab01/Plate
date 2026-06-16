@@ -17,7 +17,11 @@ import org.junit.Test
 
 private fun emptyTotals() = TotalsOut(0.0, 0.0, 0.0, 0.0)
 
-private fun dailyLog(date: String, entries: List<LogEntryOut> = emptyList()) = DailyLog(
+private fun dailyLog(
+    date: String,
+    entries: List<LogEntryOut> = emptyList(),
+    trainedToday: Boolean = false,
+) = DailyLog(
     date = date,
     meals = listOf(
         MealGroup("breakfast", entries, emptyTotals()),
@@ -27,6 +31,7 @@ private fun dailyLog(date: String, entries: List<LogEntryOut> = emptyList()) = D
     ),
     totals = emptyTotals(),
     targets = TotalsOut(2000.0, 150.0, 200.0, 67.0),
+    trainedToday = trainedToday,
 )
 
 private class FakeLogRepository(
@@ -101,6 +106,18 @@ class DiaryViewModelTest {
 
         assertEquals(1, repo.deleted)
         assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `trained-today flag surfaces in the loaded day`() = runTest {
+        val repo = FakeLogRepository(day = dailyLog("2026-06-16", trainedToday = true))
+        val vm = DiaryViewModel(repo)
+
+        advanceUntilIdle()
+
+        val state = vm.day.value
+        assertTrue(state is UiState.Success)
+        assertTrue((state as UiState.Success).data.trainedToday)
     }
 
     @Test

@@ -37,14 +37,19 @@ async def get_active_goal(db: AsyncSession, user_id: uuid.UUID) -> UserGoal | No
 
 
 async def compute_targets_for(
-    db: AsyncSession, user_id: uuid.UUID, day: datetime.date
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    day: datetime.date,
+    *,
+    trained: bool = False,
 ) -> Targets | None:
     """Compute the user's targets for ``day`` from their active goal, or ``None`` if no goal is set.
 
-    ``day`` is unused until Phase 7 wires in the training-day bump, but is part of the signature now
-    so callers (e.g. the daily log) already pass the date the targets are *for*.
+    When ``trained`` is true (Spotter reported a workout for ``day``), the targets carry the
+    training-day bump. Callers decide ``trained`` via :func:`app.services.workout_source.is_training_day`
+    and pass it in, keeping this function a pure read of the goal + the bump flag (no network here).
     """
     goal = await get_active_goal(db, user_id)
     if goal is None:
         return None
-    return compute_targets(from_goal(goal))
+    return compute_targets(from_goal(goal), trained=trained)

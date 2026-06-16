@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
@@ -115,7 +117,13 @@ fun DiaryContent(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
     ) {
-        item { DailySummaryCard(totals = day.totals, targets = day.targets) }
+        item {
+            DailySummaryCard(
+                totals = day.totals,
+                targets = day.targets,
+                trainedToday = day.trainedToday,
+            )
+        }
         item { Spacer(Modifier.height(16.dp)) }
 
         day.meals.forEach { group ->
@@ -140,7 +148,7 @@ fun DiaryContent(
 }
 
 @Composable
-private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut) {
+private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut, trainedToday: Boolean) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp)) {
             Text(
@@ -148,6 +156,23 @@ private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut) {
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
             )
+            if (trainedToday) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.FitnessCenter,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.height(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Trained today · targets bumped",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
             val fraction = if (targets.kcal > 0) (totals.kcal / targets.kcal).toFloat() else 0f
             @Suppress("DEPRECATION")
