@@ -87,3 +87,24 @@ async def food():
         await session.commit()
         await session.refresh(f)
         return f
+
+
+@pytest_asyncio.fixture
+async def recipe_food():
+    """Same macro profile as ``food`` but a distinct name, so tests that build recipes/log entries
+    don't add to the ``Test Banana`` population the food-search test counts on."""
+    async with AsyncSessionLocal() as session:
+        f = Food(
+            source="user",
+            name=f"Recipe Oats {uuid.uuid4().hex[:6]}",
+            kcal_per_100g=89.0,
+            protein_g_per_100g=1.1,
+            carbs_g_per_100g=22.8,
+            fat_g_per_100g=0.3,
+            serving_size=118.0,
+            serving_unit="g",
+        )
+        session.add(f)
+        await session.commit()
+        await session.refresh(f)
+        return f

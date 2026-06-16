@@ -54,6 +54,42 @@ class LogEntryUpdate(BaseModel):
         return v
 
 
+class QuickAddCreate(BaseModel):
+    """A MyFitnessPal-style quick add: raw macros logged directly, with no source food.
+
+    Only the four primary macros are required; secondaries are optional. The entry is stored with
+    ``food_id = None`` and the given (or default) ``name`` as its label.
+    """
+
+    date: datetime.date
+    meal: str
+    name: str | None = None
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: float | None = None
+    sugar_g: float | None = None
+    sat_fat_g: float | None = None
+    cholesterol_mg: float | None = None
+    sodium_mg: float | None = None
+
+    @field_validator("meal")
+    @classmethod
+    def meal_valid(cls, v: str) -> str:
+        return _validate_meal(v)
+
+    @field_validator(
+        "kcal", "protein_g", "carbs_g", "fat_g",
+        "fiber_g", "sugar_g", "sat_fat_g", "cholesterol_mg", "sodium_mg",
+    )
+    @classmethod
+    def non_negative(cls, v: float | None) -> float | None:
+        if v is not None and v < 0:
+            raise ValueError("macro values must not be negative")
+        return v
+
+
 class LogEntryOut(BaseModel):
     model_config = {"from_attributes": True}
 
@@ -106,3 +142,22 @@ class DailyLog(BaseModel):
     totals: TotalsOut
     targets: TotalsOut
     trained_today: bool = False
+
+
+class DaySummary(BaseModel):
+    """One day's totals within a range summary, with that day's kcal target and training flag."""
+
+    date: datetime.date
+    totals: TotalsOut
+    target_kcal: float
+    trained: bool = False
+
+
+class RangeSummaryOut(BaseModel):
+    """A date-range (e.g. weekly) summary: per-day totals plus period totals and daily averages."""
+
+    start: datetime.date
+    end: datetime.date
+    days: list[DaySummary]
+    total: TotalsOut
+    averages: TotalsOut

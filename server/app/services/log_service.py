@@ -20,10 +20,13 @@ from app.nutrition.totals import sum_entries
 from app.services.goal_service import compute_targets_for
 from app.schemas.log import (
     DailyLog,
+    DaySummary,
     LogEntryCreate,
     LogEntryOut,
     LogEntryUpdate,
     MealGroup,
+    QuickAddCreate,
+    RangeSummaryOut,
     TotalsOut,
     MEALS,
 )
@@ -52,7 +55,8 @@ async def _load_owned_entry(
 
 def _to_out(entry: FoodLogEntry, food_name: str | None) -> LogEntryOut:
     out = LogEntryOut.model_validate(entry)
-    out.food_name = food_name
+    # Source-food name when there is one; otherwise the entry's own label (quick-add entries).
+    out.food_name = food_name if food_name is not None else entry.name
     return out
 
 
@@ -80,6 +84,43 @@ async def create_entry(
     await db.commit()
     await db.refresh(entry)
     return _to_out(entry, food.name)
+
+
+async def create_quick_add(
+    db: AsyncSession, user_id: uuid.UUID, req: QuickAddCreate
+) -> LogEntryOut:
+    """Log raw macros with no source food (MyFitnessPal-style quick add).
+
+    Stored with ``food_id = None`` and a label (``name``), quantity 1 serving, macros taken
+    directly from the request — there's nothing to scale.
+    """
+    entry = FoodLogEntry(
+        user_id=user_id,
+        food_id=None,
+        name=(req.name or "").strip() or "Quick add",
+        date=req.date,
+        meal=req.meal,
+        quantity=1.0,
+        unit="serving",
+    )
+    _apply_snapshot(
+        entry,
+        MacroSnapshot(
+            kcal=req.kcal,
+            protein_g=req.protein_g,
+            carbs_g=req.carbs_g,
+            fat_g=req.fat_g,
+            fiber_g=req.fiber_g,
+            sugar_g=req.sugar_g,
+            sat_fat_g=req.sat_fat_g,
+            cholesterol_mg=req.cholesterol_mg,
+            sodium_mg=req.sodium_mg,
+        ),
+    )
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    return _to_out(entry, None)
 
 
 async def update_entry(
@@ -237,4 +278,71 @@ async def _targets_out(
         sat_fat_g=STATIC_DAILY_TARGET.sat_fat_g,
         cholesterol_mg=STATIC_DAILY_TARGET.cholesterol_mg,
         sodium_mg=STATIC_DAILY_TARGET.sodium_mg,
+    )
+
+
+def _avg(total: TotalsOut, n: int) -> TotalsOut:
+    d = float(n) if n else 1.0
+    return TotalsOut(
+        kcal=total.kcal / d,
+        protein_g=total.protein_g / d,
+        carbs_g=total.carbs_g / d,
+        fat_g=total.fat_g / d,
+        fiber_g=total.fiber_g / d,
+        sugar_g=total.sugar_g / d,
+        sat_fat_g=total.sat_fat_g / d,
+        cholesterol_mg=total.cholesterol_mg / d,
+        sodium_mg=total.sodium_mg / d,
+    )
+
+
+async def get_summary(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    start: datetime.date,
+    end: datetime.date,
+    *,
+    training_days: set[datetime.date] | None = None,
+) -> RangeSummaryOut:
+    """Per-day totals across ``[start, end]`` plus period total and daily averages (Phase 8).
+
+    One row per calendar day in the range (zero-filled when nothing was logged). ``training_days``
+    carries the Spotter-awareness flag per date so each day's ``target_kcal`` includes the
+    training-day bump where applicable.
+    """
+    trained_on = training_days or set()
+    result = await db.execute(
+        select(FoodLogEntry).where(
+            FoodLogEntry.user_id == user_id,
+            FoodLogEntry.date >= start,
+            FoodLogEntry.date <= end,
+        )
+    )
+    entries = list(result.scalars().all())
+    by_date: dict[datetime.date, list[FoodLogEntry]] = {}
+    for e in entries:
+        by_date.setdefault(e.date, []).append(e)
+
+    days: list[DaySummary] = []
+    num_days = (end - start).days + 1
+    for offset in range(num_days):
+        day = start + datetime.timedelta(days=offset)
+        trained = day in trained_on
+        day_targets = await _targets_out(db, user_id, day, trained=trained)
+        days.append(
+            DaySummary(
+                date=day,
+                totals=_totals_out(by_date.get(day, [])),
+                target_kcal=day_targets.kcal,
+                trained=trained,
+            )
+        )
+
+    total = _totals_out(entries)
+    return RangeSummaryOut(
+        start=start,
+        end=end,
+        days=days,
+        total=total,
+        averages=_avg(total, num_days),
     )
