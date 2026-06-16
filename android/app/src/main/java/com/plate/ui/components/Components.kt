@@ -13,21 +13,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.plate.ui.theme.PlateGreen
-import com.plate.ui.theme.PlateTeal
+import com.plate.ui.theme.PlateTheme
 
-/** The brand mark: a plate silhouette over the green→teal gradient from the launcher icon. */
+/** The brand mark: a plate silhouette over the PULSE hero gradient (blue→indigo). */
 @Composable
 fun BrandLogo(size: Dp = 76.dp) {
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(Brush.linearGradient(listOf(PlateGreen, PlateTeal))),
+            .background(PlateTheme.pulse.heroGradient),
         contentAlignment = Alignment.Center,
     ) {
         Box(
