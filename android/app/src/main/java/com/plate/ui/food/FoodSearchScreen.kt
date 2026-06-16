@@ -53,7 +53,6 @@ private val MEAL_LABELS = mapOf(
     "snack" to "Snacks",
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodSearchScreen(
     onLogged: () -> Unit,
@@ -77,6 +76,25 @@ fun FoodSearchScreen(
         )
     }
 
+    FoodSearchContent(
+        query = query,
+        onQueryChange = searchViewModel::onQueryChange,
+        results = results,
+        onBack = onBack,
+        onPick = { selected = it },
+    )
+}
+
+/** Stateless search body — rendered by [FoodSearchScreen] in the app and by screenshot tests. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FoodSearchContent(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    results: UiState<List<FoodOut>>,
+    onBack: () -> Unit,
+    onPick: (FoodOut) -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,13 +110,13 @@ fun FoodSearchScreen(
         Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             OutlinedTextField(
                 value = query,
-                onValueChange = searchViewModel::onQueryChange,
+                onValueChange = onQueryChange,
                 label = { Text("Search foods") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(12.dp))
-            SearchResults(results = results, onPick = { selected = it })
+            SearchResults(results = results, onPick = onPick)
         }
     }
 }
