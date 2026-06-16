@@ -12,8 +12,15 @@ import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.plate.data.remote.DailyLog
+import com.plate.data.remote.FoodOut
+import com.plate.data.remote.LogEntryOut
+import com.plate.data.remote.MealGroup
+import com.plate.data.remote.TotalsOut
 import com.plate.ui.auth.LoginContent
 import com.plate.ui.auth.RegisterContent
+import com.plate.ui.diary.DiaryContent
+import com.plate.ui.food.FoodSearchContent
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import org.junit.Rule
@@ -57,6 +64,10 @@ class ScreenshotTest {
     @Test fun login_dark() = capture("login_dark", dark = true) { LoginScene() }
     @Test fun register_light() = capture("register_light", dark = false) { RegisterScene() }
     @Test fun register_dark() = capture("register_dark", dark = true) { RegisterScene() }
+    @Test fun diary_light() = capture("diary_light", dark = false) { DiaryScene() }
+    @Test fun diary_dark() = capture("diary_dark", dark = true) { DiaryScene() }
+    @Test fun search_light() = capture("search_light", dark = false) { SearchScene() }
+    @Test fun search_dark() = capture("search_dark", dark = true) { SearchScene() }
 }
 
 @Composable
@@ -85,5 +96,72 @@ private fun RegisterScene() {
         state = UiState.Idle,
         onSubmit = {},
         onNavigateToLogin = {},
+    )
+}
+
+private fun entry(id: String, name: String, qty: Double, unit: String, kcal: Double, p: Double, c: Double, f: Double) =
+    LogEntryOut(id, id, name, "2026-06-16", "", qty, unit, kcal, p, c, f)
+
+private fun totals(entries: List<LogEntryOut>) = TotalsOut(
+    kcal = entries.sumOf { it.kcal },
+    proteinG = entries.sumOf { it.proteinG },
+    carbsG = entries.sumOf { it.carbsG },
+    fatG = entries.sumOf { it.fatG },
+)
+
+@Composable
+private fun DiaryScene() {
+    val breakfast = listOf(
+        entry("1", "Rolled Oats", 80.0, "g", 311.0, 11.0, 54.0, 6.0),
+        entry("2", "Banana", 118.0, "g", 105.0, 1.3, 27.0, 0.4),
+    )
+    val lunch = listOf(
+        entry("3", "Grilled Chicken Breast", 150.0, "g", 248.0, 46.5, 0.0, 5.4),
+        entry("4", "Brown Rice", 1.0, "serving", 216.0, 5.0, 45.0, 1.8),
+    )
+    val meals = listOf(
+        MealGroup("breakfast", breakfast, totals(breakfast)),
+        MealGroup("lunch", lunch, totals(lunch)),
+        MealGroup("dinner", emptyList(), totals(emptyList())),
+        MealGroup("snack", emptyList(), totals(emptyList())),
+    )
+    val all = breakfast + lunch
+    DiaryContent(
+        day = DailyLog(
+            date = "2026-06-16",
+            meals = meals,
+            totals = totals(all),
+            targets = TotalsOut(2000.0, 150.0, 200.0, 67.0),
+        ),
+        onDeleteEntry = {},
+    )
+}
+
+private fun searchFood(id: String, name: String, brand: String?, kcal: Double) = FoodOut(
+    id = id,
+    source = "off",
+    name = name,
+    brand = brand,
+    kcalPer100g = kcal,
+    proteinGPer100g = 0.0,
+    carbsGPer100g = 0.0,
+    fatGPer100g = 0.0,
+)
+
+@Composable
+private fun SearchScene() {
+    FoodSearchContent(
+        query = "chicken",
+        onQueryChange = {},
+        results = UiState.Success(
+            listOf(
+                searchFood("1", "Chicken Breast, raw", null, 120.0),
+                searchFood("2", "Grilled Chicken Strips", "Tyson", 165.0),
+                searchFood("3", "Chicken Thigh, roasted", null, 209.0),
+                searchFood("4", "Chicken Caesar Salad", "Deli", 142.0),
+            ),
+        ),
+        onBack = {},
+        onPick = {},
     )
 }
