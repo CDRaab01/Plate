@@ -25,11 +25,30 @@ server/
     main.py          # app factory, security headers, /health, /version
     models/          # User, Food, FoodLogEntry, UserGoal, DailyTarget
     schemas/         # pydantic request/response models
-    services/        # auth_service (register/login/forgot/reset)
-    routers/         # auth, users
+    services/        # auth_service, food_service (search/cache), log_service (CRUD/totals)
+    foods/           # FoodSource abstraction + USDA/OFF sources + normalization/dedup
+    nutrition/       # pure macro math: portion scaling, daily totals (targets engine in Phase 3)
+    routers/         # auth, users, foods, log
   alembic/           # migrations (0001 = initial tables)
-  tests/             # auth + repository-layer tests (Postgres)
+  tests/             # auth, repository, nutrition, foods, log tests (Postgres)
 ```
+
+## Food search & logging (Phase 2)
+
+- `GET /foods/search?q=` — **local-cache-first** search: the `foods` table is consulted first and
+  only a cache miss reaches USDA → OFF, whose results are normalized, deduplicated (by barcode and
+  normalized name), cached, and served locally thereafter (CLAUDE.md §5).
+- `POST /foods` — create a user-defined custom food (`source='user'`).
+- `GET /foods/{id}` — fetch one food.
+- `POST /log` / `PUT /log/{id}` / `DELETE /log/{id}` — manage `food_log_entries`, each carrying a
+  **denormalized macro snapshot** taken at log time so edits to the source food never rewrite
+  history.
+- `GET /log?date=` — a day's entries split into Breakfast/Lunch/Dinner/Snacks with per-meal and
+  day totals plus the (static, until Phase 3) daily targets.
+
+External provider keys are **server-side only** (`USDA_API_KEY`) and never shipped in the APK; OFF
+sends a descriptive `User-Agent` and requests only the nutriments we store. No live USDA/OFF calls
+are made in tests — `FOOD_SEARCH_LIVE` is off for the suite and providers are mocked.
 
 ## Running locally
 

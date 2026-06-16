@@ -5,6 +5,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.config import settings
 from app.database import AsyncSessionLocal, Base, engine
 from app.limiter import limiter
 from app.main import app
@@ -13,6 +14,10 @@ from app.models.food import Food
 # Disable rate limiting for the test suite so rapid registrations don't
 # trigger the 5/minute cap on /auth/register.
 limiter.enabled = False
+
+# Guarantee CI never reaches the network: live USDA/OFF lookups are off for the whole suite
+# (CLAUDE.md §10). External behavior is exercised with mocked transports / fake sources instead.
+settings.food_search_live = False
 
 
 @pytest.fixture(scope="session")

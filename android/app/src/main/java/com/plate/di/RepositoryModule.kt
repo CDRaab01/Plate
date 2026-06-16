@@ -2,6 +2,10 @@ package com.plate.di
 
 import com.plate.data.repository.AuthRepository
 import com.plate.data.repository.AuthRepositoryImpl
+import com.plate.data.repository.FoodRepository
+import com.plate.data.repository.FoodRepositoryImpl
+import com.plate.data.repository.LogRepository
+import com.plate.data.repository.LogRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,4 +19,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFoodRepository(impl: FoodRepositoryImpl): FoodRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLogRepository(impl: LogRepositoryImpl): LogRepository
 }

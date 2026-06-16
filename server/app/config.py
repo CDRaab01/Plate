@@ -27,6 +27,22 @@ class Settings(BaseSettings):
     git_sha: str = "unknown"
     built_at: str = "unknown"
 
+    # External food data sources (Phase 2). Keys/contact are server-side only — never shipped in
+    # the APK (CLAUDE.md §5). Live calls happen only on a local-cache miss; results are cached into
+    # the `foods` table and served locally thereafter.
+    usda_api_key: str | None = None
+    usda_base_url: str = "https://api.nal.usda.gov/fdc/v1"
+    off_base_url: str = "https://world.openfoodfacts.org"
+    # OFF requires a descriptive User-Agent identifying the app + a contact (CLAUDE.md §5).
+    off_user_agent: str = "Plate/0.1.0 (cdraab01@gmail.com)"
+    # Per-source cap on how many results a single live search pulls back.
+    external_search_limit: int = 10
+    # Timeout (seconds) for outbound calls to USDA/OFF.
+    external_timeout_seconds: float = 8.0
+    # Master switch for live external lookups on a cache miss. Disabled in the test suite so CI
+    # never reaches the network (CLAUDE.md §10); local-cache search still works with it off.
+    food_search_live: bool = True
+
     # Optional SMTP — if unset, reset codes are printed to stdout instead
     smtp_host: str | None = None
     smtp_port: int = 587
