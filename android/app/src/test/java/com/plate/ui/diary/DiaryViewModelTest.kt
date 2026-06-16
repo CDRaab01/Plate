@@ -1,0 +1,117 @@
+package com.plate.ui.diary
+
+import com.plate.data.remote.DailyLog
+import com.plate.data.remote.LogEntryOut
+import com.plate.data.remote.MealGroup
+import com.plate.data.remote.TotalsOut
+import com.plate.data.repository.LogRepository
+import com.plate.util.MainDispatcherRule
+import com.plate.util.UiState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+private fun emptyTotals() = TotalsOut(0.0, 0.0, 0.0, 0.0)
+
+private fun dailyLog(date: String, entries: List<LogEntryOut> = emptyList()) = DailyLog(
+    date = date,
+    meals = listOf(
+        MealGroup("breakfast", entries, emptyTotals()),
+        MealGroup("lunch", emptyList(), emptyTotals()),
+        MealGroup("dinner", emptyList(), emptyTotals()),
+        MealGroup("snack", emptyList(), emptyTotals()),
+    ),
+    totals = emptyTotals(),
+    targets = TotalsOut(2000.0, 150.0, 200.0, 67.0),
+)
+
+private class FakeLogRepository(
+    var day: DailyLog = dailyLog("2026-06-16"),
+    private val failWith: Exception? = null,
+) : LogRepository {
+    var added = 0
+    var deleted = 0
+
+    override suspend fun getDay(date: String): DailyLog {
+        failWith?.let { throw it }
+        return day
+    }
+
+    override suspend fun addEntry(
+        foodId: String,
+        date: String,
+        meal: String,
+        quantity: Double,
+        unit: String,
+    ): LogEntryOut {
+        added++
+        return LogEntryOut("e", foodId, "Food", date, meal, quantity, unit, 100.0, 5.0, 10.0, 2.0)
+    }
+
+    override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut =
+        LogEntryOut(id, "f", "Food", "2026-06-16", meal ?: "breakfast", quantity ?: 1.0, unit ?: "g", 100.0, 5.0, 10.0, 2.0)
+
+    override suspend fun deleteEntry(id: String) {
+        deleted++
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DiaryViewModelTest {
+
+    @get:Rule val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun `init loads the day into Success`() = runTest {
+        val repo = FakeLogRepository(day = dailyLog("2026-06-16"))
+        val vm = DiaryViewModel(repo)
+
+        advanceUntilIdle()
+
+        val state = vm.day.value
+        assertTrue(state is UiState.Success)
+        assertEquals("2026-06-16", (state as UiState.Success).data.date)
+    }
+
+    @Test
+    fun `addEntry posts then reloads the day`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo)
+        advanceUntilIdle()
+
+        vm.addEntry("food-1", "lunch", 150.0, "g")
+        advanceUntilIdle()
+
+        assertEquals(1, repo.added)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `deleteEntry removes then reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo)
+        advanceUntilIdle()
+
+        vm.deleteEntry("e1")
+        advanceUntilIdle()
+
+        assertEquals(1, repo.deleted)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `load failure emits Error`() = runTest {
+        val repo = FakeLogRepository(failWith = RuntimeException("offline"))
+        val vm = DiaryViewModel(repo)
+
+        advanceUntilIdle()
+
+        val state = vm.day.value
+        assertTrue(state is UiState.Error)
+        assertEquals("offline", (state as UiState.Error).message)
+    }
+}
