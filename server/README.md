@@ -50,6 +50,18 @@ External provider keys are **server-side only** (`USDA_API_KEY`) and never shipp
 sends a descriptive `User-Agent` and requests only the nutriments we store. No live USDA/OFF calls
 are made in tests — `FOOD_SEARCH_LIVE` is off for the suite and providers are mocked.
 
+## Barcode scanning (Phase 4)
+
+- `GET /foods/barcode/{code}` — resolve a scanned barcode **local-cache-first**: the `foods` table
+  is consulted by barcode and only a miss reaches **Open Food Facts** (the barcode authority —
+  CLAUDE.md §5/§6), whose product is normalized, cached, and served locally thereafter. Returns
+  `404` when no product is found. USDA is not consulted on the barcode path.
+
+The Android client scans on-device with ML Kit (CameraX preview) and calls this endpoint; the
+OFF/ODbL and USDA attributions required by CLAUDE.md §5 are shown on the app's About screen. As
+elsewhere, no live OFF calls happen in tests — the scan path is covered with a fake barcode source
+and `FOOD_SEARCH_LIVE` off.
+
 ## Running locally
 
 ```bash

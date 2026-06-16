@@ -10,4 +10,6 @@ class FoodRepositoryImpl @Inject constructor(
     private val api: ApiService,
 ) : FoodRepository {
     override suspend fun search(query: String): List<FoodOut> = api.searchFoods(query)
+
+    override suspend fun lookupBarcode(code: String): FoodOut = api.lookupBarcode(code)
 }

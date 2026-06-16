@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +58,7 @@ private val MEAL_LABELS = mapOf(
 fun FoodSearchScreen(
     onLogged: () -> Unit,
     onBack: () -> Unit,
+    onScan: () -> Unit,
     searchViewModel: FoodSearchViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -81,6 +83,7 @@ fun FoodSearchScreen(
         onQueryChange = searchViewModel::onQueryChange,
         results = results,
         onBack = onBack,
+        onScan = onScan,
         onPick = { selected = it },
     )
 }
@@ -93,6 +96,7 @@ fun FoodSearchContent(
     onQueryChange: (String) -> Unit,
     results: UiState<List<FoodOut>>,
     onBack: () -> Unit,
+    onScan: () -> Unit,
     onPick: (FoodOut) -> Unit,
 ) {
     Scaffold(
@@ -102,6 +106,14 @@ fun FoodSearchContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onScan) {
+                        Icon(
+                            Icons.Outlined.QrCodeScanner,
+                            contentDescription = "Scan barcode",
+                        )
                     }
                 },
             )

@@ -34,6 +34,10 @@ interface ApiService {
     @GET("foods/search")
     suspend fun searchFoods(@Query("q") query: String): List<FoodOut>
 
+    /** Phase 4: resolve a scanned barcode (local cache → Open Food Facts). 404 if unknown. */
+    @GET("foods/barcode/{code}")
+    suspend fun lookupBarcode(@Path("code") code: String): FoodOut
+
     @POST("log")
     suspend fun createLogEntry(@Body body: LogEntryCreate): LogEntryOut
 
