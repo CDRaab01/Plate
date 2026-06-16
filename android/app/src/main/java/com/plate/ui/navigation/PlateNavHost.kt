@@ -14,6 +14,7 @@ import com.plate.ui.auth.RegisterScreen
 import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
+import com.plate.ui.goals.GoalScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -25,6 +26,7 @@ object Routes {
     const val DIARY_GRAPH = "diary_graph"
     const val DIARY = "diary"
     const val SEARCH = "search"
+    const val GOALS = "goals"
 }
 
 @Composable
@@ -61,6 +63,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
                 DiaryScreen(
                     onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
+                    onNavigateToGoals = { navController.navigate(Routes.GOALS) },
                     viewModel = diaryViewModel,
                 )
             }
@@ -71,6 +74,13 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     onLogged = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                     diaryViewModel = diaryViewModel,
+                )
+            }
+            composable(Routes.GOALS) {
+                GoalScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    },
                 )
             }
         }

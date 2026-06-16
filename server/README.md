@@ -44,7 +44,7 @@ server/
   **denormalized macro snapshot** taken at log time so edits to the source food never rewrite
   history.
 - `GET /log?date=` — a day's entries split into Breakfast/Lunch/Dinner/Snacks with per-meal and
-  day totals plus the (static, until Phase 3) daily targets.
+  day totals plus computed daily targets (or the 2000 kcal placeholder for users with no goal).
 
 External provider keys are **server-side only** (`USDA_API_KEY`) and never shipped in the APK; OFF
 sends a descriptive `User-Agent` and requests only the nutriments we store. No live USDA/OFF calls
@@ -71,6 +71,24 @@ pytest tests/ -v
 
 CI runs all three against a `postgres:16` service. No live external APIs are called in tests.
 
+## Targets engine (Phase 3)
+
+All macro-target math lives in `app/nutrition/` and is pure + exhaustively unit-tested; clients only
+ever display these numbers, never recompute them.
+
+- `PUT /goals` — set the user's goal (body inputs + goal type + target weight-change rate). Each
+  call **appends a new row**; the most recent is the active goal so history is preserved.
+- `GET /goals` — read the active goal (404 if none set yet).
+- `GET /goals/targets?date=` — the computed kcal/macro targets for a date (404 until a goal is
+  set). Computed via Mifflin-St Jeor BMR → activity-factor TDEE → goal-rate adjustment (clamped to
+  a 1200 kcal/day floor) → protein-first / fat-floor / carbs-remainder split. All constants in
+  `app/nutrition/constants.py`, no inline magic numbers.
+- `GET /log?date=` targets are **live from the goal** when one is set; the static 2000 kcal
+  placeholder is used only for goal-less users to preserve backward compatibility.
+
+`daily_targets` table exists but is written only from Phase 7 onward, when the training-day bump
+makes per-date snapshots worth persisting.
+
 ## Data model (Phase 1)
 
 - `users` — account + reset-token fields (mirrors Spotter).
@@ -78,7 +96,7 @@ CI runs all three against a `postgres:16` service. No live external APIs are cal
   per serving**; secondary nutrients (fiber, sugar, sat fat, cholesterol, sodium) included.
 - `food_log_entries` — meal-bucketed log rows carrying a **denormalized macro snapshot** so edits
   to the source food never rewrite history (`food_id` is `SET NULL` on food delete).
-- `user_goals` — goal type + body inputs for the Phase 3 targets engine.
-- `daily_targets` — computed kcal/macros, unique per `(user, date)`.
+- `user_goals` — goal type + body inputs for the targets engine.
+- `daily_targets` — computed kcal/macros, unique per `(user, date)`; populated in Phase 7.
 
 No secrets in the repo: `DATABASE_URL`, `SECRET_KEY`, etc. come from the environment.

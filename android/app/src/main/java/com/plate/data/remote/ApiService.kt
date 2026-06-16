@@ -45,4 +45,15 @@ interface ApiService {
 
     @DELETE("log/{id}")
     suspend fun deleteLogEntry(@Path("id") id: String)
+
+    // ── Phase 3: goals + computed targets ────────────────────────────────────
+
+    @PUT("goals")
+    suspend fun setGoal(@Body body: GoalUpsertRequest): GoalOut
+
+    @GET("goals")
+    suspend fun getGoal(): GoalOut
+
+    @GET("goals/targets")
+    suspend fun getTargets(@Query("date") date: String? = null): TargetsOut
 }
