@@ -10,6 +10,10 @@ import com.plate.data.repository.GoalRepository
 import com.plate.data.repository.GoalRepositoryImpl
 import com.plate.data.repository.LogRepository
 import com.plate.data.repository.LogRepositoryImpl
+import com.plate.data.repository.RecipeRepository
+import com.plate.data.repository.RecipeRepositoryImpl
+import com.plate.data.repository.SummaryRepository
+import com.plate.data.repository.SummaryRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -39,4 +43,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCoachRepository(impl: CoachRepositoryImpl): CoachRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRecipeRepository(impl: RecipeRepositoryImpl): RecipeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSummaryRepository(impl: SummaryRepositoryImpl): SummaryRepository
 }

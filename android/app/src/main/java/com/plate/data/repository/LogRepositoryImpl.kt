@@ -5,6 +5,8 @@ import com.plate.data.remote.DailyLog
 import com.plate.data.remote.LogEntryCreate
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.LogEntryUpdate
+import com.plate.data.remote.QuickAddRequest
+import com.plate.data.remote.RecipeLogRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,4 +33,27 @@ class LogRepositoryImpl @Inject constructor(
     ): LogEntryOut = api.updateLogEntry(id, LogEntryUpdate(meal = meal, quantity = quantity, unit = unit))
 
     override suspend fun deleteEntry(id: String) = api.deleteLogEntry(id)
+
+    override suspend fun quickAdd(
+        date: String,
+        meal: String,
+        name: String?,
+        kcal: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+    ): LogEntryOut = api.quickAdd(
+        QuickAddRequest(
+            date = date,
+            meal = meal,
+            name = name,
+            kcal = kcal,
+            proteinG = proteinG,
+            carbsG = carbsG,
+            fatG = fatG,
+        ),
+    )
+
+    override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
+        api.logRecipe(recipeId, RecipeLogRequest(date = date, meal = meal))
 }

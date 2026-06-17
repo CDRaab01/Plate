@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -61,6 +62,45 @@ interface ApiService {
 
     @DELETE("log/{id}")
     suspend fun deleteLogEntry(@Path("id") id: String)
+
+    // ── Phase 8: quick-add, recipes, weekly summary ──────────────────────────
+
+    /** Quick add: log raw kcal/macros directly, with no source food. */
+    @POST("log/quick-add")
+    suspend fun quickAdd(@Body body: QuickAddRequest): LogEntryOut
+
+    /** Per-day totals + period total/averages. Defaults server-side to the last 7 days. */
+    @GET("log/summary")
+    suspend fun getSummary(
+        @Query("start") start: String? = null,
+        @Query("end") end: String? = null,
+    ): RangeSummary
+
+    @GET("recipes")
+    suspend fun getRecipes(): List<RecipeOut>
+
+    @GET("recipes/{id}")
+    suspend fun getRecipe(@Path("id") id: String): RecipeOut
+
+    @POST("recipes")
+    suspend fun createRecipe(@Body body: RecipeCreate): RecipeOut
+
+    @PATCH("recipes/{id}")
+    suspend fun updateRecipe(@Path("id") id: String, @Body body: RecipeUpdate): RecipeOut
+
+    @PUT("recipes/{id}/items")
+    suspend fun replaceRecipeItems(
+        @Path("id") id: String,
+        @Body body: RecipeItemsReplace,
+    ): RecipeOut
+
+    @DELETE("recipes/{id}")
+    suspend fun deleteRecipe(@Path("id") id: String)
+
+    /** Expand a saved recipe into a day's meal (one log entry per item). */
+    @POST("recipes/{id}/log")
+    suspend fun logRecipe(@Path("id") id: String, @Body body: RecipeLogRequest): List<LogEntryOut>
+
 
     // ── Phase 3: goals + computed targets ────────────────────────────────────
 

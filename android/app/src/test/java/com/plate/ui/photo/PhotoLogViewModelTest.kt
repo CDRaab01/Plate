@@ -98,6 +98,19 @@ private class FakeLogRepository : LogRepository {
         throw IllegalStateException()
 
     override suspend fun deleteEntry(id: String) = throw IllegalStateException()
+
+    override suspend fun quickAdd(
+        date: String,
+        meal: String,
+        name: String?,
+        kcal: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+    ): LogEntryOut = throw IllegalStateException()
+
+    override suspend fun logRecipe(recipeId: String, date: String, meal: String) =
+        throw IllegalStateException()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

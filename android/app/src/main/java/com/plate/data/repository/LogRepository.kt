@@ -23,4 +23,18 @@ interface LogRepository {
     ): LogEntryOut
 
     suspend fun deleteEntry(id: String)
+
+    /** Quick add: log raw macros directly (no source food). */
+    suspend fun quickAdd(
+        date: String,
+        meal: String,
+        name: String?,
+        kcal: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+    ): LogEntryOut
+
+    /** Expand a saved recipe into the given day's meal. */
+    suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut>
 }

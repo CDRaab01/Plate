@@ -64,4 +64,23 @@ class DiaryViewModel @Inject constructor(
             }
         }
     }
+
+    /** Quick add (Phase 8): log raw macros directly, with no source food, then reload the day. */
+    fun quickAdd(
+        meal: String,
+        name: String?,
+        kcal: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+    ) {
+        viewModelScope.launch {
+            try {
+                logRepository.quickAdd(_date.value, meal, name, kcal, proteinG, carbsG, fatG)
+                load()
+            } catch (e: Exception) {
+                _day.value = UiState.Error(e.message ?: "Couldn't quick-add that")
+            }
+        }
+    }
 }

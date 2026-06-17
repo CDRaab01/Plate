@@ -13,13 +13,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -33,6 +32,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +44,10 @@ import com.plate.data.remote.DailyLog
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
+import com.plate.ui.components.DataText
+import com.plate.ui.components.PanelCard
+import com.plate.ui.components.SectionHeader
+import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import kotlin.math.roundToInt
 
@@ -59,21 +65,18 @@ fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToGoals: () -> Unit,
     onNavigateToAbout: () -> Unit,
-    onNavigateToCoach: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
+    var showQuickAdd by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Today") },
                 actions = {
-                    IconButton(onClick = onNavigateToCoach) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.Chat,
-                            contentDescription = "Coach",
-                        )
+                    IconButton(onClick = { showQuickAdd = true }) {
+                        Icon(Icons.Outlined.Bolt, contentDescription = "Quick add")
                     }
                     IconButton(onClick = onNavigateToAbout) {
                         Icon(Icons.Outlined.Info, contentDescription = "About")
@@ -104,6 +107,15 @@ fun DiaryScreen(
                 else -> CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
+    }
+
+    if (showQuickAdd) {
+        QuickAddDialog(
+            onDismiss = { showQuickAdd = false },
+            onSubmit = { meal, name, kcal, protein, carbs, fat ->
+                viewModel.quickAdd(meal, name, kcal, protein, carbs, fat)
+            },
+        )
     }
 }
 
@@ -149,27 +161,38 @@ fun DiaryContent(
 
 @Composable
 private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut, trainedToday: Boolean) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp)) {
-            Text(
-                "${totals.kcal.roundToInt()} / ${targets.kcal.roundToInt()} kcal",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+    val pulse = PlateTheme.pulse
+    PanelCard(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            SectionHeader("Calories", channel = pulse.calories)
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                DataText(
+                    "${totals.kcal.roundToInt()}",
+                    style = PlateTheme.dataType.dataLarge,
+                    color = pulse.calories,
+                )
+                Text(
+                    " / ${targets.kcal.roundToInt()} kcal",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
             if (trainedToday) {
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Outlined.FitnessCenter,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = pulse.protein,
                         modifier = Modifier.height(16.dp),
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "Trained today · targets bumped",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = pulse.protein,
                     )
                 }
             }
@@ -178,6 +201,7 @@ private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut, trainedToday
             @Suppress("DEPRECATION")
             LinearProgressIndicator(
                 progress = fraction.coerceIn(0f, 1f),
+                color = pulse.calories,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(16.dp))
@@ -185,23 +209,31 @@ private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut, trainedToday
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                MacroStat("Protein", totals.proteinG, targets.proteinG)
-                MacroStat("Carbs", totals.carbsG, targets.carbsG)
-                MacroStat("Fat", totals.fatG, targets.fatG)
+                MacroStat("Protein", totals.proteinG, targets.proteinG, pulse.protein)
+                MacroStat("Carbs", totals.carbsG, targets.carbsG, pulse.carbs)
+                MacroStat("Fat", totals.fatG, targets.fatG, pulse.fat)
             }
         }
     }
 }
 
 @Composable
-private fun MacroStat(label: String, value: Double, target: Double) {
+private fun MacroStat(
+    label: String,
+    value: Double,
+    target: Double,
+    channel: androidx.compose.ui.graphics.Color,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(
-            "${value.roundToInt()} / ${target.roundToInt()} g",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
+        Text(label, style = MaterialTheme.typography.labelMedium, color = channel)
+        Row(verticalAlignment = Alignment.Bottom) {
+            DataText("${value.roundToInt()}", style = PlateTheme.dataType.numeralLarge)
+            Text(
+                " / ${target.roundToInt()} g",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
