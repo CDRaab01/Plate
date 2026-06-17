@@ -4,12 +4,17 @@ systemd units that bring the Plate API and a Cloudflare Tunnel up together at
 boot, so your public `https://plate.<yourdomain>` hostname is always live.
 
 ```
-[phone / 5G] --HTTPS--> [Cloudflare edge] --tunnel--> [cloudflared] --HTTP--> [Plate API @127.0.0.1:8000] --> [Postgres]
+[phone / 5G] --HTTPS--> [Cloudflare edge] --tunnel--> [cloudflared] --HTTP--> [Plate API @127.0.0.1:8001] --> [Postgres]
 ```
 
 The API binds to localhost only; `cloudflared` is the sole public entrypoint.
 Plate mirrors [Spotter](https://github.com/CDRaab01/Spotter)'s deployment model
 exactly — the two apps run side by side the same way.
+
+> **Ports (co-located with Spotter).** Plate publishes host ports **8001** (API) and
+> **5433** (Postgres) so it doesn't collide with Spotter's 8000/5432. Containers still
+> listen on 8000/5432 internally, so the Cloudflare tunnel (`server:8000`) and
+> `DATABASE_URL` (`db:5432`) are unchanged — only the host-side ports differ.
 
 ## Files
 | File | Purpose |
@@ -89,12 +94,16 @@ automatically on container boot (`server/docker-entrypoint.sh`).
 
 ### One-time setup
 
-1. **Install the runner on the host.** In GitHub: **Settings → Actions → Runners →
-   New self-hosted runner**, follow the download/configure steps, and give it the
-   label **`plate`** (the `Deploy` workflow targets `runs-on: [self-hosted, plate]`).
+1. **Install the runner on the host.** In the **Plate** repo: **Settings → Actions →
+   Runners → New self-hosted runner**, follow the download/configure steps, and give
+   it the label **`plate`** (the `Deploy` workflow targets `runs-on: [self-hosted, plate]`).
    Install it as a service so it survives reboots (`svc install` / `svc start` on
-   Windows; `./svc.sh install` on Linux). It can share a host with Spotter's runner —
-   just give each runner its own label.
+   Windows; `./svc.sh install` on Linux).
+
+   A repo-scoped runner serves one repository, so this is a **separate runner from
+   Spotter's** — register it in its own folder (e.g. `C:\actions-runner-plate`). Two
+   runner services co-exist fine on one host; just keep distinct labels (`plate` vs
+   `spotter`) and folders. (An org-level runner with the `plate` label would also work.)
 
 2. **Point the workflow at your deployment clone.** Set a repo **Actions variable**
    (Settings → Secrets and variables → Actions → Variables) named **`PLATE_DIR`**
@@ -175,7 +184,7 @@ day), which degrades gracefully.
 The redeploy scripts stamp the running build with the deployed commit. To verify:
 - **In the app:** **Settings → About** shows the app version and the connected
   **Server** version + short commit (e.g. `0.1.0 · a1b2c3d`).
-- **Direct:** `curl http://127.0.0.1:8000/version` →
+- **Direct:** `curl http://127.0.0.1:8001/version` →
   `{"name","version","commit","built_at"}`. `commit`/`built_at` are `unknown` for a
   plain manual `docker compose up` (only the redeploy scripts stamp them).
 

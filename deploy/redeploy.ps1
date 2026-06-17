@@ -22,7 +22,8 @@
   Commit SHA or branch to deploy. Defaults to origin/main. Pass a prior SHA to roll back.
 
 .PARAMETER HealthUrl
-  Health endpoint to poll after restart. Defaults to http://127.0.0.1:8000/health.
+  Health endpoint to poll after restart. Defaults to http://127.0.0.1:8001/health
+  (Plate is published on 8001 so it can run beside Spotter on the same host).
 
 .PARAMETER TimeoutSeconds
   How long to wait for the health check before failing. Defaults to 120.
@@ -36,7 +37,7 @@
 [CmdletBinding()]
 param(
   [string]$Ref = "origin/main",
-  [string]$HealthUrl = "http://127.0.0.1:8000/health",
+  [string]$HealthUrl = "http://127.0.0.1:8001/health",
   [int]$TimeoutSeconds = 120
 )
 

@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-plate}
       POSTGRES_DB: ${POSTGRES_DB:-plate}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -34,8 +34,12 @@ services:
       db:
         condition: service_healthy
     # Published on localhost only — cloudflared reaches it over the compose network.
+    # Host port is 8001 (not 8000) so Plate can run side-by-side with Spotter, which
+    # owns 127.0.0.1:8000 / :5432. The container still listens on 8000 internally, so
+    # the cloudflared tunnel (server:8000) and DATABASE_URL (db:5432) are unaffected —
+    # only host-side access is remapped (8001 -> API, 5433 -> Postgres).
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8000"
 
   # Public entrypoint. Only started with: docker compose --profile tunnel up -d
   # Uses a remotely-managed tunnel token (Cloudflare dashboard -> Tunnels -> your tunnel).
