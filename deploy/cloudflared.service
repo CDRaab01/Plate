@@ -1,0 +1,16 @@
+[Unit]
+Description=Cloudflare Tunnel for Plate
+# Start after the API so the tunnel has something to reach (it retries regardless).
+After=network-online.target plate.service
+Wants=network-online.target plate.service
+
+[Service]
+Type=simple
+User=__RUN_USER__
+# Runs the named tunnel defined in ~/.cloudflared/config.yml (see cloudflared.config.example.yml).
+ExecStart=__CLOUDFLARED_BIN__ --no-autoupdate --config __CLOUDFLARED_CONFIG__ tunnel run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

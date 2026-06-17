@@ -112,6 +112,30 @@ pytest tests/ -v
 
 CI runs all three against a `postgres:16` service. No live external APIs are called in tests.
 
+## Deployment (Docker)
+
+Self-hosted via **Docker Compose**, mirroring Spotter. The root `docker-compose.yml`
+runs `db` (Postgres), `server` (this FastAPI app), and an optional `cloudflared`
+tunnel (behind the `tunnel` profile). Migrations run on container boot
+(`docker-entrypoint.sh` → `alembic upgrade head`).
+
+```bash
+cd server && cp .env.example .env       # set SECRET_KEY at minimum
+cd .. && docker compose up -d --build   # http://127.0.0.1:8000  (localhost-only)
+```
+
+- `DATABASE_URL` is injected by Compose to reach the `db` service over the compose
+  network (overriding `.env`); `POSTGRES_*` default to `plate`/`plate` and are
+  shared by `db` and the server so they can't drift.
+- Set `LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1` in `server/.env` so
+  the container can reach LM Studio on the host (else `/ai/chat`, `/foods/photo`
+  return `503`). For Spotter-awareness, point `SPOTTER_BASE_URL` at Spotter's tunnel
+  hostname or `http://host.docker.internal:8000` and share `CROSS_APP_SECRET`.
+- `GET /version` reports the running commit (`git_sha`/`built_at`), stamped at deploy
+  time by `deploy/redeploy.*` (`unknown` for a plain `docker compose up`).
+- Boot-time systemd units, a Cloudflare Tunnel, and the self-hosted-runner remote
+  redeploy/rollback pipeline are documented in [`../deploy/README.md`](../deploy/README.md).
+
 ## Targets engine (Phase 3)
 
 All macro-target math lives in `app/nutrition/` and is pure + exhaustively unit-tested; clients only
