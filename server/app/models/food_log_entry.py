@@ -24,6 +24,9 @@ class FoodLogEntry(Base):
     food_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("foods.id", ondelete="SET NULL"), nullable=True
     )
+    # Label for entries with no source food (quick-add direct-macro entries); when ``food_id`` is
+    # set the displayed name comes from the source food instead.
+    name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     date: Mapped[datetime.date] = mapped_column(Date, index=True)
     meal: Mapped[str] = mapped_column(String(20))  # breakfast | lunch | dinner | snack
     quantity: Mapped[float] = mapped_column(Float)

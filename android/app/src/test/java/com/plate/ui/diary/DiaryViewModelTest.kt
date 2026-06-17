@@ -63,6 +63,23 @@ private class FakeLogRepository(
     override suspend fun deleteEntry(id: String) {
         deleted++
     }
+
+    var quickAdded = 0
+    override suspend fun quickAdd(
+        date: String,
+        meal: String,
+        name: String?,
+        kcal: Double,
+        proteinG: Double,
+        carbsG: Double,
+        fatG: Double,
+    ): LogEntryOut {
+        quickAdded++
+        return LogEntryOut("q", null, name ?: "Quick add", date, meal, 1.0, "serving", kcal, proteinG, carbsG, fatG)
+    }
+
+    override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
+        emptyList()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -105,6 +122,19 @@ class DiaryViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repo.deleted)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `quickAdd posts raw macros then reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo)
+        advanceUntilIdle()
+
+        vm.quickAdd("snack", "Shake", 200.0, 30.0, 10.0, 3.0)
+        advanceUntilIdle()
+
+        assertEquals(1, repo.quickAdded)
         assertTrue(vm.day.value is UiState.Success)
     }
 
