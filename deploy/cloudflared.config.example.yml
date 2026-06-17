@@ -13,7 +13,10 @@ tunnel: plate
 credentials-file: /home/YOUR_USER/.cloudflared/REPLACE_WITH_TUNNEL_UUID.json
 
 ingress:
+  # Port 8001 matches the systemd plate.service / run.sh bind (Plate runs beside
+  # Spotter, which uses 8000). The Docker tunnel path instead reaches server:8000
+  # over the compose network and is unaffected by this host port.
   - hostname: plate.example.com
-    service: http://localhost:8000
+    service: http://localhost:8001
   # Everything else gets a 404 (required catch-all).
   - service: http_status:404

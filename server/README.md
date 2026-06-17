@@ -121,8 +121,11 @@ tunnel (behind the `tunnel` profile). Migrations run on container boot
 
 ```bash
 cd server && cp .env.example .env       # set SECRET_KEY at minimum
-cd .. && docker compose up -d --build   # http://127.0.0.1:8000  (localhost-only)
+cd .. && docker compose up -d --build   # http://127.0.0.1:8001  (localhost-only)
 ```
+
+> Host ports are **8001** (API) / **5433** (Postgres) so Plate co-exists with Spotter
+> (which uses 8000/5432). Containers still listen on 8000/5432 internally.
 
 - `DATABASE_URL` is injected by Compose to reach the `db` service over the compose
   network (overriding `.env`); `POSTGRES_*` default to `plate`/`plate` and are

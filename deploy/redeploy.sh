@@ -17,12 +17,13 @@
 #   ./deploy/redeploy.sh 1a2b3c4         # roll back to a prior commit
 #
 # Env overrides:
-#   HEALTH_URL        health endpoint (default http://127.0.0.1:8000/health)
+#   HEALTH_URL        health endpoint (default http://127.0.0.1:8001/health)
 #   TIMEOUT_SECONDS   health-check timeout (default 120)
 set -euo pipefail
 
 REF="${1:-origin/main}"
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8000/health}"
+# Port 8001 (not 8000): Plate is published on 8001 so it can run beside Spotter.
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8001/health}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-120}"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

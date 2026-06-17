@@ -23,9 +23,13 @@ Migrations run automatically on container boot (`server/docker-entrypoint.sh` �
 
 ```bash
 cd server && cp .env.example .env      # set SECRET_KEY (at minimum)
-cd .. && docker compose up -d --build  # db + server on http://127.0.0.1:8000
-curl http://127.0.0.1:8000/health      # {"status":"ok"}
+cd .. && docker compose up -d --build  # db + server on http://127.0.0.1:8001
+curl http://127.0.0.1:8001/health      # {"status":"ok"}
 ```
+
+> Plate publishes on host ports **8001** (API) and **5433** (Postgres) — not 8000/5432 —
+> so it runs side-by-side with Spotter on the same machine. The container still listens
+> on 8000 internally, so the Cloudflare tunnel is unaffected.
 
 - **LM Studio (AI coach + photo):** inside the container `localhost` is the
   container, so set `LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1` in
