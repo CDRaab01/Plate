@@ -1,0 +1,21 @@
+[Unit]
+Description=Plate FastAPI server
+# Wait for the network and Postgres before starting; run.sh applies migrations on boot.
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=__RUN_USER__
+WorkingDirectory=__PLATE_DIR__/server
+# Bind to localhost only — the Cloudflare Tunnel reaches it locally and is the public entrypoint.
+Environment=HOST=127.0.0.1
+Environment=PORT=8000
+ExecStart=__PLATE_DIR__/server/run.sh
+# Postgres may not accept connections the instant its unit reports started; retry until it does.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

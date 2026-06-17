@@ -1,0 +1,19 @@
+# Cloudflare Tunnel config for Plate.
+# Copy to ~/.cloudflared/config.yml and fill in your tunnel + hostname.
+#
+# Prereqs (one time):
+#   cloudflared tunnel login
+#   cloudflared tunnel create plate             # prints the tunnel UUID + writes the creds JSON
+#   cloudflared tunnel route dns plate plate.example.com
+#
+# `tunnel:` accepts the tunnel name or its UUID; `credentials-file` is the JSON
+# that `tunnel create` wrote (usually ~/.cloudflared/<UUID>.json).
+
+tunnel: plate
+credentials-file: /home/YOUR_USER/.cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  - hostname: plate.example.com
+    service: http://localhost:8000
+  # Everything else gets a 404 (required catch-all).
+  - service: http_status:404

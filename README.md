@@ -12,7 +12,30 @@ adjust on days you trained (Spotter-awareness).
 See [CLAUDE.md](./CLAUDE.md) for the full architecture and build phases, and
 [server/README.md](./server/README.md) for backend details (incl. the Spotter integration).
 
-## Quick start
+## Run the server on your computer (Docker)
+
+Self-hosted via **Docker Compose**, exactly like
+[Spotter](https://github.com/CDRaab01/Spotter) — the two apps run side by side the
+same way. The root `docker-compose.yml` brings up `db` (Postgres), `server`
+(FastAPI), and an optional `cloudflared` tunnel (behind the `tunnel` profile).
+Migrations run automatically on container boot (`server/docker-entrypoint.sh` →
+`alembic upgrade head`).
+
+```bash
+cd server && cp .env.example .env      # set SECRET_KEY (at minimum)
+cd .. && docker compose up -d --build  # db + server on http://127.0.0.1:8000
+curl http://127.0.0.1:8000/health      # {"status":"ok"}
+```
+
+- **LM Studio (AI coach + photo):** inside the container `localhost` is the
+  container, so set `LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1` in
+  `server/.env` (else `/ai/chat` and `/foods/photo` return `503`).
+- **Public hostname (optional):** put `COMPOSE_PROFILES=tunnel` and `TUNNEL_TOKEN=…`
+  in a **root `.env`** to expose Plate over a Cloudflare Tunnel.
+- **Remote redeploy + boot-time systemd units + rollback** — full operator guide in
+  [deploy/README.md](./deploy/README.md). `GET /version` reports the running commit.
+
+## Quick start (local dev, no Docker)
 
 ### 1. Postgres
 
