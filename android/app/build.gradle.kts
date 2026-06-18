@@ -79,6 +79,13 @@ tasks.withType<Test>().configureEach {
     ).forEach { key ->
         (project.findProperty(key) as String?)?.let { systemProperty(key, it) }
     }
+    // The Robolectric NATIVE-graphics screenshot tests download a large android-all
+    // runtime at test time, which can stall CI. Pass -PexcludeScreenshots to skip them
+    // (the gating "Android — Unit Tests" job does this); they still run in the dedicated
+    // screenshots job.
+    if (project.hasProperty("excludeScreenshots")) {
+        filter { excludeTestsMatching("com.plate.screenshot.*") }
+    }
 }
 
 dependencies {
