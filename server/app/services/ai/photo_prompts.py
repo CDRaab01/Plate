@@ -8,6 +8,7 @@ tells the user to retake or search manually) — it never raises on bad model te
 
 These numbers are always an estimate the user confirms before logging; nothing here commits anything.
 """
+
 import json
 import re
 
@@ -140,9 +141,16 @@ def _clean_item(raw) -> dict | None:
     confidence = _coerce_number(raw.get("confidence"), default=_DEFAULT_CONFIDENCE)
     confidence = min(max(confidence if confidence is not None else _DEFAULT_CONFIDENCE, 0.0), 1.0)
 
+    est_grams = _coerce_number(raw.get("est_grams")) or 0.0
+    # Calories with no portion can't be trusted as-is — the macros depend entirely on the (unknown)
+    # serving size. Cap confidence to the default so it trips the low-confidence nudge and the user
+    # is prompted to set the portion before logging (CLAUDE.md §6), rather than silently accepting it.
+    if est_grams == 0.0 and kcal > 0.0:
+        confidence = min(confidence, _DEFAULT_CONFIDENCE)
+
     return {
         "name": name.strip(),
-        "est_grams": _coerce_number(raw.get("est_grams")) or 0.0,
+        "est_grams": est_grams,
         "kcal": kcal,
         "protein_g": _coerce_number(raw.get("protein_g")) or 0.0,
         "carbs_g": _coerce_number(raw.get("carbs_g")) or 0.0,

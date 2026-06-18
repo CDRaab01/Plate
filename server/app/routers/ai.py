@@ -4,6 +4,7 @@
 user's remaining macros + goal, derived server-side. Inference runs against LM Studio (Gemma 3);
 the route is rate-limited since each call hits the model.
 """
+
 import datetime
 from typing import Annotated
 
@@ -34,7 +35,5 @@ async def coach_chat(
 ):
     # Tell the coach if the user trained today (Spotter-awareness, §7) so its framing matches the
     # bumped targets. Best-effort: a Spotter outage just means no training-day framing.
-    trained = await is_training_day(
-        current_user.email, datetime.date.today(), source=workouts
-    )
+    trained = await is_training_day(current_user.email, datetime.date.today(), source=workouts)
     return await chat(req, db, current_user.id, trained=trained)

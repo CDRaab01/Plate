@@ -9,6 +9,7 @@ Pure functions, unit-tested with table cases. Two units are supported in Phase 2
 Secondary nutrients are optional: a ``None`` on the source stays ``None`` in the snapshot rather
 than being silently treated as zero.
 """
+
 from dataclasses import dataclass
 from typing import Protocol
 

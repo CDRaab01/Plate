@@ -63,9 +63,7 @@ class FoodCreate(BaseModel):
             raise ValueError("Name must not be blank")
         return v.strip()
 
-    @field_validator(
-        "kcal_per_100g", "protein_g_per_100g", "carbs_g_per_100g", "fat_g_per_100g"
-    )
+    @field_validator("kcal_per_100g", "protein_g_per_100g", "carbs_g_per_100g", "fat_g_per_100g")
     @classmethod
     def macros_non_negative(cls, v: float) -> float:
         if v < 0:

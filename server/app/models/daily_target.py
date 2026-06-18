@@ -15,9 +15,7 @@ class DailyTarget(Base):
     """
 
     __tablename__ = "daily_targets"
-    __table_args__ = (
-        UniqueConstraint("user_id", "date", name="uq_daily_targets_user_date"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "date", name="uq_daily_targets_user_date"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(

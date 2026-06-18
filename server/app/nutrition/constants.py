@@ -3,6 +3,7 @@
 No magic numbers inline anywhere in :mod:`app.nutrition`; every coefficient the BMR/TDEE, goal
 adjustment, and macro split depend on lives here so the policy is reviewable in one place.
 """
+
 from app.nutrition.totals import Totals
 
 # A neutral ~2000 kcal day with a balanced macro split. Used as the daily-log target only for users

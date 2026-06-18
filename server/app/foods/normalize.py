@@ -3,6 +3,7 @@
 Each source maps its own wire format onto :class:`NormalizedFood`, whose fields line up 1:1 with
 the :class:`~app.models.food.Food` columns so caching is a straight ``Food(**item.to_food_kwargs())``.
 """
+
 import re
 
 from pydantic import BaseModel

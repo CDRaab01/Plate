@@ -6,6 +6,7 @@ never trusted from the client. Kept short and token-bounded. When the user train
 (Spotter-awareness, §7), the targets already carry the training-day bump and the coach is told so it
 can frame its advice around refueling.
 """
+
 import datetime
 import uuid
 
@@ -34,9 +35,7 @@ async def build_macro_context(
     targets = await compute_targets_for(db, user_id, day, trained=trained)
 
     result = await db.execute(
-        select(FoodLogEntry).where(
-            FoodLogEntry.user_id == user_id, FoodLogEntry.date == day
-        )
+        select(FoodLogEntry).where(FoodLogEntry.user_id == user_id, FoodLogEntry.date == day)
     )
     entries = list(result.scalars().all())
 

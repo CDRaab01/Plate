@@ -95,9 +95,7 @@ async def summary(
         if await is_training_day(current_user.email, day_i, source=workouts):
             training_days.add(day_i)
 
-    return await get_summary(
-        db, current_user.id, start_day, end_day, training_days=training_days
-    )
+    return await get_summary(db, current_user.id, start_day, end_day, training_days=training_days)
 
 
 @router.put("/{entry_id}", response_model=LogEntryOut)

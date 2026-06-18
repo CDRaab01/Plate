@@ -6,6 +6,7 @@ table coverage including malformed cases. The LM Studio call is exercised throug
 validation, which short-circuit before any model call (mirroring ``test_ai``). Throughout, the
 estimate is only ever *returned* — nothing is written to the database (CLAUDE.md §3).
 """
+
 import httpx
 import pytest
 from fastapi import HTTPException
@@ -96,6 +97,14 @@ def test_parse_defaults_missing_macros_to_zero():
     assert items[0]["carbs_g"] == 0.0
     assert items[0]["fat_g"] == 0.0
     assert items[0]["est_grams"] == 0.0
+
+
+def test_parse_caps_confidence_when_calories_but_no_portion():
+    # Calories with no portion can't be trusted as-is — the parser caps confidence so the
+    # low-confidence nudge fires and the user is prompted to set the grams before logging.
+    items = parse_estimate('[{"name":"Mystery stew","kcal":250,"confidence":0.95}]')
+    assert items[0]["est_grams"] == 0.0
+    assert items[0]["confidence"] <= 0.3
 
 
 def test_parse_coerces_string_numbers():
@@ -279,9 +288,7 @@ async def test_photo_route_rejects_non_image(auth_client):
 
 
 async def test_photo_route_rejects_empty_image(auth_client):
-    resp = await auth_client.post(
-        "/foods/photo", files={"image": ("meal.jpg", b"", "image/jpeg")}
-    )
+    resp = await auth_client.post("/foods/photo", files={"image": ("meal.jpg", b"", "image/jpeg")})
     assert resp.status_code == 400
 
 

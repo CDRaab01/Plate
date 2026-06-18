@@ -4,6 +4,7 @@ The FDC API key is **server-side only** (never shipped in the APK). Foundation a
 datasets report nutrients per 100g, which is exactly our primary storage basis, so no rescaling is
 needed. Branded items additionally carry a serving, which we capture when present.
 """
+
 import logging
 
 import httpx

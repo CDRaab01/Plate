@@ -5,6 +5,7 @@ deletion of) the source food never rewrite history. Quantity/unit edits re-snaps
 source food when it still exists; if the food was deleted, macros are scaled proportionally from
 the stored snapshot so the entry stays internally consistent.
 """
+
 import datetime
 import uuid
 
@@ -60,9 +61,7 @@ def _to_out(entry: FoodLogEntry, food_name: str | None) -> LogEntryOut:
     return out
 
 
-async def create_entry(
-    db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate
-) -> LogEntryOut:
+async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate) -> LogEntryOut:
     food = await db.get(Food, req.food_id)
     if food is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found")

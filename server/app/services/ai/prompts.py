@@ -5,6 +5,7 @@ prompt-injection and out-of-scope (e.g. medical/eating-disorder) content, and a 
 assembles the message list sent to LM Studio. The trusted, server-derived macro context is injected
 as an extra system turn so the model can answer against the user's actual remaining macros.
 """
+
 import re
 
 # Cap on a single user turn. Long pastes are almost always an injection attempt or accidental dump,

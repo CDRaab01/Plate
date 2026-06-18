@@ -1,6 +1,7 @@
 package com.plate.ui.auth
 
 import com.plate.data.repository.AuthRepository
+import com.plate.util.AuthEventBus
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +47,7 @@ class AuthViewModelTest {
     @Test
     fun `login success emits Success`() = runTest {
         val repo = FakeAuthRepository()
-        val vm = AuthViewModel(repo)
+        val vm = AuthViewModel(repo, AuthEventBus())
 
         vm.login("a@b.com", "password1")
         advanceUntilIdle()
@@ -58,7 +59,7 @@ class AuthViewModelTest {
     @Test
     fun `login failure emits Error with message`() = runTest {
         val repo = FakeAuthRepository(failWith = RuntimeException("Invalid credentials"))
-        val vm = AuthViewModel(repo)
+        val vm = AuthViewModel(repo, AuthEventBus())
 
         vm.login("a@b.com", "wrong")
         advanceUntilIdle()
@@ -71,7 +72,7 @@ class AuthViewModelTest {
     @Test
     fun `register success emits Success`() = runTest {
         val repo = FakeAuthRepository()
-        val vm = AuthViewModel(repo)
+        val vm = AuthViewModel(repo, AuthEventBus())
 
         vm.register("Casey", "a@b.com", "password1")
         advanceUntilIdle()

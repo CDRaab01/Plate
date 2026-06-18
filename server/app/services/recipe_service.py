@@ -6,6 +6,7 @@ becomes a denormalized :class:`~app.models.food_log_entry.FoodLogEntry` (the sam
 manual logging). Items whose source food was deleted (``food_id`` SET NULL) are skipped in totals
 and when logging. Mirrors Spotter's program service (parent-flush-then-children, replace-children).
 """
+
 import datetime
 import uuid
 
@@ -28,9 +29,7 @@ from app.schemas.recipe import (
 )
 
 
-async def _load_owned_recipe(
-    db: AsyncSession, user_id: uuid.UUID, recipe_id: uuid.UUID
-) -> Recipe:
+async def _load_owned_recipe(db: AsyncSession, user_id: uuid.UUID, recipe_id: uuid.UUID) -> Recipe:
     recipe = await db.get(Recipe, recipe_id)
     if recipe is None or recipe.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe not found")
@@ -102,9 +101,7 @@ def _build_items(req_items: list[RecipeItemIn]) -> list[RecipeItem]:
     ]
 
 
-async def create_recipe(
-    db: AsyncSession, user_id: uuid.UUID, req: RecipeCreate
-) -> RecipeOut:
+async def create_recipe(db: AsyncSession, user_id: uuid.UUID, req: RecipeCreate) -> RecipeOut:
     recipe = Recipe(user_id=user_id, name=req.name, description=req.description)
     recipe.items = _build_items(req.items)
     db.add(recipe)
@@ -119,9 +116,7 @@ async def list_recipes(db: AsyncSession, user_id: uuid.UUID) -> list[RecipeOut]:
     return [_to_out(r) for r in result.scalars().all()]
 
 
-async def get_recipe(
-    db: AsyncSession, user_id: uuid.UUID, recipe_id: uuid.UUID
-) -> RecipeOut:
+async def get_recipe(db: AsyncSession, user_id: uuid.UUID, recipe_id: uuid.UUID) -> RecipeOut:
     recipe = await _load_owned_recipe(db, user_id, recipe_id)
     return _to_out(recipe)
 
@@ -192,19 +187,17 @@ async def log_recipe(
             detail="Recipe has no loggable items (its foods may have been deleted).",
         )
     await db.commit()
+    # Resolve food names from a single pass over the recipe's items rather than scanning the list
+    # per created entry (was O(n²) for large recipes).
+    food_names = {
+        item.food_id: item.food.name
+        for item in recipe.items
+        if item.food_id is not None and item.food is not None
+    }
     out: list[LogEntryOut] = []
     for entry in created:
         await db.refresh(entry)
         o = LogEntryOut.model_validate(entry)
-        o.food_name = item_food_name(recipe, entry.food_id)
+        o.food_name = food_names.get(entry.food_id) if entry.food_id is not None else None
         out.append(o)
     return out
-
-
-def item_food_name(recipe: Recipe, food_id: uuid.UUID | None) -> str | None:
-    if food_id is None:
-        return None
-    for item in recipe.items:
-        if item.food_id == food_id and item.food is not None:
-            return item.food.name
-    return None
