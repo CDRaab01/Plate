@@ -79,7 +79,7 @@ fun DiaryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Today") },
+                title = { Text("Plate") },
                 actions = {
                     IconButton(onClick = { showQuickAdd = true }) {
                         Icon(Icons.Outlined.Bolt, contentDescription = "Quick add")
