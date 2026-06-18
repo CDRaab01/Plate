@@ -92,6 +92,12 @@ human and the workflow run the exact same steps: fetch, check out the ref, rebui
 + restart, health-gate on `/health`, prune old images. Migrations apply
 automatically on container boot (`server/docker-entrypoint.sh`).
 
+If the health gate fails, the script dumps the last container logs (`docker compose
+logs --tail`, default 100 lines, override with `-FailureLogLines` / `FAILURE_LOG_LINES`)
+to the run output before exiting non-zero — so an unattended runner's failed deploy is
+debuggable without logging into the host. The health timeout is likewise configurable
+(`-TimeoutSeconds` / `TIMEOUT_SECONDS`, default 120).
+
 ### One-time setup
 
 1. **Install the runner on the host.** In the **Plate** repo: **Settings → Actions →
