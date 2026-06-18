@@ -3,12 +3,8 @@ package com.plate.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +33,10 @@ fun BrandLogo(size: Dp = 76.dp) {
     }
 }
 
-/** The primary call-to-action button used across the auth flow. */
+/**
+ * The primary call-to-action used across the auth/goals flows. Now a thin alias over the PULSE
+ * [PulseButton] (hero-gradient block with press-scale), so the whole app shares one button voice.
+ */
 @Composable
 fun PrimaryButton(
     text: String,
@@ -45,13 +44,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.height(52.dp),
-    ) {
-        Text(text, style = MaterialTheme.typography.titleMedium)
-    }
+    PulseButton(text = text, onClick = onClick, modifier = modifier, enabled = enabled)
 }
 
 /** Full-width variant convenience. */

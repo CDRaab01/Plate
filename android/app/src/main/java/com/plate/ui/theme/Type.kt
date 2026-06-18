@@ -2,9 +2,11 @@ package com.plate.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.plate.R
 
 /*
  * PULSE type system. Three voices on a minor-third (1.2) UI scale — 12 / 14 / 17 / 20 / 24 / 29:
@@ -13,16 +15,29 @@ import androidx.compose.ui.unit.sp
  *    used UPPERCASE as instrument-panel captions.
  *  - JetBrains Mono for data numerals (DataType.kt) — every figure aligns.
  *
- * TODO(phase-8): bundle the actual PULSE faces (Space Grotesk, Inter, JetBrains Mono — all OFL,
- * the same static-instance files Spotter ships under res/font) and point these families at them.
- * Until the binaries land, we fall back to the platform default sans + monospace so the type
- * SCALE matches PULSE exactly even though the faces don't yet. Bundling the fonts is a drop-in
- * change: only these three family definitions move from defaults to `FontFamily(Font(R.font.…))`.
+ * All faces ship as STATIC instances (one file per weight) under res/font, not variable fonts:
+ * several devices ignore FontVariation weight settings and render the lightest master, so static
+ * instances are the only way to guarantee real bold everywhere (matching Spotter's PULSE setup).
  */
 
-val SpaceGroteskFamily = FontFamily.Default
-val InterFamily = FontFamily.Default
-val JetBrainsMonoFamily = FontFamily.Monospace
+val SpaceGroteskFamily = FontFamily(
+    Font(R.font.space_grotesk_medium, weight = FontWeight.Medium),
+    Font(R.font.space_grotesk_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.space_grotesk_bold, weight = FontWeight.Bold),
+)
+
+val InterFamily = FontFamily(
+    Font(R.font.inter_regular, weight = FontWeight.Normal),
+    Font(R.font.inter_medium, weight = FontWeight.Medium),
+    Font(R.font.inter_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.inter_bold, weight = FontWeight.Bold),
+)
+
+val JetBrainsMonoFamily = FontFamily(
+    Font(R.font.jetbrains_mono_medium, weight = FontWeight.Medium),
+    Font(R.font.jetbrains_mono_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.jetbrains_mono_bold, weight = FontWeight.Bold),
+)
 
 val PlateTypography = Typography(
     displayLarge = TextStyle(
