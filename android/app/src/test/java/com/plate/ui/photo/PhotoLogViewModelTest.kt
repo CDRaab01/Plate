@@ -111,6 +111,8 @@ private class FakeLogRepository : LogRepository {
 
     override suspend fun logRecipe(recipeId: String, date: String, meal: String) =
         throw IllegalStateException()
+
+    override suspend fun syncPending() {}
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

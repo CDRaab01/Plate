@@ -45,9 +45,7 @@ async def read(recipe_id: uuid.UUID, current_user: CurrentUser, db: DbSession):
 
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)
-async def patch(
-    recipe_id: uuid.UUID, req: RecipeUpdate, current_user: CurrentUser, db: DbSession
-):
+async def patch(recipe_id: uuid.UUID, req: RecipeUpdate, current_user: CurrentUser, db: DbSession):
     return await update_recipe(db, current_user.id, recipe_id, req)
 
 
@@ -63,7 +61,9 @@ async def delete(recipe_id: uuid.UUID, current_user: CurrentUser, db: DbSession)
     await delete_recipe(db, current_user.id, recipe_id)
 
 
-@router.post("/{recipe_id}/log", response_model=list[LogEntryOut], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{recipe_id}/log", response_model=list[LogEntryOut], status_code=status.HTTP_201_CREATED
+)
 async def log(
     recipe_id: uuid.UUID, req: RecipeLogRequest, current_user: CurrentUser, db: DbSession
 ):

@@ -22,6 +22,7 @@ class TokenStore @Inject constructor(
     private val refreshKey = stringPreferencesKey("refresh_token")
 
     val accessToken: Flow<String?> = context.dataStore.data.map { it[accessKey] }
+    val refreshToken: Flow<String?> = context.dataStore.data.map { it[refreshKey] }
 
     suspend fun save(access: String, refresh: String) {
         context.dataStore.edit {
@@ -31,6 +32,8 @@ class TokenStore @Inject constructor(
     }
 
     suspend fun currentAccessToken(): String? = accessToken.first()
+
+    suspend fun currentRefreshToken(): String? = refreshToken.first()
 
     suspend fun clear() {
         context.dataStore.edit { it.clear() }

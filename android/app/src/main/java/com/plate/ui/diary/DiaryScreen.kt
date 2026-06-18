@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -69,6 +70,7 @@ fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToGoals: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
@@ -88,7 +90,10 @@ fun DiaryScreen(
                         Icon(Icons.Outlined.Info, contentDescription = "About")
                     }
                     IconButton(onClick = onNavigateToGoals) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Goals")
+                        Icon(Icons.Outlined.Tune, contentDescription = "Goals")
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
                     }
                 },
             )

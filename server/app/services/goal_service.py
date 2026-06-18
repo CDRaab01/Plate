@@ -5,6 +5,7 @@ history stays intact for later trend/coach context. Targets are **computed on re
 goal — they're a pure function of it, so there's nothing to persist yet. The ``daily_targets`` table
 gets populated in Phase 7, when the training-day bump makes a per-date snapshot worth storing.
 """
+
 import datetime
 import uuid
 

@@ -13,6 +13,7 @@ The training-day bump (Spotter-awareness, Phase 7) layers on via :func:`apply_tr
 (skewed to carbs + protein) to refuel. The bump is a pure function too, so it's table-tested
 alongside the rest of the engine; *whether* the user trained is decided outside this module.
 """
+
 from dataclasses import dataclass
 
 from app.nutrition import constants as c

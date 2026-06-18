@@ -82,6 +82,8 @@ private class FakeLogRepository(
 
     override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
         emptyList()
+
+    override suspend fun syncPending() {}
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

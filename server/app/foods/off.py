@@ -8,6 +8,7 @@ repeat hits. Data is ODbL-licensed → the app must show "Data from Open Food Fa
 OFF reports energy in kcal per 100g and macros in grams per 100g; sodium and cholesterol are in
 **grams**, which we convert to milligrams to match our storage basis.
 """
+
 import logging
 
 import httpx

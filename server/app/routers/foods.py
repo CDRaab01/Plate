@@ -89,9 +89,7 @@ async def estimate_from_photo(
 
     data = await image.read()
     if not data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="The image is empty."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The image is empty.")
     if len(data) > settings.photo_max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,

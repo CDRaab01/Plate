@@ -6,6 +6,7 @@ estimates, never auto-committed. The strict per-item contract the model is asked
 ``{name, est_grams, kcal, protein_g, carbs_g, fat_g, confidence}``; the parser tolerates a lot of
 model sloppiness (see :mod:`app.services.ai.photo_prompts`) and only well-formed items reach here.
 """
+
 from pydantic import BaseModel, Field
 
 

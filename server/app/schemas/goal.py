@@ -4,6 +4,7 @@ The goal carries the body inputs the targets engine needs. Enum-like fields are 
 bad ``sex`` / ``activity_level`` / ``goal_type`` is a 422 at the edge rather than a math error deeper
 in :mod:`app.nutrition.targets`.
 """
+
 import datetime
 import uuid
 

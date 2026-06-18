@@ -13,6 +13,7 @@ tests) never depend on the transport:
 (Spotter down, bad config, malformed reply) degrades to "not a training day" rather than failing the
 user's request, and is logged.
 """
+
 import datetime
 import logging
 from abc import ABC, abstractmethod

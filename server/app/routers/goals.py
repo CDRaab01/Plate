@@ -4,6 +4,7 @@
 * ``GET /goals`` — read the active goal.
 * ``GET /goals/targets?date=`` — the computed kcal/macro targets for a date.
 """
+
 import datetime
 from typing import Annotated
 

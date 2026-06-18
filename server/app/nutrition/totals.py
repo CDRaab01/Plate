@@ -3,6 +3,7 @@
 Pure and unit-tested. Secondary nutrients are summed only over the entries that carry them, so a
 missing micro on one entry doesn't poison the day's total (it simply isn't counted).
 """
+
 from dataclasses import dataclass
 from typing import Iterable, Protocol
 

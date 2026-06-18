@@ -4,6 +4,7 @@ A source knows how to turn a free-text query (and, for OFF, a barcode) into norm
 Concrete sources (:mod:`app.foods.usda`, :mod:`app.foods.off`) wrap an external HTTP API; tests
 substitute simple in-memory fakes that satisfy the same interface.
 """
+
 from abc import ABC, abstractmethod
 
 from app.foods.normalize import NormalizedFood

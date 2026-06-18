@@ -4,6 +4,7 @@ Search strategy: **local ``foods`` table first → USDA → OFF**. A query that 
 never touches the network; on a miss we fan out to the external sources, normalize + deduplicate
 their results, persist the new ones, and return them — so the next identical search is local.
 """
+
 import logging
 
 import httpx
@@ -37,12 +38,8 @@ def _build_live_sources(client: httpx.AsyncClient) -> list[FoodSource]:
     """
     sources: list[FoodSource] = []
     if settings.usda_api_key:
-        sources.append(
-            UsdaFoodSource(client, settings.usda_api_key, settings.usda_base_url)
-        )
-    sources.append(
-        OpenFoodFactsSource(client, settings.off_base_url, settings.off_user_agent)
-    )
+        sources.append(UsdaFoodSource(client, settings.usda_api_key, settings.usda_base_url))
+    sources.append(OpenFoodFactsSource(client, settings.off_base_url, settings.off_user_agent))
     return sources
 
 
@@ -61,25 +58,27 @@ async def _find_existing(db: AsyncSession, item: NormalizedFood) -> Food | None:
     """Return an already-cached row matching ``item`` (barcode → source id → exact lower name)."""
     if item.barcode:
         found = (
-            await db.execute(select(Food).where(Food.barcode == item.barcode))
-        ).scalars().first()
+            (await db.execute(select(Food).where(Food.barcode == item.barcode))).scalars().first()
+        )
         if found:
             return found
     if item.source_id:
         found = (
-            await db.execute(
-                select(Food).where(
-                    Food.source == item.source, Food.source_id == item.source_id
+            (
+                await db.execute(
+                    select(Food).where(Food.source == item.source, Food.source_id == item.source_id)
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if found:
             return found
     found = (
-        await db.execute(
-            select(Food).where(func.lower(Food.name) == normalized_name(item.name))
-        )
-    ).scalars().first()
+        (await db.execute(select(Food).where(func.lower(Food.name) == normalized_name(item.name))))
+        .scalars()
+        .first()
+    )
     return found
 
 
@@ -173,9 +172,7 @@ async def lookup_barcode(
     if not code:
         return None
 
-    existing = (
-        await db.execute(select(Food).where(Food.barcode == code))
-    ).scalars().first()
+    existing = (await db.execute(select(Food).where(Food.barcode == code))).scalars().first()
     if existing is not None:
         return existing
 

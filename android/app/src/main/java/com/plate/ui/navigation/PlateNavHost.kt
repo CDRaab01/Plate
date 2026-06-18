@@ -3,6 +3,7 @@ package com.plate.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -17,9 +18,11 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.plate.ui.about.AboutScreen
+import com.plate.ui.auth.AuthViewModel
 import com.plate.ui.auth.ForgotPasswordScreen
 import com.plate.ui.auth.LoginScreen
 import com.plate.ui.auth.RegisterScreen
+import com.plate.ui.settings.SettingsScreen
 import com.plate.ui.coach.CoachScreen
 import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
@@ -45,6 +48,7 @@ object Routes {
     const val PHOTO = "photo"
     const val GOALS = "goals"
     const val ABOUT = "about"
+    const val SETTINGS = "settings"
 
     // Phase 8 top-level destinations (bottom bar) + recipe editor detail.
     const val COACH = "coach"
@@ -61,6 +65,17 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showBar = currentDestination?.route in TopLevelDestination.barRoutes
+
+    // A rejected refresh token (or explicit logout) clears the session; bounce back to login.
+    val authViewModel: AuthViewModel = hiltViewModel()
+    LaunchedEffect(Unit) {
+        authViewModel.logoutEvents.collect {
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(navController.graph.id) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -110,6 +125,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                         onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
                         onNavigateToGoals = { navController.navigate(Routes.GOALS) },
                         onNavigateToAbout = { navController.navigate(Routes.ABOUT) },
+                        onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                         viewModel = diaryViewModel,
                     )
                 }
@@ -147,6 +163,19 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 }
                 composable(Routes.ABOUT) {
                     AboutScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                        onLogout = {
+                            authViewModel.logout()
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                    )
                 }
             }
 

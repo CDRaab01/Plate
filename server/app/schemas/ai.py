@@ -6,6 +6,7 @@ The macro context the coach reasons over (remaining kcal/macros for the day + go
 the request body. Phase 5 keeps the response to prose only; structured food suggestions are a later
 enhancement.
 """
+
 from pydantic import BaseModel, field_validator
 
 ROLES = ("user", "assistant", "system")

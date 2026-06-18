@@ -56,6 +56,8 @@ private class FakeLogRepository(var loggedRecipe: String? = null, var loggedMeal
         loggedMeal = meal
         return listOf(LogEntryOut("e", "f", "Food", date, meal, 1.0, "serving", 300.0, 20.0, 30.0, 10.0))
     }
+
+    override suspend fun syncPending() {}
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

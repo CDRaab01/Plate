@@ -80,8 +80,15 @@ class QuickAddCreate(BaseModel):
         return _validate_meal(v)
 
     @field_validator(
-        "kcal", "protein_g", "carbs_g", "fat_g",
-        "fiber_g", "sugar_g", "sat_fat_g", "cholesterol_mg", "sodium_mg",
+        "kcal",
+        "protein_g",
+        "carbs_g",
+        "fat_g",
+        "fiber_g",
+        "sugar_g",
+        "sat_fat_g",
+        "cholesterol_mg",
+        "sodium_mg",
     )
     @classmethod
     def non_negative(cls, v: float | None) -> float | None:

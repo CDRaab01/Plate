@@ -7,6 +7,7 @@ transport/HTTP failures to clean HTTP errors. Local-only — there is no hosted 
 ``client`` is injectable so tests drive a mocked transport and CI never reaches a real server
 (CLAUDE.md §10); in production it's ``None`` and a client is built per call.
 """
+
 import contextlib
 import datetime
 import logging
@@ -23,6 +24,11 @@ from app.services.ai.prompts import build_messages, validate_request, validate_r
 
 log = logging.getLogger(__name__)
 
+# Cap how many prior turns we replay to LM Studio so a long-running conversation can't grow the
+# request unbounded (context-window blowup / wasted tokens on the local model). The latest user
+# turn is always kept; only the older history is trimmed to the most recent N messages.
+MAX_HISTORY_MESSAGES = 20
+
 
 async def chat(
     req: ChatRequest,
@@ -38,20 +44,16 @@ async def chat(
         if msg.role == "user":
             error = validate_request(msg.content)
             if error:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error
-                )
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
 
-    last_user = next(
-        (m.content for m in reversed(req.messages) if m.role == "user"), ""
-    )
+    last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "")
     if not last_user.strip():
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Send a message for the coach to answer.",
         )
 
-    history = [m.model_dump() for m in req.messages[:-1]]
+    history = [m.model_dump() for m in req.messages[:-1]][-MAX_HISTORY_MESSAGES:]
     macro_context = await build_macro_context(
         db, user_id, day or datetime.date.today(), trained=trained
     )

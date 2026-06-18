@@ -8,6 +8,7 @@ estimate is never auto-committed (CLAUDE.md §3).
 
 ``client`` is injectable so tests drive a mocked transport and CI never reaches a real server.
 """
+
 import base64
 import contextlib
 import logging
@@ -66,9 +67,7 @@ def _to_response(items: list[PhotoEstimateItem]) -> PhotoEstimateResponse:
     threshold = settings.photo_low_confidence_threshold
     low = any(item.confidence <= threshold for item in items)
     note = (
-        "Some items are low-confidence — double-check the amounts before logging."
-        if low
-        else None
+        "Some items are low-confidence — double-check the amounts before logging." if low else None
     )
     return PhotoEstimateResponse(items=items, low_confidence=low, note=note)
 

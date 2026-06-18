@@ -3,6 +3,8 @@ package com.plate.di
 import com.plate.BuildConfig
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.AuthInterceptor
+import com.plate.data.remote.HostSelectionInterceptor
+import com.plate.data.remote.TokenRefreshAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +30,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(
+        hostSelectionInterceptor: HostSelectionInterceptor,
+        authInterceptor: AuthInterceptor,
+        tokenRefreshAuthenticator: TokenRefreshAuthenticator,
+    ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -37,8 +43,12 @@ object NetworkModule {
             }
         }
         return OkHttpClient.Builder()
+            // Host selection runs first so the rewritten URL is what the auth header + logging see.
+            .addInterceptor(hostSelectionInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
+            // Refreshes the access token on a 401 and retries, instead of failing the request.
+            .authenticator(tokenRefreshAuthenticator)
             .build()
     }
 

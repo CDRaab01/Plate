@@ -22,6 +22,8 @@ jobs:
       - run: pip install ruff==0.4.4
       - run: ruff check app
         working-directory: server
+      - run: ruff format --check app
+        working-directory: server
 
   server-test:
     name: "Server — Test"
@@ -43,6 +45,10 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://plate:plate@localhost:5432/plate_test
       SECRET_KEY: ci-test-secret-key-not-for-production
+      # AI/photo tests mock LM Studio (httpx.MockTransport) and never reach it; these just pin the
+      # config to a known test value so nothing depends on a developer's local default.
+      LM_STUDIO_BASE_URL: http://localhost:1234/v1
+      LM_STUDIO_MODEL: test-model
     defaults:
       run:
         working-directory: server
@@ -139,3 +145,67 @@ jobs:
           name: plate-debug-${{ github.sha }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+  # On a v* tag, build a signed release APK and publish both APKs to a GitHub Release. Inert until
+  # the keystore secrets (KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD) are set.
+  android-release-build:
+    name: "Android — Assemble Release APK"
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: android-test
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "server.url=${{ vars.PLATE_SERVER_URL || 'https://plate.dragonflymedia.org/' }}" >> local.properties
+      - name: Decode keystore
+        run: echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      - name: Build release APK
+        env:
+          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plate-release-${{ github.sha }}
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+  publish:
+    name: "Publish — GitHub Release"
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: [android-build, android-release-build]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: plate-debug-${{ github.sha }}
+          path: dist/debug
+      - uses: actions/download-artifact@v4
+        with:
+          name: plate-release-${{ github.sha }}
+          path: dist/release
+      - name: Rename APKs with version tag
+        run: |
+          mv dist/debug/app-debug.apk   dist/plate-${{ github.ref_name }}-debug.apk
+          mv dist/release/app-release.apk dist/plate-${{ github.ref_name }}-release.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/plate-${{ github.ref_name }}-debug.apk
+            dist/plate-${{ github.ref_name }}-release.apk
