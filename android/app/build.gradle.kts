@@ -29,7 +29,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "String", "SERVER_URL",
-            "\"${localProperties.getProperty("server.url", "http://10.0.2.2:8000/")}\""
+            "\"${localProperties.getProperty("server.url", "https://plate.dragonflymedia.org/")}\""
         )
     }
 

@@ -73,7 +73,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "server.url=${{ vars.PLATE_SERVER_URL || 'https://plate.dragonflymedia.org/' }}" >> local.properties
       # Exclude the Robolectric NATIVE-graphics screenshot tests from the gating job:
       # they download a ~100MB android-all runtime at test time and intermittently stall
       # CI for hours. The logic/ViewModel tests stay as the fast, reliable deploy gate;
@@ -98,7 +100,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "server.url=${{ vars.PLATE_SERVER_URL || 'https://plate.dragonflymedia.org/' }}" >> local.properties
       - run: >-
           ./gradlew :app:testDebugUnitTest
           --tests "com.plate.screenshot.ScreenshotTest"
@@ -126,7 +130,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "server.url=${{ vars.PLATE_SERVER_URL || 'https://plate.dragonflymedia.org/' }}" >> local.properties
       - run: ./gradlew :app:assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
