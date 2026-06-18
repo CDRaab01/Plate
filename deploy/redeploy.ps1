@@ -28,6 +28,10 @@
 .PARAMETER TimeoutSeconds
   How long to wait for the health check before failing. Defaults to 120.
 
+.PARAMETER FailureLogLines
+  Container log tail dumped on health-gate failure (so an unattended deploy is
+  debuggable from the run output). Defaults to 100.
+
 .EXAMPLE
   pwsh deploy/redeploy.ps1
 
@@ -38,7 +42,8 @@
 param(
   [string]$Ref = "origin/main",
   [string]$HealthUrl = "http://127.0.0.1:8001/health",
-  [int]$TimeoutSeconds = 120
+  [int]$TimeoutSeconds = 120,
+  [int]$FailureLogLines = 100
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,6 +94,10 @@ while ((Get-Date) -lt $deadline) {
   Start-Sleep -Seconds 3
 }
 if (-not $healthy) {
+  # Dump recent container logs so a failed deploy is debuggable from the run output
+  # (the runner is unattended; without this the failure is opaque).
+  Write-Host "--- docker compose logs (last ${FailureLogLines} lines) ---"
+  & docker compose --project-directory $RepoDir logs --no-color --tail $FailureLogLines 2>$null
   throw "Health check failed: $HealthUrl did not report ok within ${TimeoutSeconds}s."
 }
 Write-Host "Health check passed."

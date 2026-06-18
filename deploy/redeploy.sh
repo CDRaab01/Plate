@@ -19,12 +19,14 @@
 # Env overrides:
 #   HEALTH_URL        health endpoint (default http://127.0.0.1:8001/health)
 #   TIMEOUT_SECONDS   health-check timeout (default 120)
+#   FAILURE_LOG_LINES container log tail dumped on health-gate failure (default 100)
 set -euo pipefail
 
 REF="${1:-origin/main}"
 # Port 8001 (not 8000): Plate is published on 8001 so it can run beside Spotter.
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8001/health}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-120}"
+FAILURE_LOG_LINES="${FAILURE_LOG_LINES:-100}"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -56,6 +58,10 @@ while [[ $(date +%s) -lt $deadline ]]; do
 done
 if [[ $healthy -ne 1 ]]; then
   echo "error: health check failed — $HEALTH_URL did not report ok within ${TIMEOUT_SECONDS}s." >&2
+  # Dump recent container logs so a failed deploy is debuggable from the run output
+  # (the runner is unattended; without this the failure is opaque).
+  echo "--- docker compose logs (last ${FAILURE_LOG_LINES} lines) ---" >&2
+  docker compose --project-directory "$REPO_DIR" logs --no-color --tail "$FAILURE_LOG_LINES" >&2 2>/dev/null || true
   exit 1
 fi
 echo "Health check passed."
