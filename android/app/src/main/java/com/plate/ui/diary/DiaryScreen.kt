@@ -142,10 +142,10 @@ fun DiaryContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
     ) {
         item { GreetingPanel(greeting = greeting, mealNudge = mealNudge) }
-        item { Spacer(Modifier.height(12.dp)) }
+        item { Spacer(Modifier.height(8.dp)) }
         item {
             DailySummaryCard(
                 totals = day.totals,
@@ -153,7 +153,7 @@ fun DiaryContent(
                 trainedToday = day.trainedToday,
             )
         }
-        item { Spacer(Modifier.height(16.dp)) }
+        item { Spacer(Modifier.height(12.dp)) }
 
         day.meals.forEach { group ->
             item { MealHeader(group) }
@@ -171,7 +171,7 @@ fun DiaryContent(
                     EntryRow(entry = entry, onDelete = { onDeleteEntry(entry.id) })
                 }
             }
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(12.dp)) }
         }
     }
 }

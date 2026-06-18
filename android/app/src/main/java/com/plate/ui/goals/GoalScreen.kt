@@ -124,9 +124,9 @@ fun GoalContent(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, top = 16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("Your goal", style = MaterialTheme.typography.titleMedium)
         ChipRow(
