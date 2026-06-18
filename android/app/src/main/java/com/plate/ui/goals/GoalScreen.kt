@@ -124,7 +124,7 @@ fun GoalContent(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
-            .padding(horizontal = 16.dp, top = 16.dp)
+            .padding(horizontal = 16.dp, top = 8.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

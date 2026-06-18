@@ -81,7 +81,7 @@ fun RecipeEditScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = name,
                 onValueChange = viewModel::setName,
