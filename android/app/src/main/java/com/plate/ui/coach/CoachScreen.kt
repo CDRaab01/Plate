@@ -1,7 +1,6 @@
 package com.plate.ui.coach
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,19 +37,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun CoachScreen(
-    onBack: () -> Unit,
     viewModel: CoachViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     CoachContent(
         state = state,
-        onBack = onBack,
         onSend = viewModel::sendMessage,
         onErrorShown = viewModel::clearError,
     )
@@ -61,7 +57,6 @@ fun CoachScreen(
 @Composable
 fun CoachContent(
     state: CoachUiState,
-    onBack: () -> Unit,
     onSend: (String) -> Unit,
     onErrorShown: () -> Unit = {},
 ) {
@@ -86,11 +81,6 @@ fun CoachContent(
         topBar = {
             TopAppBar(
                 title = { Text("Coach") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -126,14 +116,12 @@ fun CoachContent(
 
 @Composable
 private fun EmptyState(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-        Text(
-            "Ask the coach about recipes, food swaps, or how to hit your macros for today.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
+    com.plate.ui.components.EmptyState(
+        icon = Icons.Default.AutoAwesome,
+        title = "Meet your Plate Coach",
+        subtitle = "Ask about recipes, food swaps, or how to hit your macros today.",
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -197,7 +185,7 @@ private fun InputBar(
         OutlinedTextField(
             value = draft,
             onValueChange = onDraftChange,
-            placeholder = { Text("Message the coach") },
+            placeholder = { Text("Ask your coach…") },
             modifier = Modifier.weight(1f),
             maxLines = 4,
         )

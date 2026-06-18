@@ -239,7 +239,6 @@ private fun CoachScene() {
                 ),
             ),
         ),
-        onBack = {},
         onSend = {},
     )
 }

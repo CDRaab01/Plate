@@ -173,7 +173,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 )
             }
             composable(Routes.SUMMARY) { WeeklySummaryScreen() }
-            composable(Routes.COACH) { CoachScreen(onBack = { navController.popBackStack() }) }
+            composable(Routes.COACH) { CoachScreen() }
         }
     }
 }
