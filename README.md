@@ -73,9 +73,11 @@ Optional environment (all server-side, never shipped in the APK):
 
 ### 3. Android client
 
-Open `android/` in Android Studio, sync Gradle, and run on an emulator or device. The emulator
-reaches the server at the build-time default `http://10.0.2.2:8000/`; override it by setting
-`server.url` in `android/local.properties`.
+Open `android/` in Android Studio, sync Gradle, and run on an emulator or device. The
+build-time default points at the deployed server `https://plate.dragonflymedia.org/`, so a
+physical device or emulator works out of the box. Override it (e.g. `http://10.0.2.2:8000/` to
+reach a server running on the host from the emulator) by setting `server.url` in
+`android/local.properties`.
 
 ## API surface
 
