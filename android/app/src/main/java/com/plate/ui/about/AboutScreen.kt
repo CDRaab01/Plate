@@ -59,7 +59,7 @@ fun AboutContent(onBack: () -> Unit) {
                 "Plate",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(top = 8.dp),
             )
             Text(
                 "Calorie & macro tracking with an on-device AI coach.",

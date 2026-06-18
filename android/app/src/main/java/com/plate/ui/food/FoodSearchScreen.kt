@@ -184,7 +184,7 @@ private fun FoodRow(food: FoodOut, onClick: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 12.dp),
     ) {
         Text(food.name, style = MaterialTheme.typography.bodyLarge)
         val subtitle = buildString {
@@ -224,6 +224,7 @@ fun AddFoodDialog(
         text = {
             Column {
                 Text("Meal", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MEALS.forEach { m ->
                         FilterChip(

@@ -106,7 +106,7 @@ fun SettingsScreen(
             }
 
             Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         "About",
                         style = MaterialTheme.typography.titleMedium,

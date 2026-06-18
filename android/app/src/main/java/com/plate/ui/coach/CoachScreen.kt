@@ -223,7 +223,7 @@ private fun TypingIndicator() {
                         bottomEnd = 16.dp, bottomStart = 4.dp,
                     ),
                 )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(PlateTheme.spacing.md),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -253,7 +253,7 @@ private fun InputBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         OutlinedTextField(
