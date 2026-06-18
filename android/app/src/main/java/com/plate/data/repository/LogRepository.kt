@@ -37,4 +37,7 @@ interface LogRepository {
 
     /** Expand a saved recipe into the given day's meal. */
     suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut>
+
+    /** Push any quick-adds that were queued while offline. Best-effort; safe to call repeatedly. */
+    suspend fun syncPending()
 }

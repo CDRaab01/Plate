@@ -113,6 +113,11 @@ dependencies {
 
     implementation(libs.datastore.preferences)
 
+    // Room: local mirror of the diary + an offline quick-add queue (CLAUDE.md §2 — match Spotter).
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
     implementation(libs.kotlinx.coroutines.android)
 
     // Phase 4: on-device barcode scanning (CameraX preview + ML Kit decoder).
