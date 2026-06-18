@@ -1,11 +1,23 @@
 package com.plate.ui.coach
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -13,10 +25,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -39,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.plate.ui.theme.PlateTheme
 
 @Composable
 fun CoachScreen(
@@ -85,18 +98,30 @@ fun CoachContent(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .imePadding(),
+        ) {
             if (state.messages.isEmpty() && !state.sending) {
-                EmptyState(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    EmptyState()
+                }
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(vertical = 8.dp),
                 ) {
                     items(state.messages) { message -> MessageBubble(message) }
                     if (state.sending) {
-                        item { ThinkingBubble() }
+                        item { TypingIndicator() }
                     }
                 }
             }
@@ -115,56 +140,102 @@ fun CoachContent(
 }
 
 @Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
+private fun EmptyState() {
     com.plate.ui.components.EmptyState(
         icon = Icons.Default.AutoAwesome,
         title = "Meet your Plate Coach",
         subtitle = "Ask about recipes, food swaps, or how to hit your macros today.",
-        modifier = modifier,
     )
 }
 
 @Composable
 private fun MessageBubble(message: CoachMessage) {
-    val alignment = if (message.isUser) Alignment.End else Alignment.Start
-    val bubbleColor =
-        if (message.isUser) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.surfaceVariant
-    val textColor =
-        if (message.isUser) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Column(Modifier.fillMaxWidth()) {
-        Surface(
-            color = bubbleColor,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.align(alignment).widthIn(max = 300.dp),
+    val isUser = message.isUser
+    val pulse = PlateTheme.pulse
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PlateTheme.spacing.md, vertical = PlateTheme.spacing.xs),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+    ) {
+        val shape = RoundedCornerShape(
+            topStart = 16.dp, topEnd = 16.dp,
+            bottomStart = if (isUser) 16.dp else 4.dp,
+            bottomEnd = if (isUser) 4.dp else 16.dp,
+        )
+        Box(
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .background(color = if (isUser) pulse.carbsDim else pulse.panel, shape = shape)
+                .border(1.dp, if (isUser) pulse.carbs.copy(alpha = 0.25f) else pulse.hairline, shape)
+                .padding(PlateTheme.spacing.md),
         ) {
             Text(
-                message.content,
-                color = textColor,
+                text = message.content,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
     }
 }
 
 @Composable
-private fun ThinkingBubble() {
-    Column(Modifier.fillMaxWidth()) {
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.align(Alignment.Start),
+private fun TypingIndicator() {
+    val transition = rememberInfiniteTransition(label = "typing")
+    val alpha0 by transition.animateFloat(
+        initialValue = 0.3f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(0),
+        ), label = "dot0",
+    )
+    val alpha1 by transition.animateFloat(
+        initialValue = 0.3f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(150),
+        ), label = "dot1",
+    )
+    val alpha2 by transition.animateFloat(
+        initialValue = 0.3f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(300),
+        ), label = "dot2",
+    )
+
+    val pulse = PlateTheme.pulse
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PlateTheme.spacing.md, vertical = PlateTheme.spacing.xs),
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    color = pulse.panel,
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp, topEnd = 16.dp,
+                        bottomEnd = 16.dp, bottomStart = 4.dp,
+                    ),
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Row(
-                Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircularProgressIndicator(Modifier.size(16.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Thinking…", style = MaterialTheme.typography.bodySmall)
+                listOf(alpha0, alpha1, alpha2).forEach { alpha ->
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(color = pulse.carbs.copy(alpha = alpha), shape = CircleShape),
+                    )
+                }
             }
         }
     }
@@ -178,8 +249,11 @@ private fun InputBar(
     enabled: Boolean,
     onSend: () -> Unit,
 ) {
+    val pulse = PlateTheme.pulse
     Row(
-        Modifier.fillMaxWidth().padding(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         OutlinedTextField(
@@ -188,13 +262,19 @@ private fun InputBar(
             placeholder = { Text("Ask your coach…") },
             modifier = Modifier.weight(1f),
             maxLines = 4,
+            enabled = enabled,
         )
         Spacer(Modifier.width(8.dp))
         IconButton(
             onClick = onSend,
             enabled = enabled && draft.isNotBlank(),
         ) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+            Icon(
+                Icons.AutoMirrored.Filled.Send,
+                contentDescription = "Send",
+                tint = if (draft.isNotBlank() && enabled) pulse.carbs
+                       else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
