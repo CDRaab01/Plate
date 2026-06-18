@@ -62,6 +62,7 @@ jobs:
   android-test:
     name: "Android — Unit Tests"
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: android
@@ -73,12 +74,20 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
       - run: echo "sdk.dir=$ANDROID_HOME" > local.properties
-      - run: ./gradlew :app:testDebugUnitTest --no-daemon
+      # Exclude the Robolectric NATIVE-graphics screenshot tests from the gating job:
+      # they download a ~100MB android-all runtime at test time and intermittently stall
+      # CI for hours. The logic/ViewModel tests stay as the fast, reliable deploy gate;
+      # screenshots run on demand via the manual "Android — UI Screenshots" job below.
+      - run: ./gradlew :app:testDebugUnitTest --no-daemon -PexcludeScreenshots
 
   android-screenshots:
     name: "Android — UI Screenshots"
     runs-on: ubuntu-latest
-    needs: android-test
+    # Manual-only: the Robolectric native-graphics path is flaky on CI, so it no longer
+    # gates push/PR (and therefore the auto-deploy). Run it on demand from the Actions
+    # tab to record/compare screenshots.
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: android
