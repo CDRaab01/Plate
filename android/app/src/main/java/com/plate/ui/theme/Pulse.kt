@@ -44,8 +44,9 @@ data class PulseColors(
     val panelHigh: Color,
     val glow: Color,            // ring/dot glow base; draw at low alpha
     // Brand gradients
-    val heroGradient: Brush,    // blue → indigo: greeting, primary CTAs
+    val heroGradient: Brush,    // blue → indigo: primary CTAs
     val energyGradient: Brush,  // orange → amber: celebration moments
+    val mealGradient: Brush,    // green → blue: diary greeting card (Plate-specific)
 )
 
 fun darkPulseColors() = PulseColors(
@@ -60,6 +61,7 @@ fun darkPulseColors() = PulseColors(
     glow = PulseBlue,
     heroGradient = Brush.linearGradient(listOf(PulseBlue, PulseIndigo)),
     energyGradient = Brush.linearGradient(listOf(PulseOrange, PulseAmber)),
+    mealGradient = Brush.linearGradient(listOf(PulseGreen, PulseBlue)),
 )
 
 fun lightPulseColors() = PulseColors(
@@ -74,6 +76,7 @@ fun lightPulseColors() = PulseColors(
     glow = PulseBlueDeep,
     heroGradient = Brush.linearGradient(listOf(PulseBlueDeep, PulseIndigoDeep)),
     energyGradient = Brush.linearGradient(listOf(Color(0xFFFF6B35), PulseAmber)),
+    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
 )
 
 val LocalPulse = staticCompositionLocalOf { darkPulseColors() }

@@ -1,5 +1,6 @@
 package com.plate.ui.diary
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Bolt
@@ -37,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -68,6 +72,8 @@ fun DiaryScreen(
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
+    val greeting by viewModel.greeting.collectAsState()
+    val mealNudge by viewModel.mealNudge.collectAsState()
     var showQuickAdd by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -97,6 +103,8 @@ fun DiaryScreen(
             when (val s = state) {
                 is UiState.Success -> DiaryContent(
                     day = s.data,
+                    greeting = greeting,
+                    mealNudge = mealNudge,
                     onDeleteEntry = viewModel::deleteEntry,
                 )
                 is UiState.Error -> Text(
@@ -119,16 +127,20 @@ fun DiaryScreen(
     }
 }
 
-/** Stateless diary body — meal split with daily totals vs (static for now) targets. */
+/** Stateless diary body — greeting panel, meal split with daily totals vs targets. */
 @Composable
 fun DiaryContent(
     day: DailyLog,
+    greeting: String,
+    mealNudge: String,
     onDeleteEntry: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
     ) {
+        item { GreetingPanel(greeting = greeting, mealNudge = mealNudge) }
+        item { Spacer(Modifier.height(12.dp)) }
         item {
             DailySummaryCard(
                 totals = day.totals,
@@ -156,6 +168,30 @@ fun DiaryContent(
             }
             item { Spacer(Modifier.height(20.dp)) }
         }
+    }
+}
+
+@Composable
+private fun GreetingPanel(greeting: String, mealNudge: String) {
+    val pulse = PlateTheme.pulse
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(pulse.mealGradient)
+            .padding(20.dp),
+    ) {
+        Text(
+            text = greeting,
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = mealNudge,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.85f),
+        )
     }
 }
 
