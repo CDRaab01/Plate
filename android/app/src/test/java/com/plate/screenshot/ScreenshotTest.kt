@@ -209,6 +209,8 @@ private fun DiaryScene() {
             totals = totals(all),
             targets = TotalsOut(2000.0, 150.0, 200.0, 67.0),
         ),
+        greeting = "Good morning",
+        mealNudge = "What's for breakfast today?",
         onDeleteEntry = {},
     )
 }

@@ -1,5 +1,6 @@
 package com.plate.ui.diary
 
+import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
@@ -7,6 +8,7 @@ import com.plate.data.remote.TotalsOut
 import com.plate.data.repository.LogRepository
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
+import org.mockito.kotlin.mock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -87,10 +89,12 @@ class DiaryViewModelTest {
 
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
+    private val fakeApi: ApiService = mock()
+
     @Test
     fun `init loads the day into Success`() = runTest {
         val repo = FakeLogRepository(day = dailyLog("2026-06-16"))
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
 
         advanceUntilIdle()
 
@@ -102,7 +106,7 @@ class DiaryViewModelTest {
     @Test
     fun `addEntry posts then reloads the day`() = runTest {
         val repo = FakeLogRepository()
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
         advanceUntilIdle()
 
         vm.addEntry("food-1", "lunch", 150.0, "g")
@@ -115,7 +119,7 @@ class DiaryViewModelTest {
     @Test
     fun `deleteEntry removes then reloads`() = runTest {
         val repo = FakeLogRepository()
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
         advanceUntilIdle()
 
         vm.deleteEntry("e1")
@@ -128,7 +132,7 @@ class DiaryViewModelTest {
     @Test
     fun `quickAdd posts raw macros then reloads`() = runTest {
         val repo = FakeLogRepository()
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
         advanceUntilIdle()
 
         vm.quickAdd("snack", "Shake", 200.0, 30.0, 10.0, 3.0)
@@ -141,7 +145,7 @@ class DiaryViewModelTest {
     @Test
     fun `trained-today flag surfaces in the loaded day`() = runTest {
         val repo = FakeLogRepository(day = dailyLog("2026-06-16", trainedToday = true))
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
 
         advanceUntilIdle()
 
@@ -153,7 +157,7 @@ class DiaryViewModelTest {
     @Test
     fun `load failure emits Error`() = runTest {
         val repo = FakeLogRepository(failWith = RuntimeException("offline"))
-        val vm = DiaryViewModel(repo)
+        val vm = DiaryViewModel(repo, fakeApi)
 
         advanceUntilIdle()
 
