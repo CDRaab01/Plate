@@ -75,10 +75,11 @@ class Settings(BaseSettings):
     # "not a training day" rather than failing the user's request.
     spotter_timeout_seconds: float = 8.0
 
-    # Photo logging (Phase 6, CLAUDE.md §6). The vision model estimates the foods + macros in a
-    # meal photo; the user always confirms before anything is logged (never auto-committed). Defaults
-    # to the same multimodal Gemma 3 the coach uses — override if a separate vision model is loaded.
-    lm_studio_vision_model: str = "google/gemma-3-12b"
+    # Photo logging (Phase 6, CLAUDE.md §6). The vision model identifies the foods + portions in a
+    # meal photo (macros are then looked up from the food DB, not trusted from the model); the user
+    # always confirms before anything is logged. Must match the multimodal model loaded in LM Studio
+    # — override via LM_STUDIO_VISION_MODEL if a different one is served.
+    lm_studio_vision_model: str = "google/gemma-4-e4b"
     # Reject uploads larger than this before sending to the model (a meal photo is comfortably under
     # this; the cap bounds memory + the base64 payload to LM Studio).
     photo_max_bytes: int = 8 * 1024 * 1024

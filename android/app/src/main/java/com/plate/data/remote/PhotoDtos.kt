@@ -17,6 +17,12 @@ data class PhotoEstimateItem(
     @SerialName("carbs_g") val carbsG: Double,
     @SerialName("fat_g") val fatG: Double,
     val confidence: Double,
+    // When the identified food matched a canonical row in the backend's DB, the macros above are the
+    // looked-up values and these point at that food (so we can log it directly instead of minting a
+    // custom food). `source` is the matched row's origin, or "estimate" for the model's own guess.
+    @SerialName("matched_food_id") val matchedFoodId: String? = null,
+    @SerialName("matched_name") val matchedName: String? = null,
+    val source: String = "estimate",
 )
 
 @Serializable

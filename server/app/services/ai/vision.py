@@ -12,15 +12,23 @@ estimate is never auto-committed (CLAUDE.md §3).
 import base64
 import contextlib
 import logging
+from collections.abc import Awaitable, Callable
 
 import httpx
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.models.food import Food
 from app.schemas.photo import PhotoEstimateItem, PhotoEstimateResponse
 from app.services.ai.photo_prompts import build_vision_messages, parse_estimate
+from app.services.food_service import search_foods
 
 log = logging.getLogger(__name__)
+
+# A food search: ``(db, query) -> matching foods``. Defaults to :func:`search_foods` in production;
+# injectable so unit tests enrich against a stub without a live DB or network (mirrors ``client``).
+FoodSearch = Callable[[AsyncSession, str], Awaitable[list[Food]]]
 
 _NO_FOOD_NOTE = (
     "Couldn't identify the food in this photo. Try a clearer, closer shot — or search for it "
@@ -37,10 +45,17 @@ def _data_url(image_bytes: bytes, content_type: str) -> str:
 async def estimate_photo(
     image_bytes: bytes,
     content_type: str,
+    db: AsyncSession | None = None,
     *,
     client: httpx.AsyncClient | None = None,
+    food_search: FoodSearch = search_foods,
 ) -> PhotoEstimateResponse:
     """Send a meal photo to the vision model and return an editable draft of estimated foods.
+
+    The model is asked only to *identify* the foods and gauge each portion; we then look each up in
+    our nutrition DB (``db``) and prefer the **canonical macros** scaled to the estimated grams,
+    falling back to the model's own numbers when nothing matches (see :func:`_enrich_with_db`). When
+    ``db`` is ``None`` (e.g. a parser-focused unit test) enrichment is skipped.
 
     Transport/HTTP failures surface as HTTP errors (the model is unreachable / erroring). Unusable
     *content* — the model returned junk or saw no food — degrades to an empty, low-confidence draft
@@ -56,7 +71,41 @@ async def estimate_photo(
         raw_reply = await _complete(client, messages)
 
     items = [PhotoEstimateItem(**item) for item in parse_estimate(raw_reply)]
+    if db is not None:
+        items = [await _enrich_item(item, db, food_search) for item in items]
     return _to_response(items)
+
+
+async def _enrich_item(
+    item: PhotoEstimateItem, db: AsyncSession, food_search: FoodSearch
+) -> PhotoEstimateItem:
+    """Replace an item's model-guessed macros with canonical DB values when the food is found.
+
+    Looks the identified name up via ``food_search`` (local cache → USDA → OFF) and, on a hit, scales
+    the match's per-100g macros to the estimated portion — far more reliable than the model's recalled
+    numbers (CLAUDE.md §5). A portion of 0 g can't be scaled, and a miss leaves the model's estimate
+    in place; either way the item keeps ``source="estimate"`` so the client flags it as a guess.
+    """
+    if item.est_grams <= 0:
+        return item
+
+    matches = await food_search(db, item.name)
+    if not matches:
+        return item
+    match = matches[0]
+
+    scale = item.est_grams / 100.0
+    return item.model_copy(
+        update={
+            "kcal": match.kcal_per_100g * scale,
+            "protein_g": match.protein_g_per_100g * scale,
+            "carbs_g": match.carbs_g_per_100g * scale,
+            "fat_g": match.fat_g_per_100g * scale,
+            "matched_food_id": match.id,
+            "matched_name": match.name,
+            "source": match.source,
+        }
+    )
 
 
 def _to_response(items: list[PhotoEstimateItem]) -> PhotoEstimateResponse:

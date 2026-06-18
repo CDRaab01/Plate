@@ -7,6 +7,9 @@ validation, which short-circuit before any model call (mirroring ``test_ai``). T
 estimate is only ever *returned* — nothing is written to the database (CLAUDE.md §3).
 """
 
+import uuid
+from types import SimpleNamespace
+
 import httpx
 import pytest
 from fastapi import HTTPException
@@ -268,6 +271,91 @@ async def test_estimate_photo_maps_connect_error_to_503():
         with pytest.raises(HTTPException) as exc:
             await estimate_photo(FAKE_IMAGE, "image/jpeg", client=client)
     assert exc.value.status_code == 503
+
+
+# ── DB-lookup enrichment (CLAUDE.md §5, §6) ───────────────────────────────────
+#
+# The model only identifies the food + portion; macros come from the nutrition DB when the name
+# matches. ``db`` is an opaque sentinel here — the injected ``food_search`` ignores it — so these
+# tests exercise the scaling/fallback logic without a live DB or network.
+
+_DB = object()
+
+
+def _food(**over) -> SimpleNamespace:
+    """A stand-in for a matched :class:`~app.models.food.Food` row (per-100g macros)."""
+    base = {
+        "id": uuid.uuid4(),
+        "name": "Chicken breast, grilled",
+        "source": "usda",
+        "kcal_per_100g": 165.0,
+        "protein_g_per_100g": 31.0,
+        "carbs_g_per_100g": 0.0,
+        "fat_g_per_100g": 3.6,
+    }
+    base.update(over)
+    return SimpleNamespace(**base)
+
+
+async def test_estimate_photo_uses_db_macros_when_matched():
+    food = _food()
+
+    async def fake_search(db, query):
+        assert db is _DB
+        return [food]
+
+    async with _mock_client(lambda r: _lm_response(_one_item())) as client:
+        resp = await estimate_photo(
+            FAKE_IMAGE, "image/jpeg", _DB, client=client, food_search=fake_search
+        )
+
+    item = resp.items[0]
+    # 150 g of a 165 kcal/100g food → 247.5, replacing the model's guessed 250.
+    assert item.kcal == pytest.approx(165.0 * 1.5)
+    assert item.protein_g == pytest.approx(31.0 * 1.5)
+    assert item.matched_food_id == food.id
+    assert item.matched_name == "Chicken breast, grilled"
+    assert item.source == "usda"
+
+
+async def test_estimate_photo_keeps_model_macros_when_no_db_match():
+    async def fake_search(db, query):
+        return []
+
+    async with _mock_client(lambda r: _lm_response(_one_item())) as client:
+        resp = await estimate_photo(
+            FAKE_IMAGE, "image/jpeg", _DB, client=client, food_search=fake_search
+        )
+
+    item = resp.items[0]
+    assert item.kcal == 250.0  # the model's own number, untouched
+    assert item.matched_food_id is None
+    assert item.source == "estimate"
+
+
+async def test_estimate_photo_skips_lookup_without_a_portion():
+    calls = []
+
+    async def fake_search(db, query):
+        calls.append(query)
+        return [_food()]
+
+    # No portion (est_grams=0) → macros can't be scaled, so we don't even look it up.
+    async with _mock_client(lambda r: _lm_response(_one_item(est_grams=0))) as client:
+        resp = await estimate_photo(
+            FAKE_IMAGE, "image/jpeg", _DB, client=client, food_search=fake_search
+        )
+
+    assert calls == []
+    assert resp.items[0].source == "estimate"
+
+
+async def test_estimate_photo_without_db_skips_enrichment():
+    # No db (e.g. a parser-only path) leaves the model's macros and the default "estimate" source.
+    async with _mock_client(lambda r: _lm_response(_one_item())) as client:
+        resp = await estimate_photo(FAKE_IMAGE, "image/jpeg", client=client)
+    assert resp.items[0].kcal == 250.0
+    assert resp.items[0].source == "estimate"
 
 
 # ── Route wiring (validation short-circuits before any model call) ────────────

@@ -19,6 +19,11 @@ const val LOW_CONFIDENCE = 0.4
  * One editable estimate from the photo. The macros are for the whole portion (`grams`); the user can
  * tweak any field before logging. [logged] flips once it's been added to the diary so the card can
  * show as done and not be logged twice.
+ *
+ * When [matchedFoodId] is set the macros came from a canonical food in the backend's database (its
+ * name in [matchedName], origin in [source]); logging then references that food directly so the entry
+ * links to real nutrition data. Otherwise [source] is `"estimate"` — the model's own guess — and the
+ * draft is logged as a custom food.
  */
 data class PhotoDraft(
     val id: Int,
@@ -29,6 +34,9 @@ data class PhotoDraft(
     val carbs: Double,
     val fat: Double,
     val confidence: Double,
+    val matchedFoodId: String? = null,
+    val matchedName: String? = null,
+    val source: String = "estimate",
     val logging: Boolean = false,
     val logged: Boolean = false,
 ) {
@@ -77,6 +85,9 @@ class PhotoLogViewModel @Inject constructor(
                             carbs = item.carbsG,
                             fat = item.fatG,
                             confidence = item.confidence,
+                            matchedFoodId = item.matchedFoodId,
+                            matchedName = item.matchedName,
+                            source = item.source,
                         )
                     },
                     lowConfidence = result.lowConfidence,
@@ -89,9 +100,13 @@ class PhotoLogViewModel @Inject constructor(
     }
 
     /**
-     * Log a confirmed (and possibly edited) draft into [meal] on [date]. Persists it as a one-serving
-     * custom food so the entry keeps its name, then logs the portion. [onLogged] fires on success so
-     * the shared diary can refresh.
+     * Log a confirmed (and possibly edited) draft into [meal] on [date]. [onLogged] fires on success
+     * so the shared diary can refresh.
+     *
+     * When the draft matched a canonical food ([PhotoDraft.matchedFoodId] set), we log **that food**
+     * directly by grams — the server scales its real per-100g macros to the portion, so editing the
+     * grams just works and the entry links to authoritative nutrition data. Otherwise (the model's
+     * own estimate) we persist a one-serving custom food from the edited numbers, then log it.
      */
     fun logDraft(edited: PhotoDraft, meal: String, date: String, onLogged: () -> Unit) {
         val current = _state.value.drafts.firstOrNull { it.id == edited.id } ?: return
@@ -100,7 +115,7 @@ class PhotoLogViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val grams = edited.grams
-                val food = foodRepository.createFood(
+                val foodId = edited.matchedFoodId ?: foodRepository.createFood(
                     FoodCreateRequest(
                         name = edited.name.ifBlank { "Photo estimate" },
                         servingSize = grams.takeIf { it > 0 },
@@ -110,8 +125,8 @@ class PhotoLogViewModel @Inject constructor(
                         carbsGPer100g = per100g(edited.carbs, grams),
                         fatGPer100g = per100g(edited.fat, grams),
                     ),
-                )
-                logRepository.addEntry(food.id, date, meal, grams, "g")
+                ).id
+                logRepository.addEntry(foodId, date, meal, grams, "g")
                 updateDraft(edited.id) { it.copy(logging = false, logged = true) }
                 onLogged()
             } catch (e: Exception) {
