@@ -32,7 +32,7 @@ import com.plate.ui.photo.PhotoLogScreen
 import com.plate.ui.recipe.RecipeEditScreen
 import com.plate.ui.recipe.RecipeListScreen
 import com.plate.ui.scan.BarcodeScanScreen
-import com.plate.ui.summary.WeeklySummaryScreen
+import com.plate.ui.calendar.CalendarScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -201,7 +201,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable(Routes.SUMMARY) { WeeklySummaryScreen() }
+            composable(Routes.SUMMARY) { CalendarScreen() }
             composable(Routes.COACH) { CoachScreen() }
         }
     }
