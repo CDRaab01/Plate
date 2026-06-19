@@ -16,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 
 private fun emptyTotals() = TotalsOut(0.0, 0.0, 0.0, 0.0)
 
@@ -170,6 +171,55 @@ class DiaryViewModelTest {
         val state = vm.day.value
         assertTrue(state is UiState.Success)
         assertTrue((state as UiState.Success).data.trainedToday)
+    }
+
+    @Test
+    fun `prevDay moves the date back a day and reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+        val start = LocalDate.parse(vm.date.value)
+
+        vm.prevDay()
+        advanceUntilIdle()
+
+        assertEquals(start.minusDays(1).toString(), vm.date.value)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `nextDay is capped at today`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+        val today = vm.date.value
+
+        // Already on today → next is a no-op.
+        vm.nextDay()
+        advanceUntilIdle()
+        assertEquals(today, vm.date.value)
+
+        // Step back, then forward returns to today.
+        vm.prevDay()
+        advanceUntilIdle()
+        vm.nextDay()
+        advanceUntilIdle()
+        assertEquals(today, vm.date.value)
+    }
+
+    @Test
+    fun `goToToday returns to the current date`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        vm.prevDay()
+        vm.prevDay()
+        advanceUntilIdle()
+        vm.goToToday()
+        advanceUntilIdle()
+
+        assertEquals(LocalDate.now().toString(), vm.date.value)
     }
 
     @Test

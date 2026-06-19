@@ -13,11 +13,9 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.plate.data.remote.DailyLog
-import com.plate.data.remote.DaySummary
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
-import com.plate.data.remote.RangeSummary
 import com.plate.data.remote.RecipeItemOut
 import com.plate.data.remote.RecipeOut
 import com.plate.data.remote.TotalsOut
@@ -33,7 +31,6 @@ import com.plate.ui.navigation.PlateBottomBar
 import com.plate.ui.recipe.RecipeListContent
 import com.plate.ui.scan.PermissionRationale
 import com.plate.ui.scan.ScanStatusBar
-import com.plate.ui.summary.WeeklySummaryContent
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import org.junit.Rule
@@ -95,8 +92,6 @@ class ScreenshotTest {
     @Test fun coach_dark() = capture("coach_dark", dark = true) { CoachScene() }
     @Test fun recipes_light() = capture("recipes_light", dark = false) { RecipesScene() }
     @Test fun recipes_dark() = capture("recipes_dark", dark = true) { RecipesScene() }
-    @Test fun summary_light() = capture("summary_light", dark = false) { SummaryScene() }
-    @Test fun summary_dark() = capture("summary_dark", dark = true) { SummaryScene() }
     @Test fun bottom_bar_light() =
         capture("bottom_bar_light", dark = false) { PlateBottomBar(currentDestination = null, onSelect = {}) }
     @Test fun bottom_bar_dark() =
@@ -126,23 +121,6 @@ private fun RecipesScene() {
         onEdit = {},
         onDelete = {},
         onLog = { _, _ -> },
-    )
-}
-
-@Composable
-private fun SummaryScene() {
-    val days = listOf("2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15", "2026-06-16")
-    val kcals = listOf(1850.0, 2100.0, 1700.0, 2300.0, 1950.0, 2050.0, 1600.0)
-    WeeklySummaryContent(
-        RangeSummary(
-            start = "2026-06-10",
-            end = "2026-06-16",
-            days = days.mapIndexed { i, d ->
-                DaySummary(d, TotalsOut(kcals[i], 130.0, 200.0, 65.0), 2000.0, trained = i % 2 == 0)
-            },
-            total = TotalsOut(kcals.sum(), 910.0, 1400.0, 455.0),
-            averages = TotalsOut(kcals.average(), 130.0, 200.0, 65.0),
-        ),
     )
 }
 
@@ -211,6 +189,9 @@ private fun DiaryScene() {
         ),
         greeting = "Good morning",
         mealNudge = "What's for breakfast today?",
+        onPrevDay = {},
+        onNextDay = {},
+        onToday = {},
         onEditEntry = {},
         onDeleteEntry = {},
     )

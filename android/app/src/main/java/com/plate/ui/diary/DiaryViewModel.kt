@@ -54,6 +54,25 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    /** Switch the diary (and the shared add/search/scan/photo flows) to another day, then reload. */
+    fun setDate(date: String) {
+        if (date == _date.value) return
+        _date.value = date
+        load()
+    }
+
+    /** Step to the previous day. */
+    fun prevDay() = setDate(LocalDate.parse(_date.value).minusDays(1).toString())
+
+    /** Step to the next day — capped at today (no logging into the future). */
+    fun nextDay() {
+        val next = LocalDate.parse(_date.value).plusDays(1)
+        if (!next.isAfter(LocalDate.now())) setDate(next.toString())
+    }
+
+    /** Jump back to today. */
+    fun goToToday() = setDate(LocalDate.now().toString())
+
     fun load() {
         viewModelScope.launch {
             _day.value = UiState.Loading

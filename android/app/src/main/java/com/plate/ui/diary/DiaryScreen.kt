@@ -20,10 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
@@ -63,6 +64,8 @@ import com.plate.ui.components.PanelCard
 import com.plate.ui.components.SectionHeader
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 /** Human label for each meal bucket, in the order the backend returns them. */
@@ -78,7 +81,6 @@ private val MEAL_LABELS = mapOf(
 fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToGoals: () -> Unit,
-    onNavigateToAbout: () -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -95,9 +97,6 @@ fun DiaryScreen(
                 actions = {
                     IconButton(onClick = { showQuickAdd = true }) {
                         Icon(Icons.Outlined.Bolt, contentDescription = "Quick add")
-                    }
-                    IconButton(onClick = onNavigateToAbout) {
-                        Icon(Icons.Outlined.Info, contentDescription = "About")
                     }
                     IconButton(onClick = onNavigateToGoals) {
                         Icon(Icons.Outlined.Tune, contentDescription = "Goals")
@@ -120,6 +119,9 @@ fun DiaryScreen(
                     day = s.data,
                     greeting = greeting,
                     mealNudge = mealNudge,
+                    onPrevDay = viewModel::prevDay,
+                    onNextDay = viewModel::nextDay,
+                    onToday = viewModel::goToToday,
                     onEditEntry = { editing = it },
                     onDeleteEntry = viewModel::deleteEntry,
                 )
@@ -160,6 +162,9 @@ fun DiaryContent(
     day: DailyLog,
     greeting: String,
     mealNudge: String,
+    onPrevDay: () -> Unit,
+    onNextDay: () -> Unit,
+    onToday: () -> Unit,
     onEditEntry: (LogEntryOut) -> Unit,
     onDeleteEntry: (String) -> Unit,
 ) {
@@ -167,6 +172,15 @@ fun DiaryContent(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
     ) {
+        item {
+            DateBar(
+                date = day.date,
+                onPrev = onPrevDay,
+                onNext = onNextDay,
+                onToday = onToday,
+            )
+        }
+        item { Spacer(Modifier.height(8.dp)) }
         item { GreetingPanel(greeting = greeting, mealNudge = mealNudge) }
         item { Spacer(Modifier.height(8.dp)) }
         item {
@@ -199,6 +213,61 @@ fun DiaryContent(
                 }
             }
             item { Spacer(Modifier.height(12.dp)) }
+        }
+    }
+}
+
+/**
+ * Day selector: step back/forward a day (forward capped at today by the ViewModel) and tap the
+ * label to jump back to today. This is what makes the diary a per-day log rather than today-only —
+ * the shared DiaryViewModel date also drives add/search/scan/photo, so they log to the shown day.
+ */
+@Composable
+private fun DateBar(
+    date: String,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    onToday: () -> Unit,
+) {
+    val today = LocalDate.now()
+    val parsed = remember(date) { runCatching { LocalDate.parse(date) }.getOrDefault(today) }
+    val isToday = parsed == today
+    val label = when (parsed) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        today.plusDays(1) -> "Tomorrow"
+        else -> parsed.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onPrev) {
+            Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous day")
+        }
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(enabled = !isToday, onClick = onToday)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (!isToday) {
+                Text(
+                    "Tap for today",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        IconButton(onClick = onNext, enabled = !isToday) {
+            Icon(Icons.Filled.ChevronRight, contentDescription = "Next day")
         }
     }
 }

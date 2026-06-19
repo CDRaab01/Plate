@@ -124,7 +124,6 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     DiaryScreen(
                         onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
                         onNavigateToGoals = { navController.navigate(Routes.GOALS) },
-                        onNavigateToAbout = { navController.navigate(Routes.ABOUT) },
                         onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                         viewModel = diaryViewModel,
                     )
