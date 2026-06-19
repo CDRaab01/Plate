@@ -76,6 +76,18 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    /** Edit an existing entry's portion and/or meal, then reload the day. */
+    fun updateEntry(id: String, quantity: Double, meal: String) {
+        viewModelScope.launch {
+            try {
+                logRepository.updateEntry(id = id, quantity = quantity, meal = meal)
+                load()
+            } catch (e: Exception) {
+                _day.value = UiState.Error(e.message ?: "Couldn't update that entry")
+            }
+        }
+    }
+
     fun deleteEntry(id: String) {
         viewModelScope.launch {
             try {

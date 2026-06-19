@@ -42,6 +42,7 @@ private class FakeLogRepository(
 ) : LogRepository {
     var added = 0
     var deleted = 0
+    var updated = 0
 
     override suspend fun getDay(date: String): DailyLog {
         failWith?.let { throw it }
@@ -59,8 +60,10 @@ private class FakeLogRepository(
         return LogEntryOut("e", foodId, "Food", date, meal, quantity, unit, 100.0, 5.0, 10.0, 2.0)
     }
 
-    override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut =
-        LogEntryOut(id, "f", "Food", "2026-06-16", meal ?: "breakfast", quantity ?: 1.0, unit ?: "g", 100.0, 5.0, 10.0, 2.0)
+    override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut {
+        updated++
+        return LogEntryOut(id, "f", "Food", "2026-06-16", meal ?: "breakfast", quantity ?: 1.0, unit ?: "g", 100.0, 5.0, 10.0, 2.0)
+    }
 
     override suspend fun deleteEntry(id: String) {
         deleted++
@@ -128,6 +131,19 @@ class DiaryViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repo.deleted)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `updateEntry edits then reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        vm.updateEntry("e1", 200.0, "dinner")
+        advanceUntilIdle()
+
+        assertEquals(1, repo.updated)
         assertTrue(vm.day.value is UiState.Success)
     }
 

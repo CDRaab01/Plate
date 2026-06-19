@@ -211,6 +211,7 @@ private fun DiaryScene() {
         ),
         greeting = "Good morning",
         mealNudge = "What's for breakfast today?",
+        onEditEntry = {},
         onDeleteEntry = {},
     )
 }
