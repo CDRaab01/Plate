@@ -7,12 +7,14 @@ import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
 import com.plate.data.repository.LogRepository
 import com.plate.util.MainDispatcherRule
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import org.mockito.kotlin.mock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -220,6 +222,20 @@ class DiaryViewModelTest {
         advanceUntilIdle()
 
         assertEquals(LocalDate.now().toString(), vm.date.value)
+    }
+
+    @Test
+    fun `pending date from calendar jumps the diary to that day and is consumed`() = runTest {
+        val pending = PendingDiaryDate()
+        pending.request("2026-06-10")
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi, pending)
+
+        advanceUntilIdle()
+
+        assertEquals("2026-06-10", vm.date.value)
+        assertNull(pending.date.value)
+        assertTrue(vm.day.value is UiState.Success)
     }
 
     @Test

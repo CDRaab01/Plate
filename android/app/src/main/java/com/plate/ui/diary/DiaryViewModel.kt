@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
 import com.plate.data.repository.LogRepository
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class DiaryViewModel @Inject constructor(
     private val logRepository: LogRepository,
     private val api: ApiService,
+    private val pendingDate: PendingDiaryDate = PendingDiaryDate(),
 ) : ViewModel() {
 
     private val _date = MutableStateFlow(LocalDate.now().toString())
@@ -41,6 +43,22 @@ class DiaryViewModel @Inject constructor(
     init {
         load()
         loadGreeting()
+        observePendingDate()
+    }
+
+    /**
+     * Honour a day requested from the Calendar tab (via [PendingDiaryDate]). The flow replays its
+     * current value to this collector, so a date parked before this VM existed is picked up on
+     * start; later requests jump days while the VM is alive.
+     */
+    private fun observePendingDate() {
+        viewModelScope.launch {
+            pendingDate.date.collect { requested ->
+                requested ?: return@collect
+                setDate(requested)
+                pendingDate.consume()
+            }
+        }
     }
 
     private fun loadGreeting() {

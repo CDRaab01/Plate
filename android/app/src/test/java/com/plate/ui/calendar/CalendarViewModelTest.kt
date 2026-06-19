@@ -5,6 +5,7 @@ import com.plate.data.remote.RangeSummary
 import com.plate.data.remote.TotalsOut
 import com.plate.data.repository.SummaryRepository
 import com.plate.util.MainDispatcherRule
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -14,6 +15,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 import java.time.YearMonth
 
 private val ZERO_TOTALS = TotalsOut(0.0, 0.0, 0.0, 0.0)
@@ -161,5 +163,16 @@ class CalendarViewModelTest {
         advanceUntilIdle()
 
         assertEquals(vm.displayedMonth.value.atDay(1).toString(), repo.lastStart)
+    }
+
+    @Test
+    fun `requestDay parks the date for the diary`() = runTest {
+        val pending = PendingDiaryDate()
+        val vm = CalendarViewModel(FakeSummaryRepository(), pending)
+        advanceUntilIdle()
+
+        vm.requestDay(LocalDate.parse("2026-06-10"))
+
+        assertEquals("2026-06-10", pending.date.value)
     }
 }

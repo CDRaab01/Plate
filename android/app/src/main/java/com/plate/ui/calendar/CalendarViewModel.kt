@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.DaySummary
 import com.plate.data.repository.SummaryRepository
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val summaryRepository: SummaryRepository,
+    private val pendingDate: PendingDiaryDate = PendingDiaryDate(),
 ) : ViewModel() {
 
     private val _displayedMonth = MutableStateFlow(YearMonth.now())
@@ -62,4 +64,7 @@ class CalendarViewModel @Inject constructor(
     fun selectDate(date: LocalDate) {
         _selectedDate.value = if (_selectedDate.value == date) null else date
     }
+
+    /** Park [date] for the Diary tab so opening it lands on that day (the caller switches tabs). */
+    fun requestDay(date: LocalDate) = pendingDate.request(date.toString())
 }
