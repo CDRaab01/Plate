@@ -51,7 +51,7 @@ data class PulseColors(
 
 fun darkPulseColors() = PulseColors(
     protein = PulseGreen, proteinDim = Color(0xFF11332A), onProtein = Color(0xFF00301F),
-    carbs = PulseBlue, carbsDim = Color(0xFF1B2440), onCarbs = Color(0xFFFFFFFF),
+    carbs = PulseBlue, carbsDim = Color(0xFF151C33), onCarbs = Color(0xFFFFFFFF),
     fat = PulseOrange, fatDim = Color(0xFF3B2418), onFat = Color(0xFF2B1100),
     calories = PulseViolet, caloriesDim = Color(0xFF231F3F), onCalories = Color(0xFF120A38),
     hairline = Color(0x14FFFFFF),
@@ -59,14 +59,17 @@ fun darkPulseColors() = PulseColors(
     panel = PulsePanel,
     panelHigh = PulsePanelHigh,
     glow = PulseBlue,
-    heroGradient = Brush.linearGradient(listOf(PulseBlue, PulseIndigo)),
+    // Hero/meal gradients use the deeper hues so white headline + nudge text clears WCAG AA 4.5:1
+    // (white on PulseBlue 3.72 / PulseGreen 1.92 failed; on PulseBlueDeep 5.20 / PulseGreenDeep 5.48).
+    // PulseBlue/PulseGreen stay the light accent-text tokens for use on dark surfaces.
+    heroGradient = Brush.linearGradient(listOf(PulseBlueDeep, PulseIndigo)),
     energyGradient = Brush.linearGradient(listOf(PulseOrange, PulseAmber)),
-    mealGradient = Brush.linearGradient(listOf(PulseGreen, PulseBlue)),
+    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
 )
 
 fun lightPulseColors() = PulseColors(
     protein = PulseGreenDeep, proteinDim = Color(0xFFD8F3E8), onProtein = Color(0xFFFFFFFF),
-    carbs = PulseBlueDeep, carbsDim = Color(0xFFDEE7FF), onCarbs = Color(0xFFFFFFFF),
+    carbs = PulseBlueDeep, carbsDim = Color(0xFFECF1FF), onCarbs = Color(0xFFFFFFFF),
     fat = PulseOrangeDeep, fatDim = Color(0xFFFBE3D4), onFat = Color(0xFFFFFFFF),
     calories = PulseVioletDeep, caloriesDim = Color(0xFFE6E2FB), onCalories = Color(0xFFFFFFFF),
     hairline = Color(0x1A000000),

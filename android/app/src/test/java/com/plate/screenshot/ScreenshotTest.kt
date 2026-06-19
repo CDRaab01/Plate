@@ -104,7 +104,7 @@ private fun recipeItem(id: String, name: String, kcal: Double) = RecipeItemOut(
 )
 
 @Composable
-private fun RecipesScene() {
+internal fun RecipesScene() {
     RecipeListContent(
         recipes = listOf(
             RecipeOut(
@@ -125,7 +125,7 @@ private fun RecipesScene() {
 }
 
 @Composable
-private fun LoginScene() {
+internal fun LoginScene() {
     LoginContent(
         email = "casey@plate.app",
         onEmailChange = {},
@@ -139,7 +139,7 @@ private fun LoginScene() {
 }
 
 @Composable
-private fun RegisterScene() {
+internal fun RegisterScene() {
     RegisterContent(
         name = "Casey Raab",
         onNameChange = {},
@@ -164,7 +164,7 @@ private fun totals(entries: List<LogEntryOut>) = TotalsOut(
 )
 
 @Composable
-private fun DiaryScene() {
+internal fun DiaryScene() {
     val breakfast = listOf(
         entry("1", "Rolled Oats", 80.0, "g", 311.0, 11.0, 54.0, 6.0),
         entry("2", "Banana", 118.0, "g", 105.0, 1.3, 27.0, 0.4),
@@ -209,7 +209,7 @@ private fun searchFood(id: String, name: String, brand: String?, kcal: Double) =
 )
 
 @Composable
-private fun CoachScene() {
+internal fun CoachScene() {
     CoachContent(
         state = CoachUiState(
             messages = listOf(
@@ -226,7 +226,7 @@ private fun CoachScene() {
 }
 
 @Composable
-private fun SearchScene() {
+internal fun SearchScene() {
     FoodSearchContent(
         query = "chicken",
         onQueryChange = {},

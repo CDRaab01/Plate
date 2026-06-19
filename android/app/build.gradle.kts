@@ -138,6 +138,10 @@ dependencies {
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(libs.roborazzi.rule)
+
+    // Sift design-slop audit (DesignSlopTest). Resolved from the included Sift build via
+    // composite-build dependency substitution (see settings.gradle.kts).
+    testImplementation("style.sift:sift-compose:0.1.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
