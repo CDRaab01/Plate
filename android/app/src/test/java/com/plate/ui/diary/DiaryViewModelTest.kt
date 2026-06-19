@@ -7,15 +7,18 @@ import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
 import com.plate.data.repository.LogRepository
 import com.plate.util.MainDispatcherRule
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import org.mockito.kotlin.mock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 
 private fun emptyTotals() = TotalsOut(0.0, 0.0, 0.0, 0.0)
 
@@ -42,6 +45,7 @@ private class FakeLogRepository(
 ) : LogRepository {
     var added = 0
     var deleted = 0
+    var updated = 0
 
     override suspend fun getDay(date: String): DailyLog {
         failWith?.let { throw it }
@@ -59,8 +63,10 @@ private class FakeLogRepository(
         return LogEntryOut("e", foodId, "Food", date, meal, quantity, unit, 100.0, 5.0, 10.0, 2.0)
     }
 
-    override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut =
-        LogEntryOut(id, "f", "Food", "2026-06-16", meal ?: "breakfast", quantity ?: 1.0, unit ?: "g", 100.0, 5.0, 10.0, 2.0)
+    override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut {
+        updated++
+        return LogEntryOut(id, "f", "Food", "2026-06-16", meal ?: "breakfast", quantity ?: 1.0, unit ?: "g", 100.0, 5.0, 10.0, 2.0)
+    }
 
     override suspend fun deleteEntry(id: String) {
         deleted++
@@ -132,6 +138,19 @@ class DiaryViewModelTest {
     }
 
     @Test
+    fun `updateEntry edits then reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        vm.updateEntry("e1", 200.0, "dinner")
+        advanceUntilIdle()
+
+        assertEquals(1, repo.updated)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
     fun `quickAdd posts raw macros then reloads`() = runTest {
         val repo = FakeLogRepository()
         val vm = DiaryViewModel(repo, fakeApi)
@@ -154,6 +173,69 @@ class DiaryViewModelTest {
         val state = vm.day.value
         assertTrue(state is UiState.Success)
         assertTrue((state as UiState.Success).data.trainedToday)
+    }
+
+    @Test
+    fun `prevDay moves the date back a day and reloads`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+        val start = LocalDate.parse(vm.date.value)
+
+        vm.prevDay()
+        advanceUntilIdle()
+
+        assertEquals(start.minusDays(1).toString(), vm.date.value)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `nextDay is capped at today`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+        val today = vm.date.value
+
+        // Already on today → next is a no-op.
+        vm.nextDay()
+        advanceUntilIdle()
+        assertEquals(today, vm.date.value)
+
+        // Step back, then forward returns to today.
+        vm.prevDay()
+        advanceUntilIdle()
+        vm.nextDay()
+        advanceUntilIdle()
+        assertEquals(today, vm.date.value)
+    }
+
+    @Test
+    fun `goToToday returns to the current date`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        vm.prevDay()
+        vm.prevDay()
+        advanceUntilIdle()
+        vm.goToToday()
+        advanceUntilIdle()
+
+        assertEquals(LocalDate.now().toString(), vm.date.value)
+    }
+
+    @Test
+    fun `pending date from calendar jumps the diary to that day and is consumed`() = runTest {
+        val pending = PendingDiaryDate()
+        pending.request("2026-06-10")
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi, pending)
+
+        advanceUntilIdle()
+
+        assertEquals("2026-06-10", vm.date.value)
+        assertNull(pending.date.value)
+        assertTrue(vm.day.value is UiState.Success)
     }
 
     @Test

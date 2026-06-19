@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
 import com.plate.data.repository.LogRepository
+import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class DiaryViewModel @Inject constructor(
     private val logRepository: LogRepository,
     private val api: ApiService,
+    private val pendingDate: PendingDiaryDate = PendingDiaryDate(),
 ) : ViewModel() {
 
     private val _date = MutableStateFlow(LocalDate.now().toString())
@@ -41,6 +43,22 @@ class DiaryViewModel @Inject constructor(
     init {
         load()
         loadGreeting()
+        observePendingDate()
+    }
+
+    /**
+     * Honour a day requested from the Calendar tab (via [PendingDiaryDate]). The flow replays its
+     * current value to this collector, so a date parked before this VM existed is picked up on
+     * start; later requests jump days while the VM is alive.
+     */
+    private fun observePendingDate() {
+        viewModelScope.launch {
+            pendingDate.date.collect { requested ->
+                requested ?: return@collect
+                setDate(requested)
+                pendingDate.consume()
+            }
+        }
     }
 
     private fun loadGreeting() {
@@ -53,6 +71,25 @@ class DiaryViewModel @Inject constructor(
             _greeting.value = greetingForTime(now, firstName)
         }
     }
+
+    /** Switch the diary (and the shared add/search/scan/photo flows) to another day, then reload. */
+    fun setDate(date: String) {
+        if (date == _date.value) return
+        _date.value = date
+        load()
+    }
+
+    /** Step to the previous day. */
+    fun prevDay() = setDate(LocalDate.parse(_date.value).minusDays(1).toString())
+
+    /** Step to the next day — capped at today (no logging into the future). */
+    fun nextDay() {
+        val next = LocalDate.parse(_date.value).plusDays(1)
+        if (!next.isAfter(LocalDate.now())) setDate(next.toString())
+    }
+
+    /** Jump back to today. */
+    fun goToToday() = setDate(LocalDate.now().toString())
 
     fun load() {
         viewModelScope.launch {
@@ -72,6 +109,18 @@ class DiaryViewModel @Inject constructor(
                 load()
             } catch (e: Exception) {
                 _day.value = UiState.Error(e.message ?: "Couldn't log that food")
+            }
+        }
+    }
+
+    /** Edit an existing entry's portion and/or meal, then reload the day. */
+    fun updateEntry(id: String, quantity: Double, meal: String) {
+        viewModelScope.launch {
+            try {
+                logRepository.updateEntry(id = id, quantity = quantity, meal = meal)
+                load()
+            } catch (e: Exception) {
+                _day.value = UiState.Error(e.message ?: "Couldn't update that entry")
             }
         }
     }

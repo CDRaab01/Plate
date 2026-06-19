@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -56,7 +57,10 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
+fun CalendarScreen(
+    onOpenDay: () -> Unit = {},
+    viewModel: CalendarViewModel = hiltViewModel(),
+) {
     val displayedMonth by viewModel.displayedMonth.collectAsState()
     val monthData by viewModel.monthData.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -164,7 +168,14 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                     val selected = selectedDate
                     if (selected != null) {
                         Spacer(Modifier.height(8.dp))
-                        DayDetailCard(date = selected, summary = dayMap[selected])
+                        DayDetailCard(
+                            date = selected,
+                            summary = dayMap[selected],
+                            onOpen = {
+                                viewModel.requestDay(selected)
+                                onOpenDay()
+                            },
+                        )
                     }
                 }
 
@@ -342,7 +353,7 @@ private fun MacroAvgColumn(
 }
 
 @Composable
-private fun DayDetailCard(date: LocalDate, summary: DaySummary?) {
+private fun DayDetailCard(date: LocalDate, summary: DaySummary?, onOpen: () -> Unit) {
     val pulse = PlateTheme.pulse
     val hasData = (summary?.totals?.kcal ?: 0.0) > 0.0
 
@@ -418,6 +429,16 @@ private fun DayDetailCard(date: LocalDate, summary: DaySummary?) {
                         channel = pulse.fat,
                     )
                 }
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = onOpen,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(
+                    text = if (hasData) "View & edit day" else "Log food for this day",
+                    color = pulse.carbs,
+                )
             }
         }
     }

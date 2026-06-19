@@ -124,7 +124,6 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     DiaryScreen(
                         onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
                         onNavigateToGoals = { navController.navigate(Routes.GOALS) },
-                        onNavigateToAbout = { navController.navigate(Routes.ABOUT) },
                         onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                         viewModel = diaryViewModel,
                     )
@@ -201,7 +200,11 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable(Routes.SUMMARY) { CalendarScreen() }
+            composable(Routes.SUMMARY) {
+                // Opening a calendar day parks the date (CalendarViewModel.requestDay → PendingDiaryDate)
+                // and switches to the Diary tab, where DiaryViewModel jumps to that day.
+                CalendarScreen(onOpenDay = { navigateToTab(navController, TopLevelDestination.DIARY) })
+            }
             composable(Routes.COACH) { CoachScreen() }
         }
     }

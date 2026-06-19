@@ -1,9 +1,12 @@
 package com.plate.ui.diary
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,23 +17,29 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.DailyLog
@@ -54,6 +64,8 @@ import com.plate.ui.components.PanelCard
 import com.plate.ui.components.SectionHeader
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 /** Human label for each meal bucket, in the order the backend returns them. */
@@ -69,7 +81,6 @@ private val MEAL_LABELS = mapOf(
 fun DiaryScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToGoals: () -> Unit,
-    onNavigateToAbout: () -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -77,6 +88,7 @@ fun DiaryScreen(
     val greeting by viewModel.greeting.collectAsState()
     val mealNudge by viewModel.mealNudge.collectAsState()
     var showQuickAdd by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<LogEntryOut?>(null) }
 
     Scaffold(
         topBar = {
@@ -85,9 +97,6 @@ fun DiaryScreen(
                 actions = {
                     IconButton(onClick = { showQuickAdd = true }) {
                         Icon(Icons.Outlined.Bolt, contentDescription = "Quick add")
-                    }
-                    IconButton(onClick = onNavigateToAbout) {
-                        Icon(Icons.Outlined.Info, contentDescription = "About")
                     }
                     IconButton(onClick = onNavigateToGoals) {
                         Icon(Icons.Outlined.Tune, contentDescription = "Goals")
@@ -110,6 +119,10 @@ fun DiaryScreen(
                     day = s.data,
                     greeting = greeting,
                     mealNudge = mealNudge,
+                    onPrevDay = viewModel::prevDay,
+                    onNextDay = viewModel::nextDay,
+                    onToday = viewModel::goToToday,
+                    onEditEntry = { editing = it },
                     onDeleteEntry = viewModel::deleteEntry,
                 )
                 is UiState.Error -> Text(
@@ -130,6 +143,17 @@ fun DiaryScreen(
             },
         )
     }
+
+    editing?.let { entry ->
+        EditEntryDialog(
+            entry = entry,
+            onDismiss = { editing = null },
+            onConfirm = { quantity, meal ->
+                viewModel.updateEntry(entry.id, quantity, meal)
+                editing = null
+            },
+        )
+    }
 }
 
 /** Stateless diary body — greeting panel, meal split with daily totals vs targets. */
@@ -138,12 +162,25 @@ fun DiaryContent(
     day: DailyLog,
     greeting: String,
     mealNudge: String,
+    onPrevDay: () -> Unit,
+    onNextDay: () -> Unit,
+    onToday: () -> Unit,
+    onEditEntry: (LogEntryOut) -> Unit,
     onDeleteEntry: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
     ) {
+        item {
+            DateBar(
+                date = day.date,
+                onPrev = onPrevDay,
+                onNext = onNextDay,
+                onToday = onToday,
+            )
+        }
+        item { Spacer(Modifier.height(8.dp)) }
         item { GreetingPanel(greeting = greeting, mealNudge = mealNudge) }
         item { Spacer(Modifier.height(8.dp)) }
         item {
@@ -168,10 +205,69 @@ fun DiaryContent(
                 }
             } else {
                 items(group.entries, key = { it.id }) { entry ->
-                    EntryRow(entry = entry, onDelete = { onDeleteEntry(entry.id) })
+                    EntryRow(
+                        entry = entry,
+                        onClick = { onEditEntry(entry) },
+                        onDelete = { onDeleteEntry(entry.id) },
+                    )
                 }
             }
             item { Spacer(Modifier.height(12.dp)) }
+        }
+    }
+}
+
+/**
+ * Day selector: step back/forward a day (forward capped at today by the ViewModel) and tap the
+ * label to jump back to today. This is what makes the diary a per-day log rather than today-only —
+ * the shared DiaryViewModel date also drives add/search/scan/photo, so they log to the shown day.
+ */
+@Composable
+private fun DateBar(
+    date: String,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    onToday: () -> Unit,
+) {
+    val today = LocalDate.now()
+    val parsed = remember(date) { runCatching { LocalDate.parse(date) }.getOrDefault(today) }
+    val isToday = parsed == today
+    val label = when (parsed) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        today.plusDays(1) -> "Tomorrow"
+        else -> parsed.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onPrev) {
+            Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous day")
+        }
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(enabled = !isToday, onClick = onToday)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (!isToday) {
+                Text(
+                    "Tap for today",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        IconButton(onClick = onNext, enabled = !isToday) {
+            Icon(Icons.Filled.ChevronRight, contentDescription = "Next day")
         }
     }
 }
@@ -299,9 +395,12 @@ private fun MealHeader(group: MealGroup) {
 }
 
 @Composable
-private fun EntryRow(entry: LogEntryOut, onDelete: () -> Unit) {
+private fun EntryRow(entry: LogEntryOut, onClick: () -> Unit, onDelete: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -320,6 +419,79 @@ private fun EntryRow(entry: LogEntryOut, onDelete: () -> Unit) {
             )
         }
     }
+}
+
+/**
+ * Edit a logged entry's portion and meal. Unit stays fixed (the backend re-snapshots a portion
+ * change proportionally; changing the unit of a source-less entry isn't supported), so this covers
+ * the common cases — fixing a quantity or moving a food to a different meal — without server errors.
+ * The kcal preview scales the stored snapshot so the user sees the impact before saving.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun EditEntryDialog(
+    entry: LogEntryOut,
+    onDismiss: () -> Unit,
+    onConfirm: (quantity: Double, meal: String) -> Unit,
+) {
+    var meal by remember { mutableStateOf(entry.meal) }
+    var quantityText by remember { mutableStateOf(formatQuantity(entry.quantity)) }
+
+    val quantity = quantityText.toDoubleOrNull()
+    val previewKcal = quantity
+        ?.takeIf { entry.quantity > 0 }
+        ?.let { entry.kcal * it / entry.quantity }
+    val quantityLabel = when (entry.unit) {
+        "g" -> "Grams"
+        "serving" -> "Servings"
+        else -> "Quantity (${entry.unit})"
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(entry.foodName ?: "Edit entry") },
+        text = {
+            Column {
+                Text("Meal", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MEAL_LABELS.forEach { (key, label) ->
+                        FilterChip(
+                            selected = meal == key,
+                            onClick = { meal = key },
+                            label = { Text(label) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = quantityText,
+                    onValueChange = { quantityText = it },
+                    label = { Text(quantityLabel) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                previewKcal?.let {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "≈ ${it.roundToInt()} kcal",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { quantity?.let { onConfirm(it, meal) } },
+                enabled = quantity != null && quantity > 0,
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 /** Drop a trailing ``.0`` so whole quantities read "100 g" not "100.0 g". */
