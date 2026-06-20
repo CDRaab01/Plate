@@ -291,7 +291,8 @@ private fun GreetingPanel(greeting: String, mealNudge: String) {
         Text(
             text = mealNudge,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.85f),
+            // Full white (not 0.85 alpha) so the nudge clears AA on the deepened meal gradient.
+            color = Color.White,
         )
     }
 }
