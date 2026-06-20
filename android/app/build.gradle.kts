@@ -16,6 +16,12 @@ val localProperties = Properties().apply {
 
 val keystorePath: String? = System.getenv("KEYSTORE_PATH")
 
+// Sift design-slop audit is wired in only when the sibling Sift repo is checked out next to this
+// one (<parent>/{Plate,Sift}); see settings.gradle.kts. CI builds a single repo, so Sift is absent
+// and the audit (its test dependency + the DesignSlopTest source under src/test/sift) is skipped,
+// keeping :app:testDebugUnitTest green. Locally it runs and gates as usual.
+val siftEnabled = rootDir.parentFile?.parentFile?.resolve("Sift")?.exists() == true
+
 android {
     namespace = "com.plate"
     compileSdk = 35
@@ -68,6 +74,12 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
         unitTests.isIncludeAndroidResources = true
+    }
+
+    // The Sift audit test (DesignSlopTest) lives in its own source root so it can be excluded —
+    // along with its style.sift dependency — whenever the sibling Sift build isn't present.
+    if (siftEnabled) {
+        sourceSets.getByName("test").java.srcDir("src/test/sift")
     }
 }
 
@@ -140,8 +152,11 @@ dependencies {
     testImplementation(libs.roborazzi.rule)
 
     // Sift design-slop audit (DesignSlopTest). Resolved from the included Sift build via
-    // composite-build dependency substitution (see settings.gradle.kts).
-    testImplementation("style.sift:sift-compose:0.1.0")
+    // composite-build dependency substitution (see settings.gradle.kts). Added only when the
+    // sibling Sift checkout is present, matching the src/test/sift source set above.
+    if (siftEnabled) {
+        testImplementation("style.sift:sift-compose:0.1.0")
+    }
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
