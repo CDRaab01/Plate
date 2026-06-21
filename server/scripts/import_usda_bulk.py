@@ -35,8 +35,8 @@ from collections import Counter
 from pathlib import Path
 
 import httpx
-from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # Allow running from the server/ directory without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -77,6 +77,14 @@ _NUTRIENT_SODIUM = "307"
 
 _REQUIRED = (_NUTRIENT_KCAL, _NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
 
+# Atwater general factors (kcal per gram) — USDA's own method for deriving Energy (208) when a
+# food record only carries the macro components. Foundation Foods frequently omits a stored energy
+# value entirely, so we compute it from protein/carbs/fat rather than skip an otherwise-complete
+# whole food. Only applied on a true miss; a published 208 always wins.
+_ATWATER_PROTEIN = 4.0
+_ATWATER_CARBS = 4.0
+_ATWATER_FAT = 9.0
+
 
 # ---------------------------------------------------------------------------
 # Nutrient extraction — bulk JSON uses a different wire format than the search API
@@ -106,6 +114,25 @@ def _bulk_nutrient_map(food: dict) -> dict[str, float]:
     return out
 
 
+def _nutrients_with_derived_energy(food: dict) -> dict[str, float]:
+    """Nutrient map with energy filled via Atwater factors when the record omits a stored value.
+
+    Foundation Foods frequently carries the macro components but no Energy (208); USDA derives
+    energy from those components the same way. We only derive on a true miss and only when all
+    three macros are present — a published kcal is never overwritten.
+    """
+    nutrients = _bulk_nutrient_map(food)
+    if _NUTRIENT_KCAL not in nutrients and all(
+        k in nutrients for k in (_NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
+    ):
+        nutrients[_NUTRIENT_KCAL] = (
+            _ATWATER_PROTEIN * nutrients[_NUTRIENT_PROTEIN]
+            + _ATWATER_CARBS * nutrients[_NUTRIENT_CARBS]
+            + _ATWATER_FAT * nutrients[_NUTRIENT_FAT]
+        )
+    return nutrients
+
+
 def _normalize_bulk_food(food: dict) -> dict | None:
     """Map one FDC bulk record to a dict of Food column values, or None if unusable.
 
@@ -117,7 +144,7 @@ def _normalize_bulk_food(food: dict) -> dict | None:
     if not name:
         return None
 
-    nutrients = _bulk_nutrient_map(food)
+    nutrients = _nutrients_with_derived_energy(food)
     if any(k not in nutrients for k in _REQUIRED):
         return None
 
@@ -158,8 +185,12 @@ def _normalize_bulk_food(food: dict) -> dict | None:
 
 
 def _missing_required(food: dict) -> list[str]:
-    """Return the required nutrient numbers absent from ``food`` (empty ⇒ importable)."""
-    nutrients = _bulk_nutrient_map(food)
+    """Return the required nutrient numbers absent from ``food`` (empty ⇒ importable).
+
+    Reflects the same Atwater energy derivation the importer applies, so the diagnostic matches
+    what actually gets skipped rather than the raw on-disk fields.
+    """
+    nutrients = _nutrients_with_derived_energy(food)
     return [k for k in _REQUIRED if k not in nutrients]
 
 
