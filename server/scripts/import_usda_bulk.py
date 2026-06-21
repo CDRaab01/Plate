@@ -54,11 +54,11 @@ log = logging.getLogger(__name__)
 
 _FDC_FOUNDATION_URL = os.getenv(
     "FDC_FOUNDATION_URL",
-    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json.zip",
+    "https://www.ars.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip",
 )
 _FDC_SR_LEGACY_URL = os.getenv(
     "FDC_SR_LEGACY_URL",
-    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json.zip",
+    "https://www.ars.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip",
 )
 _BATCH_SIZE = int(os.getenv("IMPORT_BATCH_SIZE", "500"))
 
