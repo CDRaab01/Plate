@@ -22,6 +22,7 @@ Foundation Foods and SR Legacy report nutrients per 100 g, which maps directly
 to our primary storage basis — no rescaling needed.
 """
 
+import argparse
 import asyncio
 import io
 import json
@@ -30,6 +31,7 @@ import os
 import sys
 import uuid
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 import httpx
@@ -155,6 +157,49 @@ def _normalize_bulk_food(food: dict) -> dict | None:
     return row
 
 
+def _missing_required(food: dict) -> list[str]:
+    """Return the required nutrient numbers absent from ``food`` (empty ⇒ importable)."""
+    nutrients = _bulk_nutrient_map(food)
+    return [k for k in _REQUIRED if k not in nutrients]
+
+
+def _dump_skipped(foods: list[dict], dataset_name: str, sample: int = 5) -> None:
+    """Diagnostic: report why records get skipped and dump a few sample records' nutrients.
+
+    Prints, for the dataset, a tally of which required nutrient is missing, then for the
+    first ``sample`` skipped records dumps every nutrient they DO carry (number → name :
+    amount) so we can see exactly which nutrient numbers the data uses.
+    """
+    _NUM_TO_NAME = {
+        _NUTRIENT_KCAL: "kcal(208)",
+        _NUTRIENT_PROTEIN: "protein(203)",
+        _NUTRIENT_CARBS: "carbs(205)",
+        _NUTRIENT_FAT: "fat(204)",
+    }
+    missing_tally: Counter = Counter()
+    dumped = 0
+    for raw in foods:
+        if not isinstance(raw, dict):
+            continue
+        missing = _missing_required(raw)
+        if not missing:
+            continue
+        missing_tally.update(_NUM_TO_NAME.get(m, m) for m in missing)
+        if dumped < sample:
+            dumped += 1
+            name = (raw.get("description") or "?").strip()
+            log.info("--- skipped #%d: %s (fdcId=%s)", dumped, name, raw.get("fdcId"))
+            log.info("    missing required: %s", [_NUM_TO_NAME.get(m, m) for m in missing])
+            for n in raw.get("foodNutrients", []) or []:
+                nutrient_obj = n.get("nutrient") or {}
+                number = nutrient_obj.get("number") or n.get("nutrientNumber") or n.get("number")
+                nname = nutrient_obj.get("name") or n.get("nutrientName") or "?"
+                amount = n.get("amount") if "amount" in n else n.get("value")
+                log.info("      [%s] %s = %s", number, nname, amount)
+
+    log.info("%s: missing-required tally across all skipped: %s", dataset_name, dict(missing_tally))
+
+
 # ---------------------------------------------------------------------------
 # Download helpers
 # ---------------------------------------------------------------------------
@@ -262,6 +307,17 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _run_dump_skipped() -> None:
+    """Download Foundation + SR Legacy and print skip diagnostics — no DB access."""
+    raw_zip = _download_zip(_FDC_FOUNDATION_URL)
+    payload = _extract_json(raw_zip)
+    _dump_skipped(payload.get("FoundationFoods", []), "Foundation Foods")
+
+    raw_zip = _download_zip(_FDC_SR_LEGACY_URL)
+    payload = _extract_json(raw_zip)
+    _dump_skipped(payload.get("SRLegacyFoods", []), "SR Legacy")
+
+
 async def main() -> None:
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
@@ -303,4 +359,16 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Import USDA FDC bulk datasets into the foods table.")
+    parser.add_argument(
+        "--dump-skipped",
+        action="store_true",
+        help="Diagnostic only: download the datasets and print why records get skipped "
+        "(which required nutrient is missing + a dump of sample records). No DB writes.",
+    )
+    args = parser.parse_args()
+
+    if args.dump_skipped:
+        _run_dump_skipped()
+    else:
+        asyncio.run(main())
