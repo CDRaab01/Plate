@@ -22,6 +22,7 @@ Foundation Foods and SR Legacy report nutrients per 100 g, which maps directly
 to our primary storage basis — no rescaling needed.
 """
 
+import argparse
 import asyncio
 import io
 import json
@@ -30,11 +31,12 @@ import os
 import sys
 import uuid
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 import httpx
-from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # Allow running from the server/ directory without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -54,11 +56,11 @@ log = logging.getLogger(__name__)
 
 _FDC_FOUNDATION_URL = os.getenv(
     "FDC_FOUNDATION_URL",
-    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json.zip",
+    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip",
 )
 _FDC_SR_LEGACY_URL = os.getenv(
     "FDC_SR_LEGACY_URL",
-    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json.zip",
+    "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip",
 )
 _BATCH_SIZE = int(os.getenv("IMPORT_BATCH_SIZE", "500"))
 
@@ -74,6 +76,14 @@ _NUTRIENT_CHOLESTEROL = "601"
 _NUTRIENT_SODIUM = "307"
 
 _REQUIRED = (_NUTRIENT_KCAL, _NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
+
+# Atwater general factors (kcal per gram) — USDA's own method for deriving Energy (208) when a
+# food record only carries the macro components. Foundation Foods frequently omits a stored energy
+# value entirely, so we compute it from protein/carbs/fat rather than skip an otherwise-complete
+# whole food. Only applied on a true miss; a published 208 always wins.
+_ATWATER_PROTEIN = 4.0
+_ATWATER_CARBS = 4.0
+_ATWATER_FAT = 9.0
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +114,25 @@ def _bulk_nutrient_map(food: dict) -> dict[str, float]:
     return out
 
 
+def _nutrients_with_derived_energy(food: dict) -> dict[str, float]:
+    """Nutrient map with energy filled via Atwater factors when the record omits a stored value.
+
+    Foundation Foods frequently carries the macro components but no Energy (208); USDA derives
+    energy from those components the same way. We only derive on a true miss and only when all
+    three macros are present — a published kcal is never overwritten.
+    """
+    nutrients = _bulk_nutrient_map(food)
+    if _NUTRIENT_KCAL not in nutrients and all(
+        k in nutrients for k in (_NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
+    ):
+        nutrients[_NUTRIENT_KCAL] = (
+            _ATWATER_PROTEIN * nutrients[_NUTRIENT_PROTEIN]
+            + _ATWATER_CARBS * nutrients[_NUTRIENT_CARBS]
+            + _ATWATER_FAT * nutrients[_NUTRIENT_FAT]
+        )
+    return nutrients
+
+
 def _normalize_bulk_food(food: dict) -> dict | None:
     """Map one FDC bulk record to a dict of Food column values, or None if unusable.
 
@@ -115,7 +144,7 @@ def _normalize_bulk_food(food: dict) -> dict | None:
     if not name:
         return None
 
-    nutrients = _bulk_nutrient_map(food)
+    nutrients = _nutrients_with_derived_energy(food)
     if any(k not in nutrients for k in _REQUIRED):
         return None
 
@@ -153,6 +182,53 @@ def _normalize_bulk_food(food: dict) -> dict | None:
         "sodium_mg_per_serving": None,
     }
     return row
+
+
+def _missing_required(food: dict) -> list[str]:
+    """Return the required nutrient numbers absent from ``food`` (empty ⇒ importable).
+
+    Reflects the same Atwater energy derivation the importer applies, so the diagnostic matches
+    what actually gets skipped rather than the raw on-disk fields.
+    """
+    nutrients = _nutrients_with_derived_energy(food)
+    return [k for k in _REQUIRED if k not in nutrients]
+
+
+def _dump_skipped(foods: list[dict], dataset_name: str, sample: int = 5) -> None:
+    """Diagnostic: report why records get skipped and dump a few sample records' nutrients.
+
+    Prints, for the dataset, a tally of which required nutrient is missing, then for the
+    first ``sample`` skipped records dumps every nutrient they DO carry (number → name :
+    amount) so we can see exactly which nutrient numbers the data uses.
+    """
+    _NUM_TO_NAME = {
+        _NUTRIENT_KCAL: "kcal(208)",
+        _NUTRIENT_PROTEIN: "protein(203)",
+        _NUTRIENT_CARBS: "carbs(205)",
+        _NUTRIENT_FAT: "fat(204)",
+    }
+    missing_tally: Counter = Counter()
+    dumped = 0
+    for raw in foods:
+        if not isinstance(raw, dict):
+            continue
+        missing = _missing_required(raw)
+        if not missing:
+            continue
+        missing_tally.update(_NUM_TO_NAME.get(m, m) for m in missing)
+        if dumped < sample:
+            dumped += 1
+            name = (raw.get("description") or "?").strip()
+            log.info("--- skipped #%d: %s (fdcId=%s)", dumped, name, raw.get("fdcId"))
+            log.info("    missing required: %s", [_NUM_TO_NAME.get(m, m) for m in missing])
+            for n in raw.get("foodNutrients", []) or []:
+                nutrient_obj = n.get("nutrient") or {}
+                number = nutrient_obj.get("number") or n.get("nutrientNumber") or n.get("number")
+                nname = nutrient_obj.get("name") or n.get("nutrientName") or "?"
+                amount = n.get("amount") if "amount" in n else n.get("value")
+                log.info("      [%s] %s = %s", number, nname, amount)
+
+    log.info("%s: missing-required tally across all skipped: %s", dataset_name, dict(missing_tally))
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +297,12 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
     skipped_missing_macros = 0
     skipped_existing = 0
 
+    skipped_empty = 0
+
     for i, raw in enumerate(foods):
+        if not isinstance(raw, dict):
+            skipped_empty += 1
+            continue
         fdc_id = str(raw.get("fdcId", ""))
         if fdc_id in existing:
             skipped_existing += 1
@@ -247,8 +328,8 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
         inserted += await _insert_batch(engine, batch)
 
     log.info(
-        "%s: done. inserted=%d  skipped_existing=%d  skipped_incomplete=%d",
-        dataset_name, inserted, skipped_existing, skipped_missing_macros,
+        "%s: done. inserted=%d  skipped_existing=%d  skipped_incomplete=%d  skipped_empty=%d",
+        dataset_name, inserted, skipped_existing, skipped_missing_macros, skipped_empty,
     )
     return inserted
 
@@ -256,6 +337,17 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
+def _run_dump_skipped() -> None:
+    """Download Foundation + SR Legacy and print skip diagnostics — no DB access."""
+    raw_zip = _download_zip(_FDC_FOUNDATION_URL)
+    payload = _extract_json(raw_zip)
+    _dump_skipped(payload.get("FoundationFoods", []), "Foundation Foods")
+
+    raw_zip = _download_zip(_FDC_SR_LEGACY_URL)
+    payload = _extract_json(raw_zip)
+    _dump_skipped(payload.get("SRLegacyFoods", []), "SR Legacy")
+
 
 async def main() -> None:
     db_url = os.environ.get("DATABASE_URL")
@@ -298,4 +390,16 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Import USDA FDC bulk datasets into the foods table.")
+    parser.add_argument(
+        "--dump-skipped",
+        action="store_true",
+        help="Diagnostic only: download the datasets and print why records get skipped "
+        "(which required nutrient is missing + a dump of sample records). No DB writes.",
+    )
+    args = parser.parse_args()
+
+    if args.dump_skipped:
+        _run_dump_skipped()
+    else:
+        asyncio.run(main())
