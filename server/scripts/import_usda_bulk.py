@@ -221,7 +221,12 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
     skipped_missing_macros = 0
     skipped_existing = 0
 
+    skipped_empty = 0
+
     for i, raw in enumerate(foods):
+        if not isinstance(raw, dict):
+            skipped_empty += 1
+            continue
         fdc_id = str(raw.get("fdcId", ""))
         if fdc_id in existing:
             skipped_existing += 1
@@ -247,8 +252,8 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
         inserted += await _insert_batch(engine, batch)
 
     log.info(
-        "%s: done. inserted=%d  skipped_existing=%d  skipped_incomplete=%d",
-        dataset_name, inserted, skipped_existing, skipped_missing_macros,
+        "%s: done. inserted=%d  skipped_existing=%d  skipped_incomplete=%d  skipped_empty=%d",
+        dataset_name, inserted, skipped_existing, skipped_missing_macros, skipped_empty,
     )
     return inserted
 
