@@ -84,6 +84,15 @@ def test_validate_request_blocks_injection(attack):
     assert validate_request(attack) is not None
 
 
+def test_system_prompt_forbids_markdown_and_emoji():
+    # Matches Spotter: replies render in a plain Text() bubble (no markdown lib), so the prompt must
+    # tell the model to emit plain prose — otherwise raw **bold**/###/* and emoji show up literally.
+    prompt = SYSTEM_PROMPT.lower()
+    assert "plain text only" in prompt
+    assert "no emoji" in prompt
+    assert "**bold**" in SYSTEM_PROMPT
+
+
 def test_validate_response_strips_leaked_prompt():
     leaked = "Sure!\n" + SYSTEM_PROMPT
     cleaned = validate_response(leaked)
