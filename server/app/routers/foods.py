@@ -73,12 +73,15 @@ async def estimate_from_photo(
     request: Request,
     image: UploadFile,
     current_user: CurrentUser,
+    db: DbSession,
 ):
     """Photo logging (Phase 6, CLAUDE.md §6): estimate the foods + macros in a meal photo.
 
-    The vision model returns an **editable draft** — this endpoint never logs anything itself. The
-    client shows the estimate for the user to confirm/edit, then logs via the normal food + log
-    endpoints. Rate-limited because each call hits the model.
+    The vision model identifies the foods and gauges portions; we then look each up in the food DB
+    and prefer canonical macros over the model's guesses (``db`` is passed through for that). The
+    result is an **editable draft** — this endpoint never logs anything itself. The client shows the
+    estimate for the user to confirm/edit, then logs via the normal food + log endpoints.
+    Rate-limited because each call hits the model.
     """
     content_type = (image.content_type or "").lower()
     if not content_type.startswith("image/"):
@@ -96,7 +99,7 @@ async def estimate_from_photo(
             detail="That image is too large — try a smaller photo.",
         )
 
-    return await estimate_photo(data, content_type)
+    return await estimate_photo(data, content_type, db)
 
 
 @router.get("/{food_id}", response_model=FoodOut)

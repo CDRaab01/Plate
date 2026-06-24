@@ -212,6 +212,35 @@ class PhotoLogViewModelTest {
     }
 
     @Test
+    fun `confirming a matched draft logs the canonical food directly`() = runTest {
+        val matched = item().copy(
+            matchedFoodId = "usda-42",
+            matchedName = "Chicken breast",
+            source = "usda",
+        )
+        val food = FakeFoodRepository(estimate = PhotoEstimateResponse(listOf(matched), false))
+        val logRepo = FakeLogRepository()
+        val vm = PhotoLogViewModel(food, logRepo)
+
+        vm.analyze(byteArrayOf(1), "image/jpeg")
+        advanceUntilIdle()
+
+        var reloaded = false
+        vm.logDraft(vm.state.value.drafts[0], meal = "dinner", date = "2026-06-16") { reloaded = true }
+        advanceUntilIdle()
+
+        // The DB already has this food — log it directly, no custom food minted.
+        assertNull(food.lastCreate)
+        val entry = logRepo.lastEntry!!
+        assertEquals("usda-42", entry.foodId)
+        assertEquals("dinner", entry.meal)
+        assertEquals(150.0, entry.quantity, 0.001)
+        assertEquals("g", entry.unit)
+        assertTrue(vm.state.value.drafts[0].logged)
+        assertTrue(reloaded)
+    }
+
+    @Test
     fun `a logged draft is not logged again`() = runTest {
         val food = FakeFoodRepository(estimate = PhotoEstimateResponse(listOf(item()), false))
         val logRepo = FakeLogRepository()

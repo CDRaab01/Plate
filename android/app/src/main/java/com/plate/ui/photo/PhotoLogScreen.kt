@@ -271,6 +271,13 @@ private fun DraftCard(draft: PhotoDraft, onLog: (PhotoDraft, String) -> Unit) {
                     label = { Text("Low confidence — please double-check") },
                 )
             }
+            // Tell the user where the macros came from: a looked-up database food (trustworthy) vs.
+            // the model's own estimate (a guess to scrutinise).
+            Text(
+                provenanceLabel(draft),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -342,6 +349,17 @@ private fun NumberField(label: String, value: String, onChange: (String) -> Unit
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(0.3f),
     )
+}
+
+/** Where a draft's macros came from, in plain language for the card. */
+private fun provenanceLabel(draft: PhotoDraft): String {
+    val matched = draft.matchedName ?: return "Estimate — not in our database, so double-check the macros"
+    val sourceName = when (draft.source) {
+        "usda" -> "USDA"
+        "off" -> "Open Food Facts"
+        else -> "your foods"
+    }
+    return "Matched “$matched” · $sourceName"
 }
 
 /** Drop a trailing ".0" so editable fields read "150" rather than "150.0". */
