@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from app.config import settings
 from app.limiter import limiter
@@ -20,6 +22,35 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# Safety net for database errors that slip past request validation. Without these, a
+# constraint violation (e.g. a referenced id that doesn't exist) or an un-storable value
+# (e.g. a NUL byte in a text field) surfaces as an opaque 500. Map them to clean 4xx so
+# clients get a structured error and the logs stay quiet. Endpoints still raise their own
+# 404s first where they can; this only catches what they don't. The request session is
+# rolled back by the get_db dependency teardown.
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": "Request conflicts with an existing or missing related record."},
+    )
+
+
+@app.exception_handler(DBAPIError)
+async def dbapi_error_handler(request: Request, exc: DBAPIError) -> Response:
+    # SQLSTATE class "22" is a *data exception* — a value the client sent that Postgres
+    # can't store (e.g. a NUL byte in text). That's a 422. Anything else (operational,
+    # connection, etc.) is a genuine server fault: re-raise so it 500s and is logged.
+    sqlstate = getattr(getattr(exc, "orig", None), "sqlstate", None)
+    if sqlstate and str(sqlstate).startswith("22"):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"detail": "Request contains a value that cannot be stored."},
+        )
+    raise exc
+
 
 # CORS: credentials=True is incompatible with wildcard origins (browser spec) and
 # unnecessary for the Android client which uses Authorization Bearer headers.
