@@ -146,8 +146,9 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-  # On a v* tag, build a signed release APK and publish it to a GitHub Release. Inert until
-  # the keystore secrets (KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD) are set.
+  # On a v* tag, build a signed release APK and publish it to a GitHub Release. Signs with the CI
+  # release key when the KEYSTORE_* secrets are set; otherwise falls back to the committed stable
+  # key (build.gradle), so a tag always produces an installable, identity-stable APK.
   android-release-build:
     name: "Android — Assemble Release APK"
     if: startsWith(github.ref, 'refs/tags/v')
@@ -166,19 +167,25 @@ jobs:
       - run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "server.url=${{ vars.PLATE_SERVER_URL || 'https://plate.dragonflymedia.org/' }}" >> local.properties
-      - name: Decode keystore
-        run: echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       - name: Build release APK
         env:
-          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: ${{ github.ref_name }}
-        run: ./gradlew :app:assembleRelease --no-daemon
+        run: |
+          # Use the CI release key only when the secret is present; otherwise build.gradle falls
+          # back to the committed stable key (KEYSTORE_PATH unset).
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
+            export KEYSTORE_PATH=keystore.jks
+            echo "Signing with the CI release key."
+          else
+            echo "No KEYSTORE_BASE64 secret; signing with the committed stable key."
+          fi
+          ./gradlew :app:assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: plate-release-${{ github.sha }}
