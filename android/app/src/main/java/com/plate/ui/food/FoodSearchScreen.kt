@@ -238,25 +238,39 @@ fun AddFoodDialog(
                 OutlinedTextField(
                     value = quantityText,
                     onValueChange = { quantityText = it },
-                    label = { Text(if (unit == "serving") "Servings" else "Grams") },
+                    label = {
+                        Text(
+                            when (unit) {
+                                "serving" -> "Servings"
+                                "oz" -> "Ounces"
+                                else -> "Grams"
+                            },
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (hasServing) {
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(Modifier.height(8.dp))
+                // Grams and ounces are always offered ("most food can be both"); serving too when defined.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (hasServing) {
                         FilterChip(
                             selected = unit == "serving",
                             onClick = { unit = "serving"; quantityText = "1" },
                             label = { Text("Serving") },
                         )
-                        FilterChip(
-                            selected = unit == "g",
-                            onClick = { unit = "g"; quantityText = "100" },
-                            label = { Text("Grams") },
-                        )
                     }
+                    FilterChip(
+                        selected = unit == "g",
+                        onClick = { unit = "g"; quantityText = "100" },
+                        label = { Text("Grams") },
+                    )
+                    FilterChip(
+                        selected = unit == "oz",
+                        onClick = { unit = "oz"; quantityText = "4" },
+                        label = { Text("Ounces") },
+                    )
                 }
                 estimatedKcal?.let {
                     Spacer(Modifier.height(12.dp))
@@ -285,5 +299,6 @@ internal fun estimateKcal(food: FoodOut, quantity: Double, unit: String): Double
         food.servingSize != null -> food.kcalPer100g * (quantity * food.servingSize / 100.0)
         else -> food.kcalPer100g * quantity
     }
+    "oz" -> food.kcalPer100g * (com.plate.util.Units.ozToG(quantity) / 100.0)
     else -> food.kcalPer100g * (quantity / 100.0)
 }

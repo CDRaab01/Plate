@@ -43,6 +43,9 @@ import com.plate.data.remote.GoalOut
 import com.plate.data.remote.GoalUpsertRequest
 import com.plate.ui.components.PrimaryButtonFullWidth
 import com.plate.util.UiState
+import com.plate.util.UnitSystem
+import com.plate.util.Units
+import kotlin.math.roundToInt
 
 private val GOAL_TYPES = listOf("maintain", "cut", "bulk")
 private val GOAL_LABELS = mapOf("maintain" to "Maintain", "cut" to "Cut", "bulk" to "Bulk")
@@ -64,6 +67,7 @@ fun GoalScreen(
 ) {
     val goalState by viewModel.goal.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val unitSystem by viewModel.unitSystem.collectAsState()
 
     LaunchedEffect(saveState) {
         if (saveState is UiState.Success) {
@@ -95,6 +99,7 @@ fun GoalScreen(
                 is UiState.Success -> GoalContent(
                     existing = s.data,
                     saveState = saveState,
+                    unitSystem = unitSystem,
                     onSave = viewModel::save,
                 )
                 else -> Unit
@@ -108,15 +113,21 @@ fun GoalScreen(
 fun GoalContent(
     existing: GoalOut?,
     saveState: UiState<Unit>,
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     onSave: (GoalUpsertRequest) -> Unit,
 ) {
+    val imperial = unitSystem == UnitSystem.IMPERIAL
+    val weightUnit = if (imperial) "lb" else "kg"
+    val heightUnit = if (imperial) "in" else "cm"
+
+    // Inputs are in the user's unit; the request to the server is always kg / cm / kg-per-week.
     var goalType by remember { mutableStateOf(existing?.goalType ?: "maintain") }
-    var weightKg by remember { mutableStateOf(existing?.weightKg?.toString() ?: "") }
-    var heightCm by remember { mutableStateOf(existing?.heightCm?.toString() ?: "") }
+    var weight by remember(unitSystem) { mutableStateOf(existing?.weightKg?.let { display(kgToUnit(it, imperial)) } ?: "") }
+    var height by remember(unitSystem) { mutableStateOf(existing?.heightCm?.let { display(cmToUnit(it, imperial)) } ?: "") }
     var age by remember { mutableStateOf(existing?.age?.toString() ?: "") }
     var sex by remember { mutableStateOf(existing?.sex ?: "male") }
     var activityLevel by remember { mutableStateOf(existing?.activityLevel ?: "moderate") }
-    var rateKgPerWeek by remember { mutableStateOf(existing?.rateKgPerWeek?.toString() ?: "0") }
+    var rate by remember(unitSystem) { mutableStateOf(existing?.rateKgPerWeek?.let { display(rateKgToUnit(it, imperial)) } ?: "0") }
 
     val isSaving = saveState is UiState.Loading
 
@@ -154,15 +165,15 @@ fun GoalContent(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NumberField(
-                label = "Weight (kg)",
-                value = weightKg,
-                onChange = { weightKg = it },
+                label = "Weight ($weightUnit)",
+                value = weight,
+                onChange = { weight = it },
                 modifier = Modifier.weight(1f),
             )
             NumberField(
-                label = "Height (cm)",
-                value = heightCm,
-                onChange = { heightCm = it },
+                label = "Height ($heightUnit)",
+                value = height,
+                onChange = { height = it },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -176,9 +187,9 @@ fun GoalContent(
                 isDecimal = false,
             )
             NumberField(
-                label = "Rate (kg/week)",
-                value = rateKgPerWeek,
-                onChange = { rateKgPerWeek = it },
+                label = "Rate ($weightUnit/week)",
+                value = rate,
+                onChange = { rate = it },
                 modifier = Modifier.weight(1f),
                 supportingText = "Negative to cut",
             )
@@ -195,11 +206,22 @@ fun GoalContent(
         PrimaryButtonFullWidth(
             text = if (isSaving) "Saving…" else "Save goal",
             onClick = {
-                val w = weightKg.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
-                val h = heightCm.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
+                val w = weight.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
+                val h = height.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
                 val a = age.toIntOrNull() ?: return@PrimaryButtonFullWidth
-                val r = rateKgPerWeek.toDoubleOrNull() ?: 0.0
-                onSave(GoalUpsertRequest(goalType, w, h, a, sex, activityLevel, r))
+                val r = rate.toDoubleOrNull() ?: 0.0
+                // Convert the user's units back to the canonical kg / cm / kg-per-week the API expects.
+                onSave(
+                    GoalUpsertRequest(
+                        goalType = goalType,
+                        weightKg = unitToKg(w, imperial),
+                        heightCm = unitToCm(h, imperial),
+                        age = a,
+                        sex = sex,
+                        activityLevel = activityLevel,
+                        rateKgPerWeek = unitToRateKg(r, imperial),
+                    ),
+                )
             },
             enabled = !isSaving,
             modifier = Modifier.fillMaxWidth(),
@@ -225,6 +247,22 @@ private fun ChipRow(
             )
         }
     }
+}
+
+// Unit conversions between the user's display unit and the canonical metric the API stores. Height
+// uses inches (1 in = 2.54 cm); weight + rate share the lb factor (rate is a linear delta).
+private const val CM_PER_IN = 2.54
+private fun kgToUnit(kg: Double, imperial: Boolean) = if (imperial) Units.kgToLb(kg) else kg
+private fun unitToKg(v: Double, imperial: Boolean) = if (imperial) Units.lbToKg(v) else v
+private fun cmToUnit(cm: Double, imperial: Boolean) = if (imperial) cm / CM_PER_IN else cm
+private fun unitToCm(v: Double, imperial: Boolean) = if (imperial) v * CM_PER_IN else v
+private fun rateKgToUnit(kg: Double, imperial: Boolean) = if (imperial) Units.kgToLb(kg) else kg
+private fun unitToRateKg(v: Double, imperial: Boolean) = if (imperial) Units.lbToKg(v) else v
+
+/** One-decimal display string, trimming a trailing ".0". */
+private fun display(v: Double): String {
+    val r = (v * 10).roundToInt() / 10.0
+    return if (r == r.toLong().toDouble()) r.toLong().toString() else r.toString()
 }
 
 @Composable

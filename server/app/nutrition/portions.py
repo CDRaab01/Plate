@@ -1,8 +1,11 @@
 """Portion scaling: a food + a logged quantity/unit → a macro snapshot.
 
-Pure functions, unit-tested with table cases. Two units are supported in Phase 2:
+Pure functions, unit-tested with table cases. Supported units:
 
 * **grams** (``g``) — scale from the per-100g basis.
+* **ounces** (``oz``) — converted to grams (canonical) and scaled from the per-100g basis, so a
+  user on imperial units can log "4 oz" directly. Macros are unit-independent — only the gram
+  factor changes.
 * **servings** (``serving``) — use the per-serving basis when the food defines one; otherwise fall
   back to the food's ``serving_size`` in grams so a serving is still loggable.
 
@@ -13,7 +16,10 @@ than being silently treated as zero.
 from dataclasses import dataclass
 from typing import Protocol
 
+from app.nutrition.units import oz_to_g
+
 GRAM_UNITS = {"g", "gram", "grams"}
+OUNCE_UNITS = {"oz", "ounce", "ounces"}
 SERVING_UNITS = {"serving", "servings"}
 
 # Primary macros are always present on a food; secondaries may be missing.
@@ -78,6 +84,10 @@ def scale_food(food: FoodLike, quantity: float, unit: str) -> MacroSnapshot:
 
     if unit_key in GRAM_UNITS:
         return _from_basis(food, "_per_100g", quantity / 100.0)
+
+    if unit_key in OUNCE_UNITS:
+        grams = oz_to_g(quantity)
+        return _from_basis(food, "_per_100g", grams / 100.0)
 
     if unit_key in SERVING_UNITS:
         if getattr(food, "kcal_per_serving", None) is not None:

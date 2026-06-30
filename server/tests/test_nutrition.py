@@ -66,6 +66,21 @@ def test_scale_grams_table(quantity, unit, expected_kcal):
     assert scale_food(BANANA, quantity, unit).kcal == pytest.approx(expected_kcal)
 
 
+def test_scale_ounces_converts_to_grams():
+    # 4 oz = 113.398 g → scale the per-100g basis by 1.13398.
+    snap = scale_food(BANANA, 4.0, "oz")
+    assert snap.kcal == pytest.approx(89.0 * 113.3980925 / 100.0)
+    assert snap.protein_g == pytest.approx(1.1 * 113.3980925 / 100.0)
+
+
+@pytest.mark.parametrize("unit", ["oz", "ounce", "ounces", "OZ"])
+def test_scale_ounce_aliases(unit):
+    # 16 oz == 453.59237 g; macros equal the gram-equivalent regardless of spelling/case.
+    by_oz = scale_food(BANANA, 16.0, unit)
+    by_g = scale_food(BANANA, 453.59237, "g")
+    assert by_oz.kcal == pytest.approx(by_g.kcal)
+
+
 def test_scale_serving_uses_per_serving_basis_when_present():
     food = FakeFood(
         kcal_per_100g=89.0,

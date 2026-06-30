@@ -44,10 +44,15 @@ class Targets:
     fat_g: float
 
 
-def from_goal(goal) -> BodyProfile:
-    """Adapt a persisted goal row (or any object with the same fields) into a :class:`BodyProfile`."""
+def from_goal(goal, *, weight_kg: float | None = None) -> BodyProfile:
+    """Adapt a persisted goal row (or any object with the same fields) into a :class:`BodyProfile`.
+
+    ``weight_kg`` overrides the goal's stored weight when supplied — the service passes the user's
+    latest weigh-in so targets track current bodyweight instead of the static goal value. Stays a
+    pure function: the DB read of the weigh-in happens in the caller.
+    """
     return BodyProfile(
-        weight_kg=goal.weight_kg,
+        weight_kg=goal.weight_kg if weight_kg is None else weight_kg,
         height_cm=goal.height_cm,
         age=goal.age,
         sex=goal.sex,

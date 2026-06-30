@@ -130,8 +130,14 @@ fun StatTile(
 }
 
 /**
- * A minimal sparkline / bar series. When [asBars] is true each value is a vertical bar (good for a
- * Mon–Sun weekly readout); otherwise the values are joined as a line. Scaled to the series max.
+ * A minimal sparkline / bar series.
+ *
+ * - [asBars] true: each value is a vertical bar scaled to the series **max** from a zero baseline —
+ *   right for magnitudes like a Mon–Sun weekly readout.
+ * - [asBars] false: the values are joined as a line. By default it's **min–max normalized** so the
+ *   shape fills the height (right for tightly-clustered series like bodyweight, where a zero
+ *   baseline would render flat); the latest point gets an emphasized dot. Pass [normalizeMinMax] =
+ *   false to keep a zero baseline.
  */
 @Composable
 fun Sparkline(
@@ -139,8 +145,12 @@ fun Sparkline(
     modifier: Modifier = Modifier.fillMaxWidth().height(48.dp),
     channel: Color = PlateTheme.pulse.carbs,
     asBars: Boolean = true,
+    normalizeMinMax: Boolean = true,
 ) {
     val max = (values.maxOrNull() ?: 0f).coerceAtLeast(1f)
+    val seriesMin = values.minOrNull() ?: 0f
+    val seriesMax = values.maxOrNull() ?: 0f
+    val range = (seriesMax - seriesMin).takeIf { it > 0f }
     Canvas(modifier = modifier) {
         if (values.isEmpty()) return@Canvas
         val w = size.width
@@ -159,14 +169,24 @@ fun Sparkline(
                 )
             }
         } else {
+            val pad = h * 0.12f // keep the line off the very top/bottom edges
+            fun yOf(v: Float): Float = if (normalizeMinMax && range != null) {
+                // Min–max: lowest value sits near the bottom, highest near the top.
+                h - pad - ((v - seriesMin) / range) * (h - 2 * pad)
+            } else {
+                h - (v / max) * h
+            }
             val step = if (values.size > 1) w / (values.size - 1) else w
             val path = Path()
             values.forEachIndexed { i, v ->
                 val x = i * step
-                val y = h - (v / max) * h
+                val y = yOf(v)
                 if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             drawPath(path, color = channel, style = Stroke(width = 4f, cap = StrokeCap.Round))
+            // Emphasize the latest point.
+            val lastX = (values.size - 1) * step
+            drawCircle(color = channel, radius = 5f, center = Offset(lastX, yOf(values.last())))
         }
     }
 }

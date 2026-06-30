@@ -3,9 +3,12 @@ package com.plate.ui.goals
 import com.plate.data.remote.GoalOut
 import com.plate.data.remote.GoalUpsertRequest
 import com.plate.data.repository.GoalRepository
+import com.plate.util.AppPreferences
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
+import com.plate.util.UnitSystem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -13,6 +16,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 private fun goalOut(type: String = "maintain") = GoalOut(
     id = "id-1",
@@ -52,10 +57,13 @@ class GoalViewModelTest {
 
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
+    private fun prefs(): AppPreferences =
+        mock { whenever(it.unitSystem).thenReturn(flowOf(UnitSystem.IMPERIAL)) }
+
     @Test
     fun `init loads existing goal into Success`() = runTest {
         val repo = FakeGoalRepository(existing = goalOut("cut"))
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         val state = vm.goal.value
@@ -66,7 +74,7 @@ class GoalViewModelTest {
     @Test
     fun `init with no goal emits Success with null`() = runTest {
         val repo = FakeGoalRepository(existing = null)
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         val state = vm.goal.value
@@ -77,7 +85,7 @@ class GoalViewModelTest {
     @Test
     fun `load failure emits Error`() = runTest {
         val repo = FakeGoalRepository(failWith = RuntimeException("network error"))
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         assertTrue(vm.goal.value is UiState.Error)
@@ -87,7 +95,7 @@ class GoalViewModelTest {
     @Test
     fun `save calls repository and emits Success`() = runTest {
         val repo = FakeGoalRepository(existing = null)
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         vm.save(REQUEST)
@@ -100,7 +108,7 @@ class GoalViewModelTest {
     @Test
     fun `clearSaveState resets back to Idle`() = runTest {
         val repo = FakeGoalRepository(existing = null)
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         vm.save(REQUEST)
@@ -120,7 +128,7 @@ class GoalViewModelTest {
             override suspend fun setGoal(request: GoalUpsertRequest): GoalOut =
                 throw RuntimeException("save failed")
         }
-        val vm = GoalViewModel(repo)
+        val vm = GoalViewModel(repo, prefs())
         advanceUntilIdle()
 
         vm.save(REQUEST)

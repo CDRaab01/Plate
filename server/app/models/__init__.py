@@ -1,3 +1,4 @@
+from app.models.body_metric import BodyMetric
 from app.models.daily_target import DailyTarget
 from app.models.food import Food
 from app.models.food_log_entry import FoodLogEntry
@@ -14,4 +15,5 @@ __all__ = [
     "DailyTarget",
     "Recipe",
     "RecipeItem",
+    "BodyMetric",
 ]

@@ -10,6 +10,8 @@ import com.plate.data.repository.GoalRepository
 import com.plate.data.repository.GoalRepositoryImpl
 import com.plate.data.repository.LogRepository
 import com.plate.data.repository.LogRepositoryImpl
+import com.plate.data.repository.MetricRepository
+import com.plate.data.repository.MetricRepositoryImpl
 import com.plate.data.repository.RecipeRepository
 import com.plate.data.repository.RecipeRepositoryImpl
 import com.plate.data.repository.SummaryRepository
@@ -51,4 +53,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSummaryRepository(impl: SummaryRepositoryImpl): SummaryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMetricRepository(impl: MetricRepositoryImpl): MetricRepository
 }

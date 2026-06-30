@@ -23,3 +23,4 @@ class User(Base):
     log_entries = relationship("FoodLogEntry", back_populates="user", lazy="raise")
     goals = relationship("UserGoal", back_populates="user", lazy="raise")
     daily_targets = relationship("DailyTarget", back_populates="user", lazy="raise")
+    metrics = relationship("BodyMetric", back_populates="user", lazy="raise")

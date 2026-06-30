@@ -17,6 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -34,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.plate.util.UnitSystem
 
 /**
  * Minimal Settings: edit the server URL (repoints the app without a rebuild via
@@ -101,6 +105,28 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Save")
+                    }
+                }
+            }
+
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Units",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    val unit by viewModel.unitSystem.collectAsState()
+                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                        UnitSystem.entries.forEachIndexed { index, system ->
+                            SegmentedButton(
+                                selected = unit == system,
+                                onClick = { viewModel.setUnitSystem(system) },
+                                shape = SegmentedButtonDefaults.itemShape(index, UnitSystem.entries.size),
+                            ) {
+                                Text(if (system == UnitSystem.IMPERIAL) "lb / oz" else "kg / g")
+                            }
+                        }
                     }
                 }
             }

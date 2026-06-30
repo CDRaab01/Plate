@@ -240,3 +240,35 @@ def test_from_goal_adapts_a_goal_row():
 
     profile = from_goal(FakeGoal())
     assert profile == BodyProfile(70.0, 175.0, 28, "female", "active", "bulk", 0.25)
+
+
+class _FakeGoal:
+    weight_kg = 90.0
+    height_cm = 180.0
+    age = 30
+    sex = "male"
+    activity_level = "moderate"
+    goal_type = "cut"
+    rate_kg_per_week = -0.5
+
+
+def test_from_goal_weight_override_replaces_goal_weight():
+    # A later weigh-in (85 kg) overrides the goal's stored 90 kg.
+    profile = from_goal(_FakeGoal(), weight_kg=85.0)
+    assert profile.weight_kg == 85.0
+    # Everything else still comes from the goal.
+    assert profile.height_cm == 180.0
+    assert profile.rate_kg_per_week == -0.5
+
+
+def test_from_goal_weight_override_none_falls_back_to_goal():
+    profile = from_goal(_FakeGoal(), weight_kg=None)
+    assert profile.weight_kg == 90.0
+
+
+def test_lighter_weight_lowers_targets():
+    # Protein scales with bodyweight and BMR drops, so a lighter weigh-in yields a lower kcal target.
+    heavy = compute_targets(from_goal(_FakeGoal(), weight_kg=90.0))
+    light = compute_targets(from_goal(_FakeGoal(), weight_kg=80.0))
+    assert light.kcal < heavy.kcal
+    assert light.protein_g < heavy.protein_g

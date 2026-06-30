@@ -26,6 +26,7 @@ class AppPreferences @Inject constructor(
 ) {
     companion object {
         private val SERVER_URL = stringPreferencesKey("pref_server_url")
+        private val UNIT_SYSTEM = stringPreferencesKey("pref_unit_system")
     }
 
     /** Base URL of the Plate server. Defaults to the build-time value when unset. */
@@ -35,5 +36,17 @@ class AppPreferences @Inject constructor(
 
     suspend fun setServerUrl(value: String) {
         context.prefsDataStore.edit { it[SERVER_URL] = value }
+    }
+
+    /**
+     * The cached lb/kg display preference. The server (`/users/me`) is the source of truth; this
+     * cache lets the UI format weights/quantities synchronously. Defaults to imperial when unset.
+     */
+    val unitSystem: Flow<UnitSystem> = context.prefsDataStore.data.map { prefs ->
+        UnitSystem.fromWire(prefs[UNIT_SYSTEM])
+    }
+
+    suspend fun setUnitSystem(value: UnitSystem) {
+        context.prefsDataStore.edit { it[UNIT_SYSTEM] = value.wire }
     }
 }

@@ -1,0 +1,295 @@
+package com.plate.ui.home
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.plate.data.remote.DailyLog
+import com.plate.data.remote.WeightTrendOut
+import com.plate.ui.components.Caption
+import com.plate.ui.components.ChannelDot
+import com.plate.ui.components.DataText
+import com.plate.ui.components.EmptyState
+import com.plate.ui.components.PanelCard
+import com.plate.ui.components.ProgressRing
+import com.plate.ui.components.SectionHeader
+import com.plate.ui.components.Sparkline
+import com.plate.ui.components.StatTile
+import com.plate.ui.theme.PlateTheme
+import com.plate.util.UiState
+import com.plate.util.UnitSystem
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Whatshot
+import kotlin.math.roundToInt
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onOpenSettings: () -> Unit,
+    onAddFood: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsState()
+    val greeting by viewModel.greeting.collectAsState()
+    val nudge by viewModel.mealNudge.collectAsState()
+    val unit by viewModel.unitSystem.collectAsState()
+    val series by viewModel.weightSeriesKg.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Today") },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when (val s = state) {
+                is UiState.Loading, is UiState.Idle ->
+                    EmptyState(icon = Icons.Filled.Refresh, title = "Loading your day…")
+                is UiState.Error ->
+                    EmptyState(icon = Icons.Filled.Refresh, title = "Couldn't load", subtitle = s.message)
+                is UiState.Success -> HomeContent(
+                    greeting = greeting,
+                    mealNudge = nudge,
+                    day = s.data.day,
+                    trend = s.data.trend,
+                    weightSeriesKg = series,
+                    unitSystem = unit,
+                    onLogWeight = viewModel::logBodyweight,
+                    onAddFood = onAddFood,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun HomeContent(
+    greeting: String,
+    mealNudge: String,
+    day: DailyLog,
+    trend: WeightTrendOut?,
+    weightSeriesKg: List<Float>,
+    unitSystem: UnitSystem,
+    onLogWeight: (Double) -> Unit,
+    onAddFood: () -> Unit,
+) {
+    val pulse = PlateTheme.pulse
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        // Greeting + nudge
+        PanelCard(Modifier.fillMaxWidth()) {
+            Column {
+                Text(greeting, style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    mealNudge,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (day.trainedToday) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.Whatshot,
+                            contentDescription = null,
+                            tint = pulse.fat,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Caption("Trained today — targets bumped", color = pulse.fat)
+                    }
+                }
+            }
+        }
+
+        // Calorie ring + remaining
+        val target = day.targets.kcal
+        val consumed = day.totals.kcal
+        val remaining = (target - consumed).coerceAtLeast(0.0)
+        val progress = if (target > 0) (consumed / target).toFloat() else 0f
+        PanelCard(Modifier.fillMaxWidth()) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                SectionHeader("Calories", channel = pulse.calories, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                ProgressRing(
+                    progress = progress,
+                    channel = pulse.calories,
+                    modifier = Modifier.size(160.dp),
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        DataText(
+                            remaining.roundToInt().toString(),
+                            style = PlateTheme.dataType.dataLarge,
+                            color = pulse.calories,
+                        )
+                        Caption("kcal left")
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    MacroRemaining("Protein", day.targets.proteinG - day.totals.proteinG, pulse.protein, Modifier.weight(1f))
+                    MacroRemaining("Carbs", day.targets.carbsG - day.totals.carbsG, pulse.carbs, Modifier.weight(1f))
+                    MacroRemaining("Fat", day.targets.fatG - day.totals.fatG, pulse.fat, Modifier.weight(1f))
+                }
+            }
+        }
+
+        // Weight trend
+        WeightTrendCard(
+            trend = trend,
+            weightSeriesKg = weightSeriesKg,
+            unitSystem = unitSystem,
+            onLogWeight = onLogWeight,
+        )
+
+        Button(onClick = onAddFood, modifier = Modifier.fillMaxWidth()) {
+            Text("Log food")
+        }
+    }
+}
+
+@Composable
+private fun MacroRemaining(label: String, remaining: Double, channel: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+    StatTile(
+        label = "$label left",
+        value = remaining.coerceAtLeast(0.0).roundToInt().toString(),
+        unit = "g",
+        channel = channel,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun WeightTrendCard(
+    trend: WeightTrendOut?,
+    weightSeriesKg: List<Float>,
+    unitSystem: UnitSystem,
+    onLogWeight: (Double) -> Unit,
+) {
+    val pulse = PlateTheme.pulse
+    // Plot the series converted to the user's unit, so the axis matches the readout.
+    val plotted = weightSeriesKg.map {
+        if (unitSystem == UnitSystem.IMPERIAL) com.plate.util.Units.kgToLb(it.toDouble()).toFloat() else it
+    }
+    PanelCard(Modifier.fillMaxWidth()) {
+        Column {
+            SectionHeader("Weight", channel = pulse.protein)
+            Spacer(Modifier.height(12.dp))
+            if (plotted.size >= 2) {
+                Sparkline(
+                    values = plotted,
+                    channel = pulse.protein,
+                    asBars = false,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+            if (trend != null) {
+                val (statusText, statusColor) = paceLabel(trend.status, pulse)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ChannelDot(statusColor)
+                    Spacer(Modifier.width(8.dp))
+                    Text(statusText, style = MaterialTheme.typography.bodyMedium, color = statusColor)
+                }
+                trend.trendWeight?.let { tw ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Trend: ${oneDp(tw)} ${trend.unit}" +
+                            (trend.observedRatePerWeek?.let { "  ·  ${signed(it)} ${trend.unit}/wk" } ?: ""),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                Text(
+                    "Log a few weigh-ins to see your trend.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            WeighInRow(unitSystem = unitSystem, onLogWeight = onLogWeight)
+        }
+    }
+}
+
+@Composable
+private fun WeighInRow(unitSystem: UnitSystem, onLogWeight: (Double) -> Unit) {
+    var field by remember { mutableStateOf("") }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = field,
+            onValueChange = { field = it.filter { ch -> ch.isDigit() || ch == '.' } },
+            label = { Text("Weight (${unitSystem.weightUnit})") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = {
+                field.toDoubleOrNull()?.let { onLogWeight(it); field = "" }
+            },
+            enabled = field.toDoubleOrNull() != null,
+        ) {
+            Text("Log")
+        }
+    }
+}
+
+private fun paceLabel(status: String, pulse: com.plate.ui.theme.PulseColors): Pair<String, androidx.compose.ui.graphics.Color> =
+    when (status) {
+        "on_pace" -> "On pace" to pulse.protein
+        "ahead" -> "Ahead of pace" to pulse.protein
+        "behind" -> "Behind pace" to pulse.fat
+        else -> "Not enough data yet" to pulse.carbs
+    }
+
+private fun oneDp(v: Double): String = ((v * 10).roundToInt() / 10.0).toString()
+private fun signed(v: Double): String = (if (v >= 0) "+" else "") + oneDp(v)

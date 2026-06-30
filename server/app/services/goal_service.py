@@ -1,9 +1,12 @@
 """Goals + computed targets (CLAUDE.md §7).
 
 The active goal is the most recent ``user_goals`` row; setting a goal appends a new one so the
-history stays intact for later trend/coach context. Targets are **computed on read** from the active
-goal — they're a pure function of it, so there's nothing to persist yet. The ``daily_targets`` table
-gets populated in Phase 7, when the training-day bump makes a per-date snapshot worth storing.
+history stays intact for later trend/coach context. Targets are **computed on read** — primarily a
+function of the active goal, but the *weight* fed into the engine is the user's latest weigh-in on
+or before the day (:func:`app.services.metric_service.latest_weight_kg_on_or_before`) when one
+exists, so a cut's deficit tracks current bodyweight instead of the static goal value; absent any
+weigh-in it falls back to the goal's ``weight_kg``. Targets are deliberately not snapshotted (the
+``daily_targets`` table stays unused) — a stored snapshot would defeat that adaptiveness.
 """
 
 import datetime
@@ -15,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user_goal import UserGoal
 from app.nutrition.targets import Targets, compute_targets, from_goal
 from app.schemas.goal import GoalUpsert
+from app.services.metric_service import latest_weight_kg_on_or_before
 
 
 async def set_goal(db: AsyncSession, user_id: uuid.UUID, req: GoalUpsert) -> UserGoal:
@@ -53,4 +57,6 @@ async def compute_targets_for(
     goal = await get_active_goal(db, user_id)
     if goal is None:
         return None
-    return compute_targets(from_goal(goal), trained=trained)
+    # Prefer the latest weigh-in on/before the day; None falls back to the goal's stored weight.
+    weight_kg = await latest_weight_kg_on_or_before(db, user_id, day)
+    return compute_targets(from_goal(goal, weight_kg=weight_kg), trained=trained)

@@ -19,7 +19,11 @@ import com.plate.data.remote.MealGroup
 import com.plate.data.remote.RecipeItemOut
 import com.plate.data.remote.RecipeOut
 import com.plate.data.remote.TotalsOut
+import com.plate.data.remote.WeightTrendOut
+import com.plate.data.remote.WeightTrendPoint
 import com.plate.ui.about.AboutContent
+import com.plate.ui.home.HomeContent
+import com.plate.util.UnitSystem
 import com.plate.ui.auth.LoginContent
 import com.plate.ui.auth.RegisterContent
 import com.plate.ui.coach.CoachContent
@@ -96,6 +100,39 @@ class ScreenshotTest {
         capture("bottom_bar_light", dark = false) { PlateBottomBar(currentDestination = null, onSelect = {}) }
     @Test fun bottom_bar_dark() =
         capture("bottom_bar_dark", dark = true) { PlateBottomBar(currentDestination = null, onSelect = {}) }
+    @Test fun home_light() = capture("home_light", dark = false) { HomeScene(onPace = true) }
+    @Test fun home_dark() = capture("home_dark", dark = true) { HomeScene(onPace = true) }
+    @Test fun home_behind_light() = capture("home_behind_light", dark = false) { HomeScene(onPace = false) }
+}
+
+@Composable
+internal fun HomeScene(onPace: Boolean) {
+    // ~90 kg trending down, shown in lb (imperial default).
+    val seriesKg = listOf(91.0f, 90.6f, 90.3f, 89.9f, 89.6f, 89.2f, 89.0f)
+    val trend = WeightTrendOut(
+        points = seriesKg.mapIndexed { i, w -> WeightTrendPoint("2026-06-${(i + 1).toString().padStart(2, '0')}", (w / 0.45359237)) },
+        trendWeight = 196.2,
+        observedRatePerWeek = if (onPace) -1.1 else -0.2,
+        goalRatePerWeek = -1.1,
+        unit = "lb",
+        status = if (onPace) "on_pace" else "behind",
+    )
+    HomeContent(
+        greeting = "Good morning, Casey",
+        mealNudge = "What's for breakfast today?",
+        day = DailyLog(
+            date = "2026-06-30",
+            meals = emptyList(),
+            totals = TotalsOut(820.0, 64.0, 88.0, 22.0),
+            targets = TotalsOut(2180.0, 165.0, 210.0, 70.0),
+            trainedToday = true,
+        ),
+        trend = trend,
+        weightSeriesKg = seriesKg,
+        unitSystem = UnitSystem.IMPERIAL,
+        onLogWeight = {},
+        onAddFood = {},
+    )
 }
 
 private fun recipeItem(id: String, name: String, kcal: Double) = RecipeItemOut(

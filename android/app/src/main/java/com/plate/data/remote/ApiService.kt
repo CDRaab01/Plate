@@ -33,6 +33,10 @@ interface ApiService {
     @GET("users/me")
     suspend fun me(): UserOut
 
+    /** Update preferences (currently the lb/kg unit system). */
+    @PATCH("users/me/settings")
+    suspend fun updateSettings(@Body body: UserSettingsUpdate): UserOut
+
     // ── Phase 2: food search + manual logging ────────────────────────────────
 
     @GET("foods/search")
@@ -117,4 +121,15 @@ interface ApiService {
 
     @POST("ai/chat")
     suspend fun coachChat(@Body body: ChatRequest): ChatResponse
+
+    // ── Bodyweight metrics + trend (Home dashboard / adaptive targets) ────────
+
+    @GET("metrics/weight")
+    suspend fun getWeightMetrics(): List<BodyMetricOut>
+
+    @POST("metrics/weight")
+    suspend fun addWeightMetric(@Body body: BodyMetricCreate): BodyMetricOut
+
+    @GET("metrics/weight/trend")
+    suspend fun getWeightTrend(): WeightTrendOut
 }

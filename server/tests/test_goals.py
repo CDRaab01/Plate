@@ -136,6 +136,38 @@ async def test_log_targets_use_computed_when_goal_set(auth_client):
     assert resp.json()["targets"]["kcal"] == pytest.approx(2759.0, abs=1.0)
 
 
+# ── Adaptive targets: latest weigh-in feeds the engine ────────────────────────
+
+
+async def test_targets_use_goal_weight_without_weigh_in(auth_client):
+    await auth_client.put("/goals", json=MALE_MODERATE)  # 80 kg
+    resp = await auth_client.get("/goals/targets")
+    # No weigh-in → goal's 80 kg → ~2759 kcal (same as the static-goal case).
+    assert resp.json()["kcal"] == pytest.approx(2759.0, abs=1.0)
+
+
+async def test_targets_prefer_latest_weigh_in_over_goal_weight(auth_client):
+    await auth_client.put("/goals", json=MALE_MODERATE)  # goal stored at 80 kg
+    base_kcal = (await auth_client.get("/goals/targets")).json()["kcal"]
+
+    # A heavier weigh-in (90 kg) on/before the target day should raise the targets.
+    await auth_client.post(
+        "/metrics/weight", json={"date": "2026-09-01", "weight": 90.0, "unit": "kg"}
+    )
+    heavier = (await auth_client.get("/goals/targets", params={"date": "2026-09-02"})).json()["kcal"]
+    assert heavier > base_kcal
+
+
+async def test_targets_weigh_in_after_day_is_ignored(auth_client):
+    await auth_client.put("/goals", json=MALE_MODERATE)
+    # Weigh-in dated AFTER the queried day must not apply (uses weight in effect then).
+    await auth_client.post(
+        "/metrics/weight", json={"date": "2026-09-10", "weight": 90.0, "unit": "kg"}
+    )
+    earlier = (await auth_client.get("/goals/targets", params={"date": "2026-09-01"})).json()["kcal"]
+    assert earlier == pytest.approx(2759.0, abs=1.0)  # falls back to goal's 80 kg
+
+
 # ── Goal isolation (one user's goal doesn't bleed to another) ────────────────
 
 

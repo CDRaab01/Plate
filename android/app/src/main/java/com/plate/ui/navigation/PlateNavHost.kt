@@ -29,6 +29,7 @@ import com.plate.ui.diary.DiaryScreen
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
 import com.plate.ui.goals.GoalScreen
+import com.plate.ui.home.HomeScreen
 import com.plate.ui.photo.PhotoLogScreen
 import com.plate.ui.recipe.RecipeEditScreen
 import com.plate.ui.recipe.RecipeListScreen
@@ -39,6 +40,9 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val FORGOT = "forgot"
+
+    /** The dashboard — post-login start destination and first bottom-bar tab. */
+    const val HOME = "home"
 
     // The diary + add-food screens share one DiaryViewModel scoped to this graph, so logging a
     // food from search reloads the diary automatically.
@@ -96,7 +100,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Routes.DIARY_GRAPH) {
+                        navController.navigate(Routes.HOME) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                     },
@@ -107,7 +111,7 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.REGISTER) {
                 RegisterScreen(
                     onRegisterSuccess = {
-                        navController.navigate(Routes.DIARY_GRAPH) {
+                        navController.navigate(Routes.HOME) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                     },
@@ -177,6 +181,13 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                         },
                     )
                 }
+            }
+
+            composable(Routes.HOME) {
+                HomeScreen(
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onAddFood = { navigateToTab(navController, TopLevelDestination.DIARY) },
+                )
             }
 
             composable(Routes.RECIPES) {

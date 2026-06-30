@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.GoalOut
 import com.plate.data.remote.GoalUpsertRequest
 import com.plate.data.repository.GoalRepository
+import com.plate.util.AppPreferences
 import com.plate.util.UiState
+import com.plate.util.UnitSystem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,7 +23,12 @@ import javax.inject.Inject
 @HiltViewModel
 class GoalViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
+    appPreferences: AppPreferences,
 ) : ViewModel() {
+
+    /** Drives whether the form inputs are labelled/entered in lb·in or kg·cm. */
+    val unitSystem: StateFlow<UnitSystem> = appPreferences.unitSystem
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UnitSystem.IMPERIAL)
 
     private val _goal = MutableStateFlow<UiState<GoalOut?>>(UiState.Loading)
     val goal: StateFlow<UiState<GoalOut?>> = _goal

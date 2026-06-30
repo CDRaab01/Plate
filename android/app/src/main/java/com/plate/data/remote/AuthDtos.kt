@@ -45,4 +45,11 @@ data class UserOut(
     val id: String,
     val name: String,
     val email: String,
+    @SerialName("unit_system") val unitSystem: String = "imperial",
+)
+
+/** Request body for PATCH /users/me/settings. */
+@Serializable
+data class UserSettingsUpdate(
+    @SerialName("unit_system") val unitSystem: String,
 )

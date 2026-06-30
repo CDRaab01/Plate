@@ -58,6 +58,16 @@ DEFAULT_PROTEIN_G_PER_KG = 1.6
 FAT_FRACTION_OF_KCAL = 0.30
 FAT_FLOOR_G_PER_KG = 0.8
 
+# ── Weight trend / on-pace feedback ───────────────────────────────────────────
+# The recent-rate window: the observed rate of weight change is the least-squares slope over the
+# weigh-ins within this many days of the latest one, so a stale older trend doesn't drag it.
+TREND_WINDOW_DAYS = 14
+# Chart smoothing: each plotted point is a trailing simple moving average over up to this many
+# weigh-ins, to damp day-to-day water-weight noise.
+TREND_SMOOTHING_POINTS = 7
+# How far the observed weekly rate may sit from the goal rate and still count as "on pace".
+ON_PACE_TOLERANCE_KG_PER_WEEK = 0.15
+
 # ── Training-day bump (Spotter-awareness, §7) ─────────────────────────────────
 # On a day the user trained (reported by Spotter), add fuel to refuel/recover. The bump is
 # expressed as gram additions skewed to carbs + protein — fat is left at its hormonal floor — and
