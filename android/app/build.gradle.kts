@@ -30,8 +30,10 @@ android {
         applicationId = "com.plate"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes VERSION_CODE (the run number) so each signed release installs cleanly over the
+        // previous one; defaults to the last shipped value for local/debug builds.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "String", "SERVER_URL",
@@ -40,6 +42,16 @@ android {
     }
 
     signingConfigs {
+        // A stable, committed key so every build — debug, local release, CI release — shares one
+        // signing identity. New APKs install over the top of existing ones without Android
+        // complaining about INSTALL_FAILED_UPDATE_INCOMPATIBLE. Password is not secret.
+        create("stable") {
+            storeFile = file("plate-debug.keystore")
+            storePassword = "plate01"
+            keyAlias = "plate"
+            keyPassword = "plate01"
+        }
+        // CI's real release key, only when KEYSTORE_PATH is supplied in the environment.
         if (keystorePath != null) {
             create("release") {
                 storeFile = file(keystorePath)
@@ -51,8 +63,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("stable")
+        }
         release {
+            // Prefer CI's release key; fall back to the stable committed key for local releases.
             signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("stable")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
