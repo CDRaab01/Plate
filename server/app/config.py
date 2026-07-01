@@ -35,8 +35,9 @@ class Settings(BaseSettings):
     off_base_url: str = "https://world.openfoodfacts.org"
     # OFF requires a descriptive User-Agent identifying the app + a contact (CLAUDE.md §5).
     off_user_agent: str = "Plate/0.1.0 (cdraab01@gmail.com)"
-    # Per-source cap on how many results a single live search pulls back.
-    external_search_limit: int = 10
+    # Per-source cap on how many results a single live search pulls back (and the "cache is rich
+    # enough, skip the network" threshold in food_service.search_foods).
+    external_search_limit: int = 25
     # Timeout (seconds) for outbound calls to USDA/OFF.
     external_timeout_seconds: float = 8.0
     # Master switch for live external lookups on a cache miss. Disabled in the test suite so CI

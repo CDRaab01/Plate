@@ -80,7 +80,9 @@ class HomeViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _state.value = UiState.Loading
+            // Keep the current dashboard visible while refreshing (e.g. on resume after logging a
+            // food); only show the spinner on the very first load.
+            if (_state.value !is UiState.Success) _state.value = UiState.Loading
             _state.value = try {
                 metricRepository.sync() // best-effort; cache backs the sparkline regardless
                 val day = logRepository.getDay(LocalDate.now().toString())

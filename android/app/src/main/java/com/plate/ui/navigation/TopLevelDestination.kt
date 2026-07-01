@@ -25,9 +25,9 @@ enum class TopLevelDestination(
     val icon: ImageVector,
     val selectedIcon: ImageVector,
 ) {
-    HOME(Routes.HOME, Routes.HOME, "Home", Icons.Outlined.Home, Icons.Filled.Home),
     DIARY(Routes.DIARY_GRAPH, Routes.DIARY, "Diary", Icons.Outlined.Today, Icons.Filled.Today),
     RECIPES(Routes.RECIPES, Routes.RECIPES, "Recipes", Icons.Outlined.RestaurantMenu, Icons.Filled.RestaurantMenu),
+    HOME(Routes.HOME, Routes.HOME, "Home", Icons.Outlined.Home, Icons.Filled.Home),
     SUMMARY(Routes.SUMMARY, Routes.SUMMARY, "Calendar", Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
     COACH(Routes.COACH, Routes.COACH, "Coach", Icons.AutoMirrored.Outlined.Chat, Icons.AutoMirrored.Filled.Chat),
     ;

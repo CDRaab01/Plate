@@ -118,7 +118,13 @@ async def search_foods(
     *,
     sources: list[FoodSource] | None = None,
 ) -> list[Food]:
-    """Local-cache-first food search.
+    """Local-cache-first food search that still enriches from external sources.
+
+    The local ``foods`` cache is consulted first. If it already holds a full page
+    (``>= external_search_limit`` matches) we return it and skip the network. Otherwise we still
+    query the external sources and **merge** their results with the local ones (local first, deduped)
+    — so a thin early cache (e.g. an OFF-only result before a USDA key was configured) no longer
+    permanently shadows richer external data. New external foods are cached for next time.
 
     ``sources`` is injectable for tests; in production it's ``None`` and live USDA/OFF sources are
     built on demand (and only when :data:`settings.food_search_live` is enabled).
@@ -127,21 +133,31 @@ async def search_foods(
     if not q:
         return []
 
-    local = await _search_local(db, q, settings.external_search_limit)
-    if local:
+    limit = settings.external_search_limit
+    local = await _search_local(db, q, limit)
+    if len(local) >= limit:
+        return local  # cache already has a full page — no need to hit the network
+
+    # Supplement with external sources. When there's nothing to query (live disabled, no injected
+    # source), fall back to whatever the local cache had.
+    if sources is not None:
+        items = await _gather(sources, q, limit)
+    elif settings.food_search_live:
+        async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
+            items = await _gather(_build_live_sources(client), q, limit)
+    else:
         return local
 
-    if sources is not None:
-        items = await _gather(sources, q, settings.external_search_limit)
-        return await cache_foods(db, items)
+    cached = await cache_foods(db, items)
 
-    if not settings.food_search_live:
-        return []
-
-    async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
-        live = _build_live_sources(client)
-        items = await _gather(live, q, settings.external_search_limit)
-    return await cache_foods(db, items)
+    # Merge local + external, deduped by id, local first, capped at the page limit.
+    merged = list(local)
+    seen = {f.id for f in local}
+    for food in cached:
+        if food.id not in seen:
+            seen.add(food.id)
+            merged.append(food)
+    return merged[:limit]
 
 
 async def _fetch_barcode(source: FoodSource, code: str) -> NormalizedFood | None:

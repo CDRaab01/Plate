@@ -9,6 +9,7 @@ import uuid
 import httpx
 import pytest
 
+from app.config import settings
 from app.database import AsyncSessionLocal
 from app.foods.base import FoodSource
 from app.foods.normalize import NormalizedFood, normalized_name
@@ -201,7 +202,10 @@ def _normalized(name: str, *, barcode: str | None = None, source: str = "off") -
     )
 
 
-async def test_search_returns_local_without_calling_sources():
+async def test_search_returns_local_without_calling_sources(monkeypatch):
+    # A full local page (>= external_search_limit) skips the network. Use a limit of 1 so a single
+    # cached row counts as "full".
+    monkeypatch.setattr(settings, "external_search_limit", 1)
     unique = f"Localberry {uuid.uuid4().hex[:6]}"
     async with AsyncSessionLocal() as db:
         db.add(
@@ -223,7 +227,8 @@ async def test_search_returns_local_without_calling_sources():
     assert any(f.name == unique for f in results)
 
 
-async def test_search_caches_external_results_on_miss():
+async def test_search_caches_external_results_on_miss(monkeypatch):
+    monkeypatch.setattr(settings, "external_search_limit", 1)
     query = f"Quinoa {uuid.uuid4().hex[:6]}"
     item = _normalized(query, barcode=uuid.uuid4().hex)
     source = FakeSource("off", [item])
@@ -234,11 +239,38 @@ async def test_search_caches_external_results_on_miss():
     assert len(first) == 1
     assert first[0].id is not None  # persisted
 
-    # Second search finds it locally — the source is not hit again.
+    # Second search now finds a full local page (1 >= limit 1) — the source is not hit again.
     async with AsyncSessionLocal() as db:
         second = await search_foods(db, query, sources=[source])
     assert source.calls == 1
     assert second[0].name == query
+
+
+async def test_thin_local_cache_still_enriches_from_sources(monkeypatch):
+    # With more room than the single cached row, a repeat search still queries the source and
+    # merges new results (local first) instead of the thin cache shadowing them.
+    monkeypatch.setattr(settings, "external_search_limit", 10)
+    term = f"Oat {uuid.uuid4().hex[:6]}"
+    async with AsyncSessionLocal() as db:
+        db.add(
+            Food(
+                source="user",
+                name=f"{term} homemade",
+                kcal_per_100g=100.0,
+                protein_g_per_100g=5.0,
+                carbs_g_per_100g=10.0,
+                fat_g_per_100g=2.0,
+            )
+        )
+        await db.commit()
+
+    extra = _normalized(f"{term} branded", barcode=uuid.uuid4().hex)
+    source = FakeSource("off", [extra])
+    async with AsyncSessionLocal() as db:
+        results = await search_foods(db, term, sources=[source])
+    assert source.calls == 1  # not shadowed by the single local row
+    names = {f.name for f in results}
+    assert f"{term} homemade" in names and f"{term} branded" in names
 
 
 async def test_cache_dedups_within_batch_by_barcode():

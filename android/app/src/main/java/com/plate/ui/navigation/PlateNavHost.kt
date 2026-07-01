@@ -186,7 +186,9 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.HOME) {
                 HomeScreen(
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onAddFood = { navigateToTab(navController, TopLevelDestination.DIARY) },
+                    // Jump straight to food search. Navigating to this nested destination puts the
+                    // diary graph on the back stack, so the search screen's DiaryViewModel resolves.
+                    onAddFood = { navController.navigate(Routes.SEARCH) },
                 )
             }
 

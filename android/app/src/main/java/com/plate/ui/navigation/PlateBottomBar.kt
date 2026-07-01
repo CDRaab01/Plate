@@ -25,9 +25,9 @@ fun PlateBottomBar(
     onSelect: (TopLevelDestination) -> Unit,
 ) {
     val pulse = PlateTheme.pulse
-    // One tint per tab: Home · Diary · Recipes · Calendar · Coach.
-    val channels = listOf(pulse.calories, pulse.carbs, pulse.protein, pulse.fat, pulse.carbs)
-    val channelDims = listOf(pulse.caloriesDim, pulse.carbsDim, pulse.proteinDim, pulse.fatDim, pulse.carbsDim)
+    // One tint per tab: Diary · Recipes · Home (center) · Calendar · Coach.
+    val channels = listOf(pulse.carbs, pulse.protein, pulse.calories, pulse.fat, pulse.carbs)
+    val channelDims = listOf(pulse.carbsDim, pulse.proteinDim, pulse.caloriesDim, pulse.fatDim, pulse.carbsDim)
     Column {
         HorizontalDivider(thickness = 1.dp, color = pulse.hairline)
         NavigationBar(
