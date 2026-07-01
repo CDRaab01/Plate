@@ -82,22 +82,42 @@ def normalize_information(data: dict) -> NormalizedRecipe:
 
 
 class SpoonacularSource(RecipeSource):
+    """Spoonacular, direct or via RapidAPI.
+
+    Direct (``api.spoonacular.com``) authenticates with an ``apiKey`` query param. When
+    ``rapidapi_host`` is set the same endpoints are called on the RapidAPI host with header auth
+    (``X-RapidAPI-Key`` / ``X-RapidAPI-Host``) and no ``apiKey`` param.
+    """
+
     source_tag = "spoonacular"
 
-    def __init__(self, client: httpx.AsyncClient, api_key: str, base_url: str):
+    def __init__(
+        self,
+        client: httpx.AsyncClient,
+        api_key: str,
+        base_url: str,
+        rapidapi_host: str | None = None,
+    ):
         self._client = client
         self._api_key = api_key
         self._base_url = base_url.rstrip("/")
+        self._rapidapi_host = rapidapi_host
+
+    @property
+    def _headers(self) -> dict[str, str]:
+        if self._rapidapi_host:
+            return {"X-RapidAPI-Key": self._api_key, "X-RapidAPI-Host": self._rapidapi_host}
+        return {}
+
+    def _params(self, extra: dict) -> dict:
+        # RapidAPI authenticates via headers; direct Spoonacular via the apiKey query param.
+        return extra if self._rapidapi_host else {"apiKey": self._api_key, **extra}
 
     async def discover(self, query: str, *, limit: int) -> list[RecipeSummary]:
         resp = await self._client.get(
             f"{self._base_url}/recipes/complexSearch",
-            params={
-                "apiKey": self._api_key,
-                "query": query,
-                "number": limit,
-                "addRecipeInformation": "true",
-            },
+            params=self._params({"query": query, "number": limit, "addRecipeInformation": "true"}),
+            headers=self._headers,
         )
         resp.raise_for_status()
         out: list[RecipeSummary] = []
@@ -119,7 +139,8 @@ class SpoonacularSource(RecipeSource):
     async def fetch(self, source_id: str) -> NormalizedRecipe | None:
         resp = await self._client.get(
             f"{self._base_url}/recipes/{source_id}/information",
-            params={"apiKey": self._api_key, "includeNutrition": "true"},
+            params=self._params({"includeNutrition": "true"}),
+            headers=self._headers,
         )
         if resp.status_code == 404:
             return None

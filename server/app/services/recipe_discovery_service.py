@@ -30,6 +30,13 @@ _DISABLED = HTTPException(
 )
 
 
+def _build_source(client: httpx.AsyncClient) -> SpoonacularSource:
+    """Construct the Spoonacular source, honoring the RapidAPI host + base-URL config."""
+    host = settings.spoonacular_rapidapi_host
+    base_url = f"https://{host}" if host else settings.spoonacular_base_url
+    return SpoonacularSource(client, settings.spoonacular_api_key, base_url, rapidapi_host=host)
+
+
 def _scaled(value: float | None, factor: float) -> float | None:
     return None if value is None else value * factor
 
@@ -110,8 +117,7 @@ async def discover_recipes(
     if not settings.spoonacular_api_key:
         raise _DISABLED
     async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
-        src = SpoonacularSource(client, settings.spoonacular_api_key, settings.spoonacular_base_url)
-        return await src.discover(q, limit=settings.recipe_discover_limit)
+        return await _build_source(client).discover(q, limit=settings.recipe_discover_limit)
 
 
 async def import_recipe(
@@ -126,10 +132,7 @@ async def import_recipe(
         normalized = await source.fetch(source_id)
     elif settings.spoonacular_api_key:
         async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
-            src = SpoonacularSource(
-                client, settings.spoonacular_api_key, settings.spoonacular_base_url
-            )
-            normalized = await src.fetch(source_id)
+            normalized = await _build_source(client).fetch(source_id)
     else:
         raise _DISABLED
 

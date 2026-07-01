@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # endpoints are disabled (503). Free key: https://spoonacular.com/food-api/console#Dashboard
     spoonacular_api_key: str | None = None
     spoonacular_base_url: str = "https://api.spoonacular.com"
+    # Use Spoonacular via RapidAPI instead of direct: set this to the RapidAPI host
+    # (spoonacular-recipe-food-nutrition-v1.p.rapidapi.com) and put the RapidAPI key in
+    # spoonacular_api_key. Auth then uses X-RapidAPI-Key/Host headers, not the apiKey param.
+    spoonacular_rapidapi_host: str | None = None
     # Max recipes returned per discovery search.
     recipe_discover_limit: int = 10
 

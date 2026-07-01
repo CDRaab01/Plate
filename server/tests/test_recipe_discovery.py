@@ -7,6 +7,7 @@ Plate recipe that can be logged to a meal.
 import datetime
 import uuid
 
+import httpx
 import pytest
 
 from app.database import AsyncSessionLocal
@@ -17,7 +18,7 @@ from app.recipes_ext.base import (
     RecipeSource,
     RecipeSummary,
 )
-from app.recipes_ext.spoonacular import normalize_information
+from app.recipes_ext.spoonacular import SpoonacularSource, normalize_information
 from app.services.recipe_discovery_service import discover_recipes, import_recipe
 from app.services.recipe_service import log_recipe
 
@@ -104,6 +105,43 @@ def test_normalize_information_maps_ingredients_and_grams():
     chicken, oil = r.ingredients
     assert chicken.grams == 200 and chicken.kcal == 330 and chicken.sodium_mg == 140
     assert oil.grams is None and oil.kcal == 119  # tbsp → no gram basis
+
+
+# ── Spoonacular auth modes (direct vs RapidAPI) ───────────────────────────────
+
+
+async def test_direct_mode_authenticates_with_apikey_param():
+    captured: dict = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        captured["url"] = str(req.url)
+        captured["headers"] = req.headers
+        return httpx.Response(200, json={"results": []})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        src = SpoonacularSource(client, "KEY123", "https://api.spoonacular.com")
+        await src.discover("chicken", limit=5)
+
+    assert "apiKey=KEY123" in captured["url"]
+    assert "x-rapidapi-key" not in captured["headers"]
+
+
+async def test_rapidapi_mode_authenticates_with_headers():
+    captured: dict = {}
+    host = "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        captured["url"] = str(req.url)
+        captured["headers"] = req.headers
+        return httpx.Response(200, json={"results": []})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        src = SpoonacularSource(client, "RAPID123", f"https://{host}", rapidapi_host=host)
+        await src.discover("chicken", limit=5)
+
+    assert "apiKey" not in captured["url"]  # no query-param auth in RapidAPI mode
+    assert captured["headers"]["x-rapidapi-key"] == "RAPID123"
+    assert captured["headers"]["x-rapidapi-host"] == host
 
 
 # ── Discovery ─────────────────────────────────────────────────────────────────
