@@ -80,6 +80,14 @@ interface ApiService {
         @Query("end") end: String? = null,
     ): RangeSummary
 
+    /** Search external recipes (Spoonacular). 503 until the server has a key configured. */
+    @GET("recipes/discover")
+    suspend fun discoverRecipes(@Query("q") query: String): List<DiscoveredRecipe>
+
+    /** Import an external recipe (by provider id) as a saved recipe. */
+    @POST("recipes/import")
+    suspend fun importRecipe(@Body body: RecipeImportRequest): RecipeOut
+
     @GET("recipes")
     suspend fun getRecipes(): List<RecipeOut>
 

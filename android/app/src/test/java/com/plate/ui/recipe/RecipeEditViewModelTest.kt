@@ -36,6 +36,9 @@ private class EditFakeRecipeRepository : RecipeRepository {
     override suspend fun replaceItems(id: String, items: List<RecipeItemIn>): RecipeOut =
         RecipeOut(id, "Existing", null, emptyList(), TotalsOut(0.0, 0.0, 0.0, 0.0))
     override suspend fun delete(id: String) {}
+    override suspend fun discover(query: String) = emptyList<com.plate.data.remote.DiscoveredRecipe>()
+    override suspend fun importRecipe(sourceId: String): RecipeOut =
+        RecipeOut(sourceId, "Imported", null, emptyList(), TotalsOut(0.0, 0.0, 0.0, 0.0))
 }
 
 private class EditFakeFoodRepository(private val results: List<FoodOut>) : FoodRepository {

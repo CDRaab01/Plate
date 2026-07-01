@@ -40,6 +40,8 @@ private class FakeRecipeRepository(
         deleted++
         recipes.removeAll { it.id == id }
     }
+    override suspend fun discover(query: String) = emptyList<com.plate.data.remote.DiscoveredRecipe>()
+    override suspend fun importRecipe(sourceId: String): RecipeOut = recipes.first()
 }
 
 private class FakeLogRepository(var loggedRecipe: String? = null, var loggedMeal: String? = null) : LogRepository {

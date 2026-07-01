@@ -60,3 +60,19 @@ data class RecipeLogRequest(
     val date: String,
     val meal: String,
 )
+
+/** A recipe-discovery search hit from GET /recipes/discover (external provider). */
+@Serializable
+data class DiscoveredRecipe(
+    @SerialName("source_id") val sourceId: String,
+    val title: String,
+    val image: String? = null,
+    @SerialName("ready_in_minutes") val readyInMinutes: Int? = null,
+    val servings: Int? = null,
+)
+
+/** POST /recipes/import: save an external recipe (by provider id) as a Plate recipe. */
+@Serializable
+data class RecipeImportRequest(
+    @SerialName("source_id") val sourceId: String,
+)

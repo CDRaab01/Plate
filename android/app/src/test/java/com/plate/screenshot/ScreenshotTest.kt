@@ -103,6 +103,25 @@ class ScreenshotTest {
     @Test fun home_light() = capture("home_light", dark = false) { HomeScene(onPace = true) }
     @Test fun home_dark() = capture("home_dark", dark = true) { HomeScene(onPace = true) }
     @Test fun home_behind_light() = capture("home_behind_light", dark = false) { HomeScene(onPace = false) }
+    @Test fun discover_light() = capture("discover_light", dark = false) { DiscoverScene() }
+    @Test fun discover_dark() = capture("discover_dark", dark = true) { DiscoverScene() }
+}
+
+@Composable
+internal fun DiscoverScene() {
+    com.plate.ui.recipe.DiscoverRecipesContent(
+        query = "high protein chicken",
+        onQueryChange = {},
+        onSearch = {},
+        results = UiState.Success(
+            listOf(
+                com.plate.data.remote.DiscoveredRecipe("1", "Grilled Chicken & Rice Bowl", servings = 2, readyInMinutes = 25),
+                com.plate.data.remote.DiscoveredRecipe("2", "High-Protein Chicken Stir-Fry", servings = 4, readyInMinutes = 30),
+                com.plate.data.remote.DiscoveredRecipe("3", "Lemon Garlic Chicken Thighs", servings = 3, readyInMinutes = 40),
+            ),
+        ),
+        onPick = {},
+    )
 }
 
 @Composable

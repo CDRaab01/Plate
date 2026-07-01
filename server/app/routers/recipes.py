@@ -1,19 +1,23 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.limiter import limiter
 from app.schemas.log import LogEntryOut
 from app.schemas.recipe import (
+    DiscoveredRecipe,
     RecipeCreate,
+    RecipeImportRequest,
     RecipeItemsReplace,
     RecipeLogRequest,
     RecipeOut,
     RecipeUpdate,
 )
 from app.security import CurrentUser
+from app.services.recipe_discovery_service import discover_recipes, import_recipe
 from app.services.recipe_service import (
     create_recipe,
     delete_recipe,
@@ -27,6 +31,39 @@ from app.services.recipe_service import (
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+@router.get("/discover", response_model=list[DiscoveredRecipe])
+@limiter.limit("30/minute")
+async def discover(
+    request: Request,
+    current_user: CurrentUser,
+    q: Annotated[str, Query(description="Recipe search text")],
+):
+    """Search external recipes (Spoonacular). 503 until SPOONACULAR_API_KEY is configured."""
+    hits = await discover_recipes(q)
+    return [
+        DiscoveredRecipe(
+            source_id=h.source_id,
+            title=h.title,
+            image=h.image,
+            ready_in_minutes=h.ready_in_minutes,
+            servings=h.servings,
+        )
+        for h in hits
+    ]
+
+
+@router.post("/import", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
+async def import_external(
+    request: Request,
+    req: RecipeImportRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """Import an external recipe as a saved Plate recipe (ingredients become loggable foods)."""
+    return await import_recipe(db, current_user.id, req.source_id)
 
 
 @router.post("", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)

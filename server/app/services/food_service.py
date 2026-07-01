@@ -22,10 +22,17 @@ log = logging.getLogger(__name__)
 
 
 async def _search_local(db: AsyncSession, query: str, limit: int) -> list[Food]:
-    """Case-insensitive substring match on the cached ``foods`` table."""
+    """Case-insensitive substring match on the cached ``foods`` table.
+
+    Recipe-ingredient foods (``source='spoonacular'``, created by recipe import) are excluded — they
+    carry recipe-specific per-serving nutrition and would be confusing as standalone search hits.
+    """
     pattern = f"%{query}%"
     result = await db.execute(
-        select(Food).where(Food.name.ilike(pattern)).order_by(Food.name).limit(limit)
+        select(Food)
+        .where(Food.name.ilike(pattern), Food.source != "spoonacular")
+        .order_by(Food.name)
+        .limit(limit)
     )
     return list(result.scalars().all())
 

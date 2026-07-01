@@ -1,7 +1,9 @@
 package com.plate.data.repository
 
 import com.plate.data.remote.ApiService
+import com.plate.data.remote.DiscoveredRecipe
 import com.plate.data.remote.RecipeCreate
+import com.plate.data.remote.RecipeImportRequest
 import com.plate.data.remote.RecipeItemIn
 import com.plate.data.remote.RecipeItemsReplace
 import com.plate.data.remote.RecipeOut
@@ -31,4 +33,10 @@ class RecipeRepositoryImpl @Inject constructor(
         api.replaceRecipeItems(id, RecipeItemsReplace(items = items))
 
     override suspend fun delete(id: String) = api.deleteRecipe(id)
+
+    override suspend fun discover(query: String): List<DiscoveredRecipe> =
+        api.discoverRecipes(query)
+
+    override suspend fun importRecipe(sourceId: String): RecipeOut =
+        api.importRecipe(RecipeImportRequest(sourceId = sourceId))
 }

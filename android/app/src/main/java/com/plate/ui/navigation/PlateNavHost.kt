@@ -31,6 +31,7 @@ import com.plate.ui.food.FoodSearchScreen
 import com.plate.ui.goals.GoalScreen
 import com.plate.ui.home.HomeScreen
 import com.plate.ui.photo.PhotoLogScreen
+import com.plate.ui.recipe.DiscoverRecipesScreen
 import com.plate.ui.recipe.RecipeEditScreen
 import com.plate.ui.recipe.RecipeListScreen
 import com.plate.ui.scan.BarcodeScanScreen
@@ -59,6 +60,7 @@ object Routes {
     const val COACH = "coach"
     const val RECIPES = "recipes"
     const val RECIPE_EDIT = "recipe_edit"
+    const val RECIPE_DISCOVER = "recipe_discover"
     const val SUMMARY = "summary"
 
     fun recipeEdit(id: String? = null) =
@@ -196,7 +198,11 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 RecipeListScreen(
                     onCreate = { navController.navigate(Routes.recipeEdit()) },
                     onEdit = { id -> navController.navigate(Routes.recipeEdit(id)) },
+                    onDiscover = { navController.navigate(Routes.RECIPE_DISCOVER) },
                 )
+            }
+            composable(Routes.RECIPE_DISCOVER) {
+                DiscoverRecipesScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = "${Routes.RECIPE_EDIT}?recipeId={recipeId}",

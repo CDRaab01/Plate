@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.TravelExplore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -57,6 +58,7 @@ private val MEALS = listOf("breakfast", "lunch", "dinner", "snack")
 fun RecipeListScreen(
     onCreate: () -> Unit,
     onEdit: (String) -> Unit,
+    onDiscover: () -> Unit,
     viewModel: RecipeListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.recipes.collectAsState()
@@ -71,7 +73,16 @@ fun RecipeListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Recipes") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Recipes") },
+                actions = {
+                    IconButton(onClick = onDiscover) {
+                        Icon(Icons.Outlined.TravelExplore, contentDescription = "Discover recipes")
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreate) {

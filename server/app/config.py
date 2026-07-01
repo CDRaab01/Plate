@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     # never reaches the network (CLAUDE.md §10); local-cache search still works with it off.
     food_search_live: bool = True
 
+    # External recipe discovery (Spoonacular). Server-side key only. Unset ⇒ the discover/import
+    # endpoints are disabled (503). Free key: https://spoonacular.com/food-api/console#Dashboard
+    spoonacular_api_key: str | None = None
+    spoonacular_base_url: str = "https://api.spoonacular.com"
+    # Max recipes returned per discovery search.
+    recipe_discover_limit: int = 10
+
     # Optional SMTP — if unset, reset codes are printed to stdout instead
     smtp_host: str | None = None
     smtp_port: int = 587
