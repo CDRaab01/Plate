@@ -70,3 +70,45 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[object, Depends(get_current_user)]
+
+
+async def get_cross_app_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Resolve the Plate user from a sister-app (Cookbook) cross-app token.
+
+    Mirrors Spotter's ``get_cross_app_user``: the token is signed with ``cross_app_secret``
+    (the ecosystem-wide shared secret — the same one Plate already uses to mint tokens toward
+    Spotter), typed ``cross_app``, and carries the user's email — the only stable identity
+    across the apps' independent user tables. This is the only entry point that trusts the
+    cross-app secret, so a normal Plate access/refresh token can't reach it. Unset secret ⇒
+    the cross-app surface is disabled (401).
+    """
+    from app.models.user import User
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if not settings.cross_app_secret:
+        raise credentials_exception
+    try:
+        payload = jwt.decode(token, settings.cross_app_secret, algorithms=[settings.algorithm])
+        if payload.get("type") != "cross_app":
+            raise credentials_exception
+        email: str | None = payload.get("email")
+        if not email:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+CrossAppUser = Annotated[object, Depends(get_cross_app_user)]

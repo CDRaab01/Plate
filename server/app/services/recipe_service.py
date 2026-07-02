@@ -148,6 +148,35 @@ async def delete_recipe(db: AsyncSession, user_id: uuid.UUID, recipe_id: uuid.UU
     await db.commit()
 
 
+async def export_recipes(db: AsyncSession, user_id: uuid.UUID) -> list["RecipeExport"]:
+    """All of a user's recipes as name+amount rows, for Cookbook's one-time migration.
+
+    Items whose source food was deleted (``food_id`` SET NULL) are skipped — there is no name
+    left to export. Recipes that end up empty are still exported (name/description carry over).
+    """
+    from app.schemas.recipe import RecipeExport, RecipeExportItem
+
+    result = await db.execute(
+        select(Recipe).where(Recipe.user_id == user_id).order_by(Recipe.created_at)
+    )
+    exports: list[RecipeExport] = []
+    for recipe in result.scalars().all():
+        items = [
+            RecipeExportItem(food_name=item.food.name, quantity=item.quantity, unit=item.unit)
+            for item in recipe.items
+            if item.food is not None
+        ]
+        exports.append(
+            RecipeExport(
+                id=recipe.id,
+                name=recipe.name,
+                description=recipe.description,
+                items=items,
+            )
+        )
+    return exports
+
+
 async def log_recipe(
     db: AsyncSession,
     user_id: uuid.UUID,

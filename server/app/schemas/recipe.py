@@ -86,6 +86,27 @@ class RecipeLogRequest(BaseModel):
         return _validate_meal(v)
 
 
+class RecipeExportItem(BaseModel):
+    """One ingredient row in the cross-app export: the food's display name + amount."""
+
+    food_name: str
+    quantity: float
+    unit: str
+
+
+class RecipeExport(BaseModel):
+    """Cross-app recipe export for Cookbook's one-time migration (its Phase 6).
+
+    Deliberately food-id-free: Cookbook stores free-text ingredients, so only names and
+    amounts cross the boundary. ``id`` becomes Cookbook's ``source_id`` for dedupe.
+    """
+
+    id: uuid.UUID
+    name: str
+    description: str | None = None
+    items: list[RecipeExportItem]
+
+
 class DiscoveredRecipe(BaseModel):
     """A recipe-discovery search hit (from the external provider)."""
 

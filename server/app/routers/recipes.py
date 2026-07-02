@@ -10,17 +10,19 @@ from app.schemas.log import LogEntryOut
 from app.schemas.recipe import (
     DiscoveredRecipe,
     RecipeCreate,
+    RecipeExport,
     RecipeImportRequest,
     RecipeItemsReplace,
     RecipeLogRequest,
     RecipeOut,
     RecipeUpdate,
 )
-from app.security import CurrentUser
+from app.security import CrossAppUser, CurrentUser
 from app.services.recipe_discovery_service import discover_recipes, import_recipe
 from app.services.recipe_service import (
     create_recipe,
     delete_recipe,
+    export_recipes,
     get_recipe,
     list_recipes,
     log_recipe,
@@ -64,6 +66,17 @@ async def import_external(
 ):
     """Import an external recipe as a saved Plate recipe (ingredients become loggable foods)."""
     return await import_recipe(db, current_user.id, req.source_id)
+
+
+@router.get("/export", response_model=list[RecipeExport])
+@limiter.limit("60/minute")
+async def export(request: Request, current_user: CrossAppUser, db: DbSession):
+    """**Cross-app**, read-only recipe export for the sister app **Cookbook** (its recipe
+    migration). Not Plate's own user-token auth — takes a cross-app JWT signed with
+    ``CROSS_APP_SECRET`` carrying the user's email (see ``get_cross_app_user``). Disabled
+    (401) unless the secret is set. Declared before ``/{recipe_id}`` so "export" never parses
+    as a recipe id."""
+    return await export_recipes(db, current_user.id)
 
 
 @router.post("", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)
