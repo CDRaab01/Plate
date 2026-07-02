@@ -131,6 +131,9 @@ async def log_cross_app_recipe(
         await db.commit()
     if skipped:
         log.info(
-            "cross-app log (%s): %d logged, %d skipped", req.recipe_name or "recipe", logged, skipped
+            "cross-app log (%s): %d logged, %d skipped",
+            req.recipe_name or "recipe",
+            logged,
+            skipped,
         )
     return CrossAppLogResponse(logged=logged, skipped=skipped)
