@@ -26,6 +26,7 @@ val PulseIndigoDeep = Color(0xFF5B2BE0)
 val PulseVioletDeep = Color(0xFF5B2BE0)
 val PulseOrangeDeep = Color(0xFFC2410C)
 val PulseGreenDeep = Color(0xFF047857)
+val PulseGreenDeeper = Color(0xFF064E3B) // forest green — deep end of the emerald hero ramp
 val PulseRedDeep = Color(0xFFDC2626)
 
 // Light theme — Material 3 named tokens. Plate leads GREEN (a food/nutrition app): primary=green,
