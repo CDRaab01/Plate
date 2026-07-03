@@ -19,10 +19,10 @@ import androidx.compose.ui.graphics.Color
  *
  * Each channel has a `base` (strokes, text, rings), a `dim` (container fill — a pre-composited
  * solid, not an alpha, so hairlines drawn on top stay predictable) and an `on` (content atop the
- * base fill). Gradients are reserved for hero moments: [heroGradient] (green → blue) for the
- * greeting and primary CTAs is the signature — Plate leads green as a food/nutrition app;
- * [energyGradient] (orange → amber) is the celebration voice. Provided through [LocalPulse] by
- * PlateTheme; pull via `PlateTheme.pulse`.
+ * base fill). Gradients are reserved for hero moments: [heroGradient] (an emerald ramp,
+ * green → forest green) for the greeting and primary CTAs is the signature — Plate leads green as a
+ * food/nutrition app; [energyGradient] (orange → amber) is the celebration voice. Provided through
+ * [LocalPulse] by PlateTheme; pull via `PlateTheme.pulse`.
  */
 @Immutable
 data class PulseColors(
@@ -45,9 +45,9 @@ data class PulseColors(
     val panelHigh: Color,
     val glow: Color,            // ring/dot glow base; draw at low alpha
     // Brand gradients
-    val heroGradient: Brush,    // green → blue: primary CTAs (Plate leads green)
+    val heroGradient: Brush,    // emerald ramp (green → forest): primary CTAs (Plate leads green)
     val energyGradient: Brush,  // orange → amber: celebration moments
-    val mealGradient: Brush,    // green → blue: greeting card (Plate-specific)
+    val mealGradient: Brush,    // emerald ramp (green → forest): greeting card (Plate-specific)
 )
 
 fun darkPulseColors() = PulseColors(
@@ -60,12 +60,13 @@ fun darkPulseColors() = PulseColors(
     panel = PulsePanel,
     panelHigh = PulsePanelHigh,
     glow = PulseGreen,
-    // Hero/meal gradients use the deeper hues so white headline + nudge text clears WCAG AA 4.5:1
-    // (white on PulseBlue 3.72 / PulseGreen 1.92 failed; on PulseBlueDeep 5.20 / PulseGreenDeep 5.48).
-    // PulseBlue/PulseGreen stay the light accent-text tokens for use on dark surfaces.
-    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
+    // Emerald ramp: a single-hue green gradient (medium -> forest) that varies luminance, not hue —
+    // so it reads as one confident brand voice instead of the green->blue two-channel blend. Both
+    // stops clear WCAG AA 4.5:1 for white text (PulseGreenDeep 5.48, PulseGreenDeeper darker still),
+    // so the greeting headline/nudge and hero-button labels stay legible across the whole fill.
+    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseGreenDeeper)),
     energyGradient = Brush.linearGradient(listOf(PulseOrange, PulseAmber)),
-    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
+    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseGreenDeeper)),
 )
 
 fun lightPulseColors() = PulseColors(
@@ -78,9 +79,9 @@ fun lightPulseColors() = PulseColors(
     panel = Color(0xFFFFFFFF),
     panelHigh = Color(0xFFF1F3F6),
     glow = PulseGreenDeep,
-    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
+    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseGreenDeeper)),
     energyGradient = Brush.linearGradient(listOf(Color(0xFFFF6B35), PulseAmber)),
-    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
+    mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseGreenDeeper)),
 )
 
 val LocalPulse = staticCompositionLocalOf { darkPulseColors() }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Brand gradient (PULSE hero: green -> blue) for the adaptive icon background. Plate leads green. -->
+<!-- Brand gradient (PULSE hero: emerald ramp, green -> forest) for the adaptive icon background.
+     Livelier stops than the in-app hero because the icon carries no text (only the white plate). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
@@ -15,7 +16,7 @@
                 android:endY="108"
                 android:type="linear">
                 <item android:offset="0" android:color="#FF34D399" />
-                <item android:offset="1" android:color="#FF4D7CFF" />
+                <item android:offset="1" android:color="#FF047857" />
             </gradient>
         </aapt:attr>
     </path>

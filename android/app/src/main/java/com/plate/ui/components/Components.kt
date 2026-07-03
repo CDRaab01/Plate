@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.plate.ui.theme.PlateTheme
 
-/** The brand mark: a plate silhouette over the PULSE hero gradient (green→blue). */
+/** The brand mark: a plate silhouette over the PULSE hero gradient (emerald ramp). */
 @Composable
 fun BrandLogo(size: Dp = 76.dp) {
     Box(
