@@ -7,7 +7,7 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from app.config import settings
 from app.limiter import limiter
-from app.routers import ai, auth, cross_app, foods, goals, log, metrics, recipes, users
+from app.routers import ai, auth, cross_app, foods, goals, log, metrics, recipes, suite_auth, users
 
 # Single source for the human-facing version, reused by GET /version below.
 APP_VERSION = "0.1.0"
@@ -76,6 +76,7 @@ async def security_headers(request: Request, call_next) -> Response:
 
 
 app.include_router(auth.router)
+app.include_router(suite_auth.router)
 app.include_router(users.router)
 app.include_router(foods.router)
 app.include_router(goals.router)

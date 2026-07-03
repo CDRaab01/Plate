@@ -81,6 +81,14 @@ class Settings(BaseSettings):
     # without Spotter. `cross_app_secret` here MUST equal Spotter's `cross_app_secret`.
     spotter_base_url: str | None = None
     cross_app_secret: str | None = None
+
+    # Suite SSO (BROKER.md Phase 2b). When suite_jwks_url + suite_issuer are set, POST /auth/suite
+    # accepts a suite access token (RS256, from the Dragonfly identity server), validates it
+    # against the published JWKS, and trades it for a Plate session — linking by email. Unset ⇒
+    # the endpoint is disabled and the app's own email/password login is unaffected (dual-auth).
+    suite_jwks_url: str | None = None
+    suite_issuer: str | None = None
+    suite_audience: str = "suite"
     # TTL of the minted cross-app token — only needs to outlive a single request round-trip.
     cross_app_token_ttl_seconds: int = 60
     # Timeout (seconds) for the outbound call to Spotter. A failure degrades gracefully to
