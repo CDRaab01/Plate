@@ -19,9 +19,10 @@ import androidx.compose.ui.graphics.Color
  *
  * Each channel has a `base` (strokes, text, rings), a `dim` (container fill — a pre-composited
  * solid, not an alpha, so hairlines drawn on top stay predictable) and an `on` (content atop the
- * base fill). Gradients are reserved for hero moments: [heroGradient] (blue → indigo) for the
- * greeting and primary CTAs is the signature; [energyGradient] (orange → amber) is the
- * celebration voice. Provided through [LocalPulse] by PlateTheme; pull via `PlateTheme.pulse`.
+ * base fill). Gradients are reserved for hero moments: [heroGradient] (green → blue) for the
+ * greeting and primary CTAs is the signature — Plate leads green as a food/nutrition app;
+ * [energyGradient] (orange → amber) is the celebration voice. Provided through [LocalPulse] by
+ * PlateTheme; pull via `PlateTheme.pulse`.
  */
 @Immutable
 data class PulseColors(
@@ -44,9 +45,9 @@ data class PulseColors(
     val panelHigh: Color,
     val glow: Color,            // ring/dot glow base; draw at low alpha
     // Brand gradients
-    val heroGradient: Brush,    // blue → indigo: primary CTAs
+    val heroGradient: Brush,    // green → blue: primary CTAs (Plate leads green)
     val energyGradient: Brush,  // orange → amber: celebration moments
-    val mealGradient: Brush,    // green → blue: diary greeting card (Plate-specific)
+    val mealGradient: Brush,    // green → blue: greeting card (Plate-specific)
 )
 
 fun darkPulseColors() = PulseColors(
@@ -58,11 +59,11 @@ fun darkPulseColors() = PulseColors(
     hairlineStrong = Color(0x29FFFFFF),
     panel = PulsePanel,
     panelHigh = PulsePanelHigh,
-    glow = PulseBlue,
+    glow = PulseGreen,
     // Hero/meal gradients use the deeper hues so white headline + nudge text clears WCAG AA 4.5:1
     // (white on PulseBlue 3.72 / PulseGreen 1.92 failed; on PulseBlueDeep 5.20 / PulseGreenDeep 5.48).
     // PulseBlue/PulseGreen stay the light accent-text tokens for use on dark surfaces.
-    heroGradient = Brush.linearGradient(listOf(PulseBlueDeep, PulseIndigo)),
+    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
     energyGradient = Brush.linearGradient(listOf(PulseOrange, PulseAmber)),
     mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
 )
@@ -76,8 +77,8 @@ fun lightPulseColors() = PulseColors(
     hairlineStrong = Color(0x33000000),
     panel = Color(0xFFFFFFFF),
     panelHigh = Color(0xFFF1F3F6),
-    glow = PulseBlueDeep,
-    heroGradient = Brush.linearGradient(listOf(PulseBlueDeep, PulseIndigoDeep)),
+    glow = PulseGreenDeep,
+    heroGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
     energyGradient = Brush.linearGradient(listOf(Color(0xFFFF6B35), PulseAmber)),
     mealGradient = Brush.linearGradient(listOf(PulseGreenDeep, PulseBlueDeep)),
 )

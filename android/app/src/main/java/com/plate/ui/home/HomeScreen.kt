@@ -1,5 +1,6 @@
 package com.plate.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -133,28 +135,37 @@ internal fun HomeContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Greeting + nudge
-        PanelCard(Modifier.fillMaxWidth()) {
-            Column {
-                Text(greeting, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    mealNudge,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (day.trainedToday) {
-                    Spacer(Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.Whatshot,
-                            contentDescription = null,
-                            tint = pulse.fat,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Caption("Trained today — targets bumped", color = pulse.fat)
-                    }
+        // Greeting + nudge — on the green-led brand gradient so the header carries the app theme.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(pulse.mealGradient)
+                .padding(20.dp),
+        ) {
+            Text(
+                greeting,
+                style = MaterialTheme.typography.headlineSmall,
+                color = androidx.compose.ui.graphics.Color.White,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                mealNudge,
+                style = MaterialTheme.typography.bodyMedium,
+                // Full white (not dimmed) so the nudge clears AA on the deepened gradient.
+                color = androidx.compose.ui.graphics.Color.White,
+            )
+            if (day.trainedToday) {
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Whatshot,
+                        contentDescription = null,
+                        tint = androidx.compose.ui.graphics.Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Caption("Trained today — targets bumped", color = androidx.compose.ui.graphics.Color.White)
                 }
             }
         }

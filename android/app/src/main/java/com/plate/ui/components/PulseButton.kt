@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.plate.ui.theme.PlateTheme
 
 /**
- * The primary action: the brand hero gradient (blue → indigo) with press-scale and ripple. Use one
+ * The primary action: the brand hero gradient (green → blue) with press-scale and ripple. Use one
  * per screen; secondary actions take [tonal] (channel dim fill, channel text) or plain M3 buttons.
  *
  * Pass [gradient] to switch the voice (e.g. `pulse.energyGradient` for a celebration CTA), or
