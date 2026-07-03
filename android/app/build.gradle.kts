@@ -35,6 +35,8 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // AppAuth redirect receiver scheme (BROKER.md Phase 2c) — com.plate:/oauth2redirect.
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.plate"
         buildConfigField(
             "String", "SERVER_URL",
             "\"${localProperties.getProperty("server.url", "https://plate.dragonflymedia.org/")}\""
@@ -133,6 +135,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // Suite SSO (BROKER.md Phase 2c): OpenID Connect authorization-code + PKCE via AppAuth.
+    implementation(libs.appauth)
 
     implementation(libs.retrofit)
     implementation(libs.okhttp)

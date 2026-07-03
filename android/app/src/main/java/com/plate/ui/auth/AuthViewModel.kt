@@ -2,6 +2,8 @@ package com.plate.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Intent
+import com.plate.data.remote.SuiteAuthManager
 import com.plate.data.repository.AuthRepository
 import com.plate.util.AuthEventBus
 import com.plate.util.UiState
@@ -15,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val suiteAuthManager: SuiteAuthManager,
     authEventBus: AuthEventBus,
 ) : ViewModel() {
 
@@ -60,6 +63,22 @@ class AuthViewModel @Inject constructor(
                 UiState.Success(Unit)
             } catch (e: Exception) {
                 UiState.Error(e.message ?: "Request failed. Please try again.")
+            }
+        }
+    }
+
+    /** Intent that launches the Dragonfly (suite SSO) sign-in — launch via an ActivityResult. */
+    fun suiteAuthorizeIntent(): Intent = suiteAuthManager.authorizeIntent()
+
+    /** Handle the sign-in result: exchange → /auth/suite → session. Success drives navigation. */
+    fun completeSuiteLogin(data: Intent?) {
+        viewModelScope.launch {
+            _authState.value = UiState.Loading
+            _authState.value = try {
+                suiteAuthManager.complete(data)
+                UiState.Success(Unit)
+            } catch (e: Exception) {
+                UiState.Error(e.message ?: "Dragonfly sign-in failed")
             }
         }
     }
