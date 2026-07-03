@@ -33,6 +33,25 @@ explain itself.
 5. **Quick-log ergonomics:** "copy yesterday's breakfast" / recent-foods-first search ranking.
    Cheap, and it's the #1 real-world friction in daily logging apps.
 
+## Cross-app work (approved 2026-07-03 — see Dragonfly/CROSS-APP.md for the full design)
+
+Plate is the hub of the approved cross-app roadmap (nutrition is the shared language):
+
+1. **Weight authority** (CROSS-APP item 1): add `GET/POST /cross-app/weight` so Spotter
+   writes weigh-ins through and reads the merged series. Directly feeds the adaptive-TDEE
+   feature above — do them together.
+2. **Planned-dinner awareness** (item 2): consume Cookbook's `GET /cross-app/plan?date=`
+   into the targets/coach trusted context ("planned dinner ≈ N kcal"). Context only; never
+   auto-log.
+3. **Remaining-macros surface** (item 3): add `GET /cross-app/remaining?date=` for
+   Cookbook's suggestion ranking.
+4. **Digest range read** (item 4): expose the existing `/log/summary?start=&end=` on the
+   cross-app auth surface.
+
+Follow the CROSS-APP.md infra rules: provider-committed contract fixtures under
+`server/tests/contracts/`, and write new surfaces against a swappable token-verify helper
+(the shared `CROSS_APP_SECRET` is slated for replacement by dragonfly-id service tokens).
+
 ## Coordination notes
 
 - Plate is the **reference implementation Cookbook ports from** (its `app/services/ai/` vision
