@@ -181,8 +181,8 @@ fun DiaryContent(
             )
         }
         item { Spacer(Modifier.height(8.dp)) }
-        item { GreetingPanel(greeting = greeting, mealNudge = mealNudge) }
-        item { Spacer(Modifier.height(8.dp)) }
+        // Greeting lives only on the Home dashboard now — the diary goes straight to the day's
+        // calorie summary and meals (no duplicate "Good morning" across the two tabs).
         item {
             DailySummaryCard(
                 totals = day.totals,

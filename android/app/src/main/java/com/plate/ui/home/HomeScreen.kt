@@ -194,6 +194,12 @@ internal fun HomeContent(
             }
         }
 
+        // Log food — kept directly under the calorie ring (above Weight) so it's reachable without
+        // scrolling, the primary action on the Home dashboard.
+        Button(onClick = onAddFood, modifier = Modifier.fillMaxWidth()) {
+            Text("Log food")
+        }
+
         // Weight trend
         WeightTrendCard(
             trend = trend,
@@ -201,10 +207,6 @@ internal fun HomeContent(
             unitSystem = unitSystem,
             onLogWeight = onLogWeight,
         )
-
-        Button(onClick = onAddFood, modifier = Modifier.fillMaxWidth()) {
-            Text("Log food")
-        }
     }
 }
 
