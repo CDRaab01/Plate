@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -24,7 +23,7 @@ val siftEnabled = rootDir.parentFile?.parentFile?.resolve("Sift")?.exists() == t
 
 android {
     namespace = "com.plate"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.plate"
@@ -83,9 +82,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -120,6 +116,8 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+    // Hilt 2.60 generated code references errorprone annotations at compile time.
+    compileOnly("com.google.errorprone:error_prone_annotations:2.36.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
