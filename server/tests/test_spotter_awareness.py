@@ -18,6 +18,11 @@ from app.main import app
 from app.models.user_goal import UserGoal
 from app.services.ai.client import chat
 from app.services.ai.context_service import build_macro_context
+from app.services.cross_app_token import (
+    cross_app_configured,
+    fetch_cross_app_token,
+    mint_legacy_cross_app_token as mint_cross_app_token,
+)
 from app.services.workout_source import (
     NOT_TRAINED,
     NullWorkoutSource,
@@ -26,7 +31,6 @@ from app.services.workout_source import (
     WorkoutStatus,
     get_workout_source,
     is_training_day,
-    mint_cross_app_token,
 )
 from tests.test_ai import _make_user, _mock_client, _req
 
@@ -119,6 +123,42 @@ def test_mint_cross_app_token_requires_secret():
             mint_cross_app_token("lifter@plate.com")
     finally:
         settings.cross_app_secret = prior
+
+
+@pytest.fixture
+def rs256_client_creds(monkeypatch):
+    """Configure Plate as a dragonfly-id confidential client (ROADMAP T2 #5 RS256 path)."""
+    monkeypatch.setattr(settings, "cross_app_client_id", "plate")
+    monkeypatch.setattr(settings, "cross_app_client_secret", "s3cret")
+    monkeypatch.setattr(settings, "suite_issuer", "https://id.test")
+
+
+async def test_fetch_token_uses_dragonfly_id_when_client_configured(rs256_client_creds):
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["body"] = request.read().decode()
+        return httpx.Response(200, json={"access_token": "rs256-abc", "expires_in": 120})
+
+    async with _mock_client(handler) as client:
+        token = await fetch_cross_app_token("lifter@plate.com", client=client)
+
+    assert token == "rs256-abc"
+    assert captured["url"].endswith("/cross-app/token")
+    assert "client_id=plate" in captured["body"]
+    assert "subject_email=lifter" in captured["body"]  # url-encoded email present
+
+
+async def test_fetch_token_falls_back_to_hs256_without_client_creds(cross_app_secret):
+    # No client creds → the legacy HS256 path (no network), decodable with the shared secret.
+    token = await fetch_cross_app_token("lifter@plate.com")
+    payload = jwt.decode(token, cross_app_secret, algorithms=[settings.algorithm])
+    assert payload["email"] == "lifter@plate.com" and payload["type"] == "cross_app"
+
+
+def test_cross_app_configured_true_with_secret(cross_app_secret):
+    assert cross_app_configured() is True
 
 
 # ── is_training_day (best-effort) ───────────────────────────────────────────────
