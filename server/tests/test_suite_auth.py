@@ -114,3 +114,33 @@ async def test_wrong_audience_rejected(client, suite_enabled):
 async def test_garbage_token_rejected(client, suite_enabled):
     r = await client.post("/auth/suite", json={"suite_token": "not-a-jwt"})
     assert r.status_code == 401
+
+
+# --- Cross-app service tokens (ROADMAP T2 #5) — RS256 dual-accept on the provider surface ---
+
+
+async def _make_user(email: str) -> None:
+    async with AsyncSessionLocal() as s:
+        s.add(User(name="X", email=email, hashed_password="x"))
+        await s.commit()
+
+
+async def test_cross_app_rs256_token_accepted_on_provider(client, suite_enabled):
+    """A dragonfly-id RS256 token (aud="cross-app") authenticates Plate's cross-app /recipes/export,
+    validated against the same JWKS as SSO — no cross_app_secret needed on this side."""
+    import uuid
+
+    email = f"xapp-rs256-{uuid.uuid4().hex[:8]}@plate.com"
+    await _make_user(email)
+    token = _suite_token(email, aud="cross-app")
+    r = await client.get("/recipes/export", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200, r.text
+    assert r.json() == []  # new user, no recipes — but authenticated
+
+
+async def test_suite_sso_token_rejected_on_provider(client, suite_enabled):
+    """Audience scoping: a suite SSO user token (aud="suite") must NOT work on the cross-app
+    surface — the point of the distinct aud="cross-app"."""
+    token = _suite_token("sso-user@plate.com", aud="suite")
+    r = await client.get("/recipes/export", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401

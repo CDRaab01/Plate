@@ -81,6 +81,12 @@ class Settings(BaseSettings):
     # without Spotter. `cross_app_secret` here MUST equal Spotter's `cross_app_secret`.
     spotter_base_url: str | None = None
     cross_app_secret: str | None = None
+    # Cross-app service token (ROADMAP T2 #5, retiring cross_app_secret). When these are set (with
+    # suite_issuer), Plate requests a short-lived RS256 token from the Dragonfly identity server's
+    # POST /cross-app/token instead of self-signing an HS256 token — Spotter validates it via the
+    # JWKS it already trusts. Falls back to cross_app_secret when unset (dual-accept transition).
+    cross_app_client_id: str | None = None
+    cross_app_client_secret: str | None = None
 
     # Suite SSO (BROKER.md Phase 2b). When suite_jwks_url + suite_issuer are set, POST /auth/suite
     # accepts a suite access token (RS256, from the Dragonfly identity server), validates it

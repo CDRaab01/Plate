@@ -20,9 +20,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import httpx
-from jose import jwt
 
 from app.config import settings
+from app.services.cross_app_token import cross_app_configured, fetch_cross_app_token
 
 log = logging.getLogger(__name__)
 
@@ -38,24 +38,6 @@ class WorkoutStatus:
 
 # Shared "no workout" sentinel — returned whenever the integration is off or a lookup fails.
 NOT_TRAINED = WorkoutStatus(trained=False)
-
-
-def mint_cross_app_token(email: str) -> str:
-    """Sign a short-lived cross-app token for ``email`` that Spotter's /workouts will accept.
-
-    Signed with the shared ``cross_app_secret`` and typed ``cross_app`` so it can't be confused with
-    a normal Plate access token (different secret + type). Raises if no secret is configured.
-    """
-    if not settings.cross_app_secret:
-        raise RuntimeError("cross_app_secret is not configured")
-    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
-        seconds=settings.cross_app_token_ttl_seconds
-    )
-    return jwt.encode(
-        {"email": email, "type": "cross_app", "exp": expire},
-        settings.cross_app_secret,
-        algorithm=settings.algorithm,
-    )
 
 
 class WorkoutSource(ABC):
@@ -85,7 +67,7 @@ class SpotterWorkoutSource(WorkoutSource):
         self._client = client
 
     async def trained_on(self, email: str, day: datetime.date) -> WorkoutStatus:
-        token = mint_cross_app_token(email)
+        token = await fetch_cross_app_token(email)
         request = lambda c: c.get(  # noqa: E731 - tiny local binding, reused for both client paths
             f"{self._base_url}/workouts",
             params={"date": day.isoformat()},
@@ -111,7 +93,7 @@ def get_workout_source() -> WorkoutSource:
     Returned as a Depends so route tests can override it (``app.dependency_overrides``) without
     touching the network.
     """
-    if settings.spotter_base_url and settings.cross_app_secret:
+    if settings.spotter_base_url and cross_app_configured():
         return SpotterWorkoutSource(settings.spotter_base_url)
     return NullWorkoutSource()
 

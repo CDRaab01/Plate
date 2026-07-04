@@ -73,6 +73,43 @@ async def _verify_suite_token(token: str) -> dict:
         raise unauthorized
 
 
+# Cross-app service tokens (ROADMAP T2 #5) carry aud="cross-app" — distinct from SSO's suite
+# audience — and are validated against the SAME JWKS trust as SSO (no new secret on this side).
+CROSS_APP_AUDIENCE = "cross-app"
+
+
+async def verify_cross_app_token(token: str) -> str | None:
+    """Return the subject email if `token` is a valid RS256 cross-app token from dragonfly-id,
+    else None.
+
+    Returns None (rather than raising) on any failure — unconfigured JWKS, wrong audience, bad
+    signature, JWKS unreachable — so the caller can fall back to the legacy HS256 cross-app path
+    during the dual-accept transition. A suite SSO user token (aud="suite") returns None here.
+    """
+    if not settings.suite_jwks_url or not settings.suite_issuer:
+        return None
+    try:
+        kid = jwt.get_unverified_header(token).get("kid")
+        jwks = await _fetch_jwks()
+        key = _select_key(jwks, kid)
+        if key is None:
+            jwks = await _fetch_jwks(force=True)  # unknown kid → possible rotation, refetch once
+            key = _select_key(jwks, kid)
+        if key is None:
+            return None
+        claims = jwt.decode(
+            token,
+            key,
+            algorithms=["RS256"],
+            audience=CROSS_APP_AUDIENCE,
+            issuer=settings.suite_issuer,
+        )
+    except (JWTError, JWKError, httpx.HTTPError):
+        return None
+    email = (claims.get("email") or "").strip().lower()
+    return email or None
+
+
 async def suite_login(db: AsyncSession, suite_token: str) -> TokenResponse:
     if not settings.suite_jwks_url or not settings.suite_issuer:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Suite login is not enabled")
