@@ -44,9 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.RecipeOut
-import com.plate.ui.components.Caption
-import com.plate.ui.components.DataText
-import com.plate.ui.components.PanelCard
+import design.pulse.ui.components.Caption
+import design.pulse.ui.components.DataText
+import design.pulse.ui.components.PanelCard
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import kotlin.math.roundToInt

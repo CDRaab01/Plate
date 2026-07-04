@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.plate.ui.theme.PlateTheme
+import design.pulse.ui.components.PulseButton
 
 /** The brand mark: a plate silhouette over the PULSE hero gradient (emerald ramp). */
 @Composable
@@ -34,8 +35,12 @@ fun BrandLogo(size: Dp = 76.dp) {
 }
 
 /**
- * The primary call-to-action used across the auth/goals flows. Now a thin alias over the PULSE
+ * The primary call-to-action used across the auth/goals flows. A thin alias over the PULSE
  * [PulseButton] (hero-gradient block with press-scale), so the whole app shares one button voice.
+ *
+ * Plate's button voice is its emerald hero ramp (green → forest) with white labels — NOT the
+ * library's default accent gradient (which for the Green accent is a green→blue blend). Pass Plate's
+ * [PulseColors.heroGradient] + white `onCarbs` explicitly so the auth CTAs stay the emerald brand.
  */
 @Composable
 fun PrimaryButton(
@@ -44,7 +49,14 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    PulseButton(text = text, onClick = onClick, modifier = modifier, enabled = enabled)
+    PulseButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        onChannel = PlateTheme.pulse.onCarbs,
+        gradient = PlateTheme.pulse.heroGradient,
+    )
 }
 
 /** Full-width variant convenience. */

@@ -145,7 +145,7 @@ fun CoachContent(
 
 @Composable
 private fun EmptyState() {
-    com.plate.ui.components.EmptyState(
+    design.pulse.ui.components.EmptyState(
         icon = Icons.Default.AutoAwesome,
         title = "Meet your Plate Coach",
         subtitle = "Ask about recipes, food swaps, or how to hit your macros today.",

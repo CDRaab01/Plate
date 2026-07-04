@@ -132,6 +132,9 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
 
+    // PULSE design system as a shared library (composite build; see settings.gradle.kts).
+    implementation(libs.pulse.ui)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)

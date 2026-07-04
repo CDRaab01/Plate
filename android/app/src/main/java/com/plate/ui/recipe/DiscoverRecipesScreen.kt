@@ -42,9 +42,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.DiscoveredRecipe
-import com.plate.ui.components.Caption
-import com.plate.ui.components.EmptyState
-import com.plate.ui.components.PanelCard
+import design.pulse.ui.components.Caption
+import design.pulse.ui.components.EmptyState
+import design.pulse.ui.components.PanelCard
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 

@@ -44,10 +44,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.plate.data.remote.DaySummary
-import com.plate.ui.components.DataText
-import com.plate.ui.components.PanelCard
-import com.plate.ui.components.SectionHeader
-import com.plate.ui.components.StatTile
+import design.pulse.ui.components.DataText
+import design.pulse.ui.components.PanelCard
+import design.pulse.ui.components.SectionHeader
+import design.pulse.ui.components.StatTile
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import java.time.LocalDate
