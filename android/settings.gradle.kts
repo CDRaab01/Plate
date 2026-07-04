@@ -25,3 +25,10 @@ include(":app")
 if (file("../../Sift").exists()) {
     includeBuild("../../Sift")
 }
+
+// PULSE design system, consumed as a composite build of the sibling Pulse repo
+// (<parent>/{Plate,Pulse}); Gradle substitutes the design.pulse:pulse-ui dependency with the
+// included build. REQUIRED — the app's theme + generic components live there — so no exists()
+// gate; a missing checkout should fail loudly, and CI checks Pulse out next to this repo
+// (.github/workflows/{ci,release}.yml). Mirror of Cookbook's settings.gradle.kts.
+includeBuild("../../Pulse")

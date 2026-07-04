@@ -24,9 +24,16 @@ jobs:
     timeout-minutes: 25
     defaults:
       run:
-        working-directory: android
+        working-directory: Plate/android
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: Plate
+      # Composite build needs the sibling Pulse repo (settings.gradle.kts includeBuild ../../Pulse).
+      - uses: actions/checkout@v4
+        with:
+          repository: CDRaab01/Pulse
+          path: Pulse
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -45,11 +52,17 @@ jobs:
       contents: write
     defaults:
       run:
-        working-directory: android
+        working-directory: Plate/android
     steps:
       - uses: actions/checkout@v4
         with:
+          path: Plate
           fetch-depth: 0 # full history so `git rev-list --count` gives the commit count
+      # Composite build needs the sibling Pulse repo (settings.gradle.kts includeBuild ../../Pulse).
+      - uses: actions/checkout@v4
+        with:
+          repository: CDRaab01/Pulse
+          path: Pulse
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -112,5 +125,5 @@ jobs:
           tag_name: v${{ steps.version.outputs.name }}
           generate_release_notes: true
           files: |
-            android/plate-v${{ steps.version.outputs.name }}.apk
-            android/version.json
+            Plate/android/plate-v${{ steps.version.outputs.name }}.apk
+            Plate/android/version.json

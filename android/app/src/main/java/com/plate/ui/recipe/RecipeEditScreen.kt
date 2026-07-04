@@ -36,9 +36,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.FoodOut
-import com.plate.ui.components.Caption
-import com.plate.ui.components.PanelCard
-import com.plate.ui.components.SectionHeader
+import design.pulse.ui.components.Caption
+import design.pulse.ui.components.PanelCard
+import design.pulse.ui.components.SectionHeader
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 

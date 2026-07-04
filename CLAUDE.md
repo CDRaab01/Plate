@@ -118,6 +118,19 @@ with `ref` = rollback. Full operator guide: [deploy/README.md](deploy/README.md)
 `LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1` inside the container (503 from `/ai/*`
 or `/foods/photo` means LM Studio unreachable; 530 means tunnel down).
 
+## Design system (PULSE)
+
+Plate consumes the shared **Pulse library** (`design.pulse:pulse-ui`) via a Gradle composite build
+(`settings.gradle.kts` → `includeBuild("../../Pulse")`; the sibling `Pulse` repo must sit next to
+`Plate`, and CI/release check it out) — migrated off the in-tree copy 2026-07-03. Plate **leads
+green** via `PulseAccent.Green`. The app-side semantic layer is `ui/theme/PlateTheme.kt`: the
+nutrition channel map (`PulseColors` — protein/carbs/fat/calories), the signature **emerald hero
+gradient** (green→forest, its own `PulseColors.heroGradient`, NOT the library's green→blue accent
+gradient), and a small M3 `secondary`-family reconcile to keep the carbs-blue voice. Pull via
+`PlateTheme.pulse`. Generic tokens + components (`PanelCard`, `PulseButton`, `DataText`, …) come
+from the library — **do not reintroduce in-tree copies**; fix them in Pulse (rebuild Cookbook +
+Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's catalog.
+
 ## Conventions & guardrails
 
 - Match Spotter's code style, package naming, workflows; if this doc conflicts with how Spotter
