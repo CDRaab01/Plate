@@ -69,7 +69,8 @@ async def build_export(db: AsyncSession, user) -> dict:
             _row(m) for m in await _all(db, select(BodyMetric).where(BodyMetric.user_id == user.id))
         ],
         "daily_targets": [
-            _row(t) for t in await _all(db, select(DailyTarget).where(DailyTarget.user_id == user.id))
+            _row(t)
+            for t in await _all(db, select(DailyTarget).where(DailyTarget.user_id == user.id))
         ],
         "food_log_entries": [
             _row(e)
