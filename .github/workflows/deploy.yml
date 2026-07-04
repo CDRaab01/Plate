@@ -31,11 +31,13 @@ jobs:
     name: Redeploy server
     # The `plate` label is assigned when the runner is registered on the host.
     runs-on: [self-hosted, plate]
-    # Manual runs always proceed; automatic runs require a successful CI run on main.
+    # Manual runs always proceed; automatic runs require a successful CI run on main
+    # triggered by a push (NOT the weekly scheduled bit-rot run — that must not ship).
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main')
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.event == 'push')
     steps:
       # No actions/checkout: we deploy the canonical clone on the host
       # (vars.PLATE_DIR), not the runner's ephemeral _work directory. That clone
