@@ -67,6 +67,7 @@ import com.plate.data.remote.TotalsOut
 import design.pulse.ui.components.DataText
 import design.pulse.ui.components.PanelCard
 import design.pulse.ui.components.SectionHeader
+import design.pulse.ui.components.TickerNumber
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import java.time.LocalDate
@@ -320,8 +321,9 @@ private fun DailySummaryCard(totals: TotalsOut, targets: TotalsOut, trainedToday
             SectionHeader("Calories", channel = pulse.calories)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                DataText(
-                    "${totals.kcal.roundToInt()}",
+                // Rolls up on load / day-switch, matching the Home ring's calorie ticker.
+                TickerNumber(
+                    target = totals.kcal.roundToInt(),
                     style = PlateTheme.dataType.dataLarge,
                     color = pulse.calories,
                 )

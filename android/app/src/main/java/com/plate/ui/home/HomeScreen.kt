@@ -53,6 +53,7 @@ import design.pulse.ui.components.ProgressRing
 import design.pulse.ui.components.SectionHeader
 import design.pulse.ui.components.Sparkline
 import design.pulse.ui.components.StatTile
+import design.pulse.ui.components.TickerNumber
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
 import com.plate.util.UnitSystem
@@ -185,8 +186,8 @@ internal fun HomeContent(
                     modifier = Modifier.size(160.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        DataText(
-                            remaining.roundToInt().toString(),
+                        TickerNumber(
+                            target = remaining.roundToInt(),
                             style = PlateTheme.dataType.dataLarge,
                             color = pulse.calories,
                         )
@@ -223,6 +224,8 @@ internal fun HomeContent(
 
 @Composable
 private fun MacroRemaining(label: String, remaining: Double, channel: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+    // Standard tile (not dense): keeps the prominent value and lets the "… left" caption wrap
+    // rather than ellipsize at one-third width. The ring's TickerNumber is the animated hero.
     StatTile(
         label = "$label left",
         value = remaining.coerceAtLeast(0.0).roundToInt().toString(),
@@ -246,13 +249,28 @@ private fun WeightTrendCard(
     }
     PanelCard(Modifier.fillMaxWidth()) {
         Column {
-            SectionHeader("Weight", channel = pulse.protein)
+            SectionHeader(
+                "Weight",
+                modifier = Modifier.fillMaxWidth(),
+                channel = pulse.protein,
+                // Latest logged weight (in display units) on the right — current vs the trend below.
+                trailing = plotted.lastOrNull()?.let { latest ->
+                    {
+                        DataText(
+                            "${oneDp(latest.toDouble())} ${unitSystem.weightUnit}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+            )
             Spacer(Modifier.height(12.dp))
             if (plotted.size >= 2) {
                 Sparkline(
                     values = plotted,
                     channel = pulse.protein,
                     asBars = false,
+                    // Filled-area line (the richer Pulse mode) — area gradient + emphasized last point.
+                    strokeWidth = 2.dp,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                 )
                 Spacer(Modifier.height(12.dp))
