@@ -117,7 +117,7 @@ tasks.withType<Test>().configureEach {
 
 dependencies {
     // Hilt 2.60 generated code references errorprone annotations at compile time.
-    compileOnly("com.google.errorprone:error_prone_annotations:2.36.0")
+    compileOnly("com.google.errorprone:error_prone_annotations:2.50.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
