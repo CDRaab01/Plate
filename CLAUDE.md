@@ -133,6 +133,9 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 
 ## Conventions & guardrails
 
+- **Update `ARCHITECTURE.md` in the same PR** when a change alters architecture — a module's
+  responsibility, a layer boundary, a cross-app contract, or the data model. Silently-drifting
+  docs are how Spotter's API docs said `/plans` for a round (ROADMAP2 T2 #5c).
 - Match Spotter's code style, package naming, workflows; if this doc conflicts with how Spotter
   actually does something, **Spotter wins** — flag the conflict.
 - Prefer Alembic migrations over manual schema edits; Pydantic at every boundary.
