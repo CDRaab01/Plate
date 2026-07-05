@@ -129,6 +129,9 @@ interface ApiService {
     @GET("goals/targets")
     suspend fun getTargets(@Query("date") date: String? = null): TargetsOut
 
+    @GET("goals/adaptive")
+    suspend fun getAdaptiveTdee(@Query("date") date: String? = null): AdaptiveTdeeOut
+
     // ── Phase 5: AI coach chat ───────────────────────────────────────────────
 
     @POST("ai/chat")

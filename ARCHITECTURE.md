@@ -27,10 +27,12 @@ boundary) plus **two pure domain packages** that are the heart of the app:
 
 - **`app/nutrition/`** — ALL macro math: `constants.py`, `portions.py`, `targets.py`
   (Mifflin-St Jeor TDEE → goal adjustment → protein from bodyweight → fat floor → carbs fill,
-  training-day bump), `totals.py`, `trend.py` (observed weight rate, `classify_pace`),
-  `units.py` (metric-canonical ↔ imperial-display conversion). Pure functions, table-driven
-  tests, no I/O. **Clients display, never compute targets** — if a number is wrong on the phone,
-  the bug is here or in what feeds it, not in Kotlin.
+  training-day bump; `compute_targets` takes an optional `maintenance_override`), `totals.py`,
+  `trend.py` (observed weight rate, `classify_pace`), `adaptive.py` (adaptive-TDEE correction:
+  energy-balance solve of observed maintenance from intake vs weight change, confidence blend +
+  deviation clamp — ROADMAP2 T3 #1), `units.py` (metric-canonical ↔ imperial-display conversion).
+  Pure functions, table-driven tests, no I/O. **Clients display, never compute targets** — if a
+  number is wrong on the phone, the bug is here or in what feeds it, not in Kotlin.
 - **`app/foods/`** — external food data: `base.py` (provider seam), `usda.py`, `off.py`
   (Open Food Facts), `normalize.py`. Resolution order is **local `foods` cache → USDA → OFF**;
   barcodes go straight to OFF then cache. Rows are cached forever on first fetch (staleness TTL
@@ -46,7 +48,7 @@ keep the two in sync only when the shared seam changes.
 | Auth/users | `auth.py`, `users.py`, `suite_auth.py` | `auth_service`, `user_service`, `suite_auth` | `User` (settings JSON holds `unit_system`) |
 | Food catalog + search | `foods.py` | `food_service` | `Food` |
 | Diary | `log.py` | `log_service` | `FoodLogEntry` |
-| Goals/targets | `goals.py` | `goal_service` (+ `nutrition/targets`) | `UserGoal`, `DailyTarget` |
+| Goals/targets | `goals.py` (`/targets`, `/adaptive`) | `goal_service`, `adaptive_service` (+ `nutrition/targets`, `nutrition/adaptive`) | `UserGoal`, `DailyTarget` |
 | Bodyweight | `metrics.py` | `metric_service` (+ `nutrition/trend`) | `BodyMetric` |
 | Recipes/saved meals | `recipes.py` | `recipe_service`, `recipe_discovery_service` | `Recipe`, `RecipeItem` |
 | AI coach + photo | `ai.py` | `services/ai/` | writes via log/recipe services only |

@@ -94,3 +94,24 @@ class TargetsOut(BaseModel):
     carbs_g: float
     fat_g: float
     trained_today: bool = False
+
+
+class AdaptiveTDEEOut(BaseModel):
+    """Adaptive-TDEE state (ROADMAP2 T3 #1) — what the Home "your maintenance" card renders.
+
+    kcal-only, so no unit conversion. ``status`` is ``insufficient_data`` (not enough logged days /
+    weigh-in signal), ``learning`` (some signal, below the trust thresholds — targets stay on the
+    formula), or ``active`` (correction applied; ``observed_maintenance`` populated). The client
+    shows ``n_logged_days``/``min_logged_days`` as the progress toward unlocking it.
+    """
+
+    date: datetime.date
+    status: str
+    formula_tdee: float
+    corrected_tdee: float
+    observed_maintenance: float | None
+    adjustment_kcal: float
+    confidence: float
+    n_logged_days: int
+    window_days: int
+    min_logged_days: int

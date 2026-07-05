@@ -38,3 +38,23 @@ data class TargetsOut(
     @SerialName("carbs_g") val carbsG: Double,
     @SerialName("fat_g") val fatG: Double,
 )
+
+/**
+ * Adaptive-TDEE state from GET /goals/adaptive (ROADMAP2 T3 #1). All kcal.
+ *
+ * [status] is `insufficient_data`, `learning`, or `active`; [observedMaintenance] is non-null only
+ * when active. The client shows [nLoggedDays]/[minLoggedDays] as progress toward unlocking it.
+ */
+@Serializable
+data class AdaptiveTdeeOut(
+    val date: String,
+    val status: String,
+    @SerialName("formula_tdee") val formulaTdee: Double,
+    @SerialName("corrected_tdee") val correctedTdee: Double,
+    @SerialName("observed_maintenance") val observedMaintenance: Double? = null,
+    @SerialName("adjustment_kcal") val adjustmentKcal: Double,
+    val confidence: Double,
+    @SerialName("n_logged_days") val nLoggedDays: Int,
+    @SerialName("window_days") val windowDays: Int,
+    @SerialName("min_logged_days") val minLoggedDays: Int,
+)

@@ -59,4 +59,17 @@ async def compute_targets_for(
         return None
     # Prefer the latest weigh-in on/before the day; None falls back to the goal's stored weight.
     weight_kg = await latest_weight_kg_on_or_before(db, user_id, day)
-    return compute_targets(from_goal(goal, weight_kg=weight_kg), trained=trained)
+    # Adaptive TDEE correction (ROADMAP2 T3 #1): once there's enough logged-day + weigh-in history,
+    # replace the formula maintenance with the observed one so targets self-correct. Anything short
+    # of ACTIVE leaves the override None → identical to the pure-formula behaviour (no regression).
+    # Lazy import: adaptive_service imports this module.
+    from app.nutrition.adaptive import ACTIVE
+    from app.services.adaptive_service import compute_adaptive_for
+
+    adaptive = await compute_adaptive_for(db, user_id, day)
+    override = (
+        adaptive.corrected_tdee if adaptive is not None and adaptive.status == ACTIVE else None
+    )
+    return compute_targets(
+        from_goal(goal, weight_kg=weight_kg), trained=trained, maintenance_override=override
+    )

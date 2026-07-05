@@ -22,7 +22,10 @@ cached); ML Kit barcode scanning; photo-a-meal macro estimation via the LM Studi
 remaining macros, goal, and today's Spotter training status; recipes/saved meals, quick-add,
 weekly summaries; bodyweight tracking with trend/target support; daily targets computed
 server-side (Mifflin-St Jeor TDEE, goal adjustment, protein from bodyweight, fat floor, carbs
-fill) with a **training-day bump** when Spotter reports a workout.
+fill) with a **training-day bump** when Spotter reports a workout. Once there's enough logged-day +
+weigh-in history, an **adaptive TDEE correction** back-solves the user's real maintenance from the
+energy balance between intake and weight change and self-corrects the targets (`GET /goals/adaptive`;
+ROADMAP2 T3 #1).
 
 ## Decisions that were once open and are now closed (do not relitigate)
 

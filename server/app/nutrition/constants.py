@@ -68,6 +68,25 @@ TREND_SMOOTHING_POINTS = 7
 # How far the observed weekly rate may sit from the goal rate and still count as "on pace".
 ON_PACE_TOLERANCE_KG_PER_WEEK = 0.15
 
+# ── Adaptive TDEE correction (CLAUDE.md §7; ROADMAP2 T3 #1) ────────────────────
+# Back-solve the user's *real* maintenance from the energy balance between what they logged and how
+# their smoothed weight actually moved, then blend it into the formula TDEE so targets self-correct.
+# Trailing window the intake average + observed weight rate are measured over.
+ADAPTIVE_WINDOW_DAYS = 14
+# A day counts as "logged" only if its intake clears this floor — a half-empty day would understate
+# intake and bias the maintenance estimate downward.
+MIN_LOGGED_KCAL = 800.0
+# Need at least this many logged days in the window before any correction is trusted.
+MIN_LOGGED_DAYS = 10
+# Weigh-ins must span at least this many days (first→last) for the least-squares rate to be stable.
+MIN_WEIGH_IN_SPAN_DAYS = 10
+# Ceiling on how much the observed signal can pull the estimate: the formula always anchors, so a
+# noisy two-week window can never fully own the number (blend weight = coverage × this).
+MAX_BLEND = 0.7
+# Corrected maintenance is clamped to formula × [1 − dev, 1 + dev] so a water-weight whoosh (a big
+# transient weight swing) can't tank or balloon targets.
+MAX_TDEE_DEVIATION = 0.30
+
 # ── Training-day bump (Spotter-awareness, §7) ─────────────────────────────────
 # On a day the user trained (reported by Spotter), add fuel to refuel/recover. The bump is
 # expressed as gram additions skewed to carbs + protein — fat is left at its hormonal floor — and

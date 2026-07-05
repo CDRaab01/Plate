@@ -2,6 +2,7 @@ package com.plate.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.plate.data.remote.AdaptiveTdeeOut
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
 import com.plate.data.remote.WeightTrendOut
@@ -27,6 +28,8 @@ data class HomeData(
     val trend: WeightTrendOut?,
     /** Canonical-kg weigh-in series (oldest first) for the trend sparkline. */
     val weightSeriesKg: List<Float>,
+    /** Adaptive-TDEE state (ROADMAP2 T3 #1); null when no goal / endpoint unavailable. */
+    val adaptive: AdaptiveTdeeOut? = null,
 )
 
 /**
@@ -87,8 +90,11 @@ class HomeViewModel @Inject constructor(
                 metricRepository.sync() // best-effort; cache backs the sparkline regardless
                 val day = logRepository.getDay(LocalDate.now().toString())
                 val trend = runCatching { metricRepository.getTrend() }.getOrNull()
+                val adaptive = runCatching { api.getAdaptiveTdee() }.getOrNull()
                 val series = weightSeriesKg.value
-                UiState.Success(HomeData(day = day, trend = trend, weightSeriesKg = series))
+                UiState.Success(
+                    HomeData(day = day, trend = trend, weightSeriesKg = series, adaptive = adaptive)
+                )
             } catch (e: Exception) {
                 UiState.Error(e.message ?: "Couldn't load your day")
             }

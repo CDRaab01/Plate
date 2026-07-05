@@ -12,8 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.goal import GoalOut, GoalUpsert, TargetsOut
+from app.schemas.goal import AdaptiveTDEEOut, GoalOut, GoalUpsert, TargetsOut
 from app.security import CurrentUser
+from app.services.adaptive_service import compute_adaptive_for
 from app.services.goal_service import compute_targets_for, get_active_goal, set_goal
 from app.services.workout_source import WorkoutSource, get_workout_source, is_training_day
 
@@ -70,4 +71,34 @@ async def read_targets(
         carbs_g=targets.carbs_g,
         fat_g=targets.fat_g,
         trained_today=trained,
+    )
+
+
+@router.get("/adaptive", response_model=AdaptiveTDEEOut)
+async def read_adaptive(
+    current_user: CurrentUser,
+    db: DbSession,
+    date: Annotated[datetime.date | None, Query(description="Defaults to today (UTC)")] = None,
+):
+    """The adaptive-TDEE state (ROADMAP2 T3 #1): observed maintenance vs the formula, and whether
+    the correction is active. 404 until a goal is set. Read-only — the correction is already folded
+    into ``/goals/targets`` and ``/log`` when active."""
+    target_day = date or datetime.date.today()
+    adaptive = await compute_adaptive_for(db, current_user.id, target_day)
+    if adaptive is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Set a goal to get an adaptive maintenance estimate",
+        )
+    return AdaptiveTDEEOut(
+        date=target_day,
+        status=adaptive.status,
+        formula_tdee=adaptive.formula_tdee,
+        corrected_tdee=adaptive.corrected_tdee,
+        observed_maintenance=adaptive.observed_maintenance,
+        adjustment_kcal=adaptive.adjustment_kcal,
+        confidence=adaptive.confidence,
+        n_logged_days=adaptive.n_logged_days,
+        window_days=adaptive.window_days,
+        min_logged_days=adaptive.min_logged_days,
     )

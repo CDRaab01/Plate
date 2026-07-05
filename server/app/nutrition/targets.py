@@ -138,18 +138,32 @@ def apply_training_day_bump(targets: Targets) -> Targets:
     return Targets(kcal=kcal, protein_g=protein_g, carbs_g=carbs_g, fat_g=fat_g)
 
 
-def compute_targets(profile: BodyProfile, *, trained: bool = False) -> Targets:
+def compute_targets(
+    profile: BodyProfile,
+    *,
+    trained: bool = False,
+    maintenance_override: float | None = None,
+) -> Targets:
     """Full pipeline: BMR → TDEE → goal-adjusted kcal → macro split, plus the training-day bump.
 
     When ``trained`` is true (Spotter reported a workout for the day), :func:`apply_training_day_bump`
     layers a carbs+protein-skewed fuel bump over the base targets.
+
+    ``maintenance_override`` replaces the formula TDEE with an observed maintenance value (the
+    adaptive-TDEE correction, :mod:`app.nutrition.adaptive`) — everything downstream (goal
+    adjustment, macro split, training-day bump) is unchanged, so a ``None`` override is exactly
+    today's behaviour.
     """
-    maintenance = tdee(
-        profile.weight_kg,
-        profile.height_cm,
-        profile.age,
-        profile.sex,
-        profile.activity_level,
+    maintenance = (
+        maintenance_override
+        if maintenance_override is not None
+        else tdee(
+            profile.weight_kg,
+            profile.height_cm,
+            profile.age,
+            profile.sex,
+            profile.activity_level,
+        )
     )
     kcal = goal_adjusted_kcal(maintenance, profile.rate_kg_per_week)
     protein_g, carbs_g, fat_g = macro_split(kcal, profile.weight_kg, profile.goal_type)

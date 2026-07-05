@@ -42,6 +42,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.plate.data.remote.AdaptiveTdeeOut
 import com.plate.data.remote.DailyLog
 import com.plate.data.remote.WeightTrendOut
 import design.pulse.ui.components.Caption
@@ -108,6 +109,7 @@ fun HomeScreen(
                     day = s.data.day,
                     trend = s.data.trend,
                     weightSeriesKg = series,
+                    adaptive = s.data.adaptive,
                     unitSystem = unit,
                     onLogWeight = viewModel::logBodyweight,
                     onAddFood = onAddFood,
@@ -124,6 +126,7 @@ internal fun HomeContent(
     day: DailyLog,
     trend: WeightTrendOut?,
     weightSeriesKg: List<Float>,
+    adaptive: AdaptiveTdeeOut? = null,
     unitSystem: UnitSystem,
     onLogWeight: (Double) -> Unit,
     onAddFood: () -> Unit,
@@ -219,6 +222,9 @@ internal fun HomeContent(
             unitSystem = unitSystem,
             onLogWeight = onLogWeight,
         )
+
+        // Adaptive maintenance — sits under the trend since it's derived from weight + intake.
+        adaptive?.let { AdaptiveTdeeCard(it) }
     }
 }
 
@@ -300,6 +306,66 @@ private fun WeightTrendCard(
             }
             Spacer(Modifier.height(12.dp))
             WeighInRow(unitSystem = unitSystem, onLogWeight = onLogWeight)
+        }
+    }
+}
+
+/** Display strings for the adaptive card — pure so it can be unit-tested without Compose. */
+internal data class AdaptiveDisplay(val heroKcal: String?, val title: String, val caption: String)
+
+internal fun adaptiveDisplay(a: AdaptiveTdeeOut): AdaptiveDisplay = when (a.status) {
+    "active" -> {
+        val adj = a.adjustmentKcal.roundToInt()
+        AdaptiveDisplay(
+            heroKcal = "${a.correctedTdee.roundToInt()} kcal",
+            title = when {
+                adj > 0 -> "+$adj kcal vs the estimate — you burn more than the formula thought, targets raised."
+                adj < 0 -> "$adj kcal vs the estimate — you burn less than the formula thought, targets trimmed."
+                else -> "Right on the formula estimate."
+            },
+            caption = "Learned from ${a.nLoggedDays} of ${a.windowDays} logged days.",
+        )
+    }
+    "learning" -> AdaptiveDisplay(
+        heroKcal = null,
+        title = "Dialing in your real maintenance…",
+        caption = "${a.nLoggedDays} of ${a.minLoggedDays} full days logged — keep logging and weighing in.",
+    )
+    else -> AdaptiveDisplay(
+        heroKcal = null,
+        title = "Adaptive targets locked",
+        caption = "Log full days plus a few weigh-ins over ~2 weeks and Plate tunes your targets to your real metabolism.",
+    )
+}
+
+/**
+ * "Your maintenance" card (ROADMAP2 T3 #1): once there's enough logged-day + weigh-in history, Plate
+ * back-solves the user's real maintenance from energy balance and adjusts targets. Shows the
+ * correction when active, otherwise the progress toward unlocking it.
+ */
+@Composable
+private fun AdaptiveTdeeCard(adaptive: AdaptiveTdeeOut) {
+    val pulse = PlateTheme.pulse
+    val d = adaptiveDisplay(adaptive)
+    PanelCard(Modifier.fillMaxWidth()) {
+        Column {
+            SectionHeader("Maintenance", modifier = Modifier.fillMaxWidth(), channel = pulse.calories)
+            Spacer(Modifier.height(12.dp))
+            d.heroKcal?.let {
+                Text(
+                    it,
+                    style = PlateTheme.dataType.dataLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(4.dp))
+            }
+            Text(
+                d.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Caption(d.caption)
         }
     }
 }
