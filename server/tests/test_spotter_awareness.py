@@ -27,10 +27,12 @@ from app.services.workout_source import (
     NOT_TRAINED,
     NullWorkoutSource,
     SpotterWorkoutSource,
+    WeekSummary,
     WorkoutSource,
     WorkoutStatus,
     get_workout_source,
     is_training_day,
+    training_week,
 )
 from tests.test_ai import _make_user, _mock_client, _req
 
@@ -271,3 +273,90 @@ async def test_log_endpoint_not_trained_by_default(auth_client, override_workout
     override_workouts(StubWorkoutSource(False))
     body = (await auth_client.get("/log")).json()
     assert body["trained_today"] is False
+
+
+# ── Training week (federated awareness Link B) ────────────────────────────────
+
+
+async def test_null_source_has_no_week():
+    assert await NullWorkoutSource().trained_week("a@b.com", TODAY, TODAY) is None
+
+
+async def test_spotter_source_parses_week_totals(cross_app_secret):
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(
+            200,
+            json={
+                "start": (TODAY - datetime.timedelta(days=6)).isoformat(),
+                "end": TODAY.isoformat(),
+                "days": [
+                    {"date": TODAY.isoformat(), "strength_sessions": 1, "cardio_sessions": 1}
+                ],
+                "totals": {"days_trained": 4, "strength_sessions": 3, "cardio_sessions": 2},
+            },
+        )
+
+    async with _mock_client(handler) as client:
+        source = SpotterWorkoutSource("https://spotter.example/", client=client)
+        week = await source.trained_week(
+            "lifter@plate.com", TODAY - datetime.timedelta(days=6), TODAY
+        )
+
+    assert week == WeekSummary(days_trained=4, strength_sessions=3, cardio_sessions=2)
+    assert f"start={(TODAY - datetime.timedelta(days=6)).isoformat()}" in captured["url"]
+    assert f"end={TODAY.isoformat()}" in captured["url"]
+
+
+async def test_training_week_degrades_to_none_on_failure():
+    # A stub whose week lookup explodes: the helper logs and returns None, never raises.
+    class ExplodingWeekSource(StubWorkoutSource):
+        async def trained_week(self, email, start, end):
+            raise httpx.ConnectError("spotter unreachable")
+
+    week = await training_week("a@b.com", TODAY, source=ExplodingWeekSource(True))
+    assert week is None
+
+
+async def test_training_week_covers_last_seven_days():
+    captured = {}
+
+    class WindowCapturingSource(StubWorkoutSource):
+        async def trained_week(self, email, start, end):
+            captured["start"], captured["end"] = start, end
+            return WeekSummary(days_trained=2, strength_sessions=2, cardio_sessions=0)
+
+    week = await training_week("a@b.com", TODAY, source=WindowCapturingSource(True))
+    assert week is not None and week.days_trained == 2
+    assert captured["end"] == TODAY
+    assert captured["start"] == TODAY - datetime.timedelta(days=6)
+
+
+async def test_macro_context_includes_week_line():
+    from app.database import AsyncSessionLocal
+    from app.services.ai.context_service import build_macro_context
+
+    async with AsyncSessionLocal() as session:
+        user = await _make_user(session)
+        context = await build_macro_context(
+            session,
+            user.id,
+            TODAY,
+            week=WeekSummary(days_trained=4, strength_sessions=3, cardio_sessions=2),
+        )
+    assert context is not None  # the week alone is worth a context block
+    assert "trained 4 of the last 7 days" in context
+    assert "(reported by Spotter)" in context
+    assert "3 strength" in context and "2 cardio" in context
+
+
+async def test_macro_context_has_no_week_line_when_absent():
+    from app.database import AsyncSessionLocal
+    from app.services.ai.context_service import build_macro_context
+
+    async with AsyncSessionLocal() as session:
+        user = await _make_user(session)
+        context = await build_macro_context(session, user.id, TODAY, week=None)
+    assert context is None or "last 7 days" not in context
