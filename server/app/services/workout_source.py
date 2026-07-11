@@ -40,12 +40,31 @@ class WorkoutStatus:
 NOT_TRAINED = WorkoutStatus(trained=False)
 
 
+@dataclass(frozen=True)
+class WeekSummary:
+    """Training over a date range (mirrors Spotter's ``WorkoutRangeOut.totals`` — federated
+    awareness Link B). ``None`` where a summary would go means "Spotter didn't say", never
+    "didn't train" — absence and zero are different facts."""
+
+    days_trained: int
+    strength_sessions: int
+    cardio_sessions: int
+
+
 class WorkoutSource(ABC):
     """Resolves a user's training status for a date. Implementations may hit the network or not."""
 
     @abstractmethod
     async def trained_on(self, email: str, day: datetime.date) -> WorkoutStatus:
         raise NotImplementedError
+
+    async def trained_week(
+        self, email: str, start: datetime.date, end: datetime.date
+    ) -> WeekSummary | None:
+        """Range summary via Spotter's ``GET /workouts?start=&end=``. Non-abstract default (None)
+        so null/stub sources and older fakes stay valid — absence degrades the coach's weekly
+        framing, nothing else."""
+        return None
 
 
 class NullWorkoutSource(WorkoutSource):
@@ -86,6 +105,28 @@ class SpotterWorkoutSource(WorkoutSource):
             cardio_sessions=int(data.get("cardio_sessions", 0)),
         )
 
+    async def trained_week(
+        self, email: str, start: datetime.date, end: datetime.date
+    ) -> WeekSummary | None:
+        token = await fetch_cross_app_token(email)
+        request = lambda c: c.get(  # noqa: E731 - tiny local binding, mirrors trained_on
+            f"{self._base_url}/workouts",
+            params={"start": start.isoformat(), "end": end.isoformat()},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if self._client is not None:
+            resp = await request(self._client)
+        else:
+            async with httpx.AsyncClient(timeout=settings.spotter_timeout_seconds) as client:
+                resp = await request(client)
+        resp.raise_for_status()
+        totals = resp.json()["totals"]
+        return WeekSummary(
+            days_trained=int(totals.get("days_trained", 0)),
+            strength_sessions=int(totals.get("strength_sessions", 0)),
+            cardio_sessions=int(totals.get("cardio_sessions", 0)),
+        )
+
 
 def get_workout_source() -> WorkoutSource:
     """FastAPI dependency: the configured source, or the null source when integration is off.
@@ -113,3 +154,17 @@ async def is_training_day(
     except Exception as exc:  # noqa: BLE001 - intentional: degrade gracefully, never propagate
         log.warning("workout-source lookup failed for %s on %s: %s", email, day, exc)
         return False
+
+
+async def training_week(
+    email: str, day: datetime.date, *, source: WorkoutSource | None = None
+) -> WeekSummary | None:
+    """Best-effort: the last 7 days of training ending on ``day`` (federated awareness Link B).
+    Any failure — or a source that doesn't do ranges — degrades to ``None``: the coach simply
+    loses its weekly framing line, never the request."""
+    source = source or get_workout_source()
+    try:
+        return await source.trained_week(email, day - datetime.timedelta(days=6), day)
+    except Exception as exc:  # noqa: BLE001 - intentional: degrade gracefully, never propagate
+        log.warning("workout-week lookup failed for %s ending %s: %s", email, day, exc)
+        return None

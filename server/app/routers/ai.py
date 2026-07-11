@@ -16,7 +16,12 @@ from app.limiter import limiter
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.security import CurrentUser
 from app.services.ai.client import chat
-from app.services.workout_source import WorkoutSource, get_workout_source, is_training_day
+from app.services.workout_source import (
+    WorkoutSource,
+    get_workout_source,
+    is_training_day,
+    training_week,
+)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -33,7 +38,10 @@ async def coach_chat(
     db: DbSession,
     workouts: Workouts,
 ):
-    # Tell the coach if the user trained today (Spotter-awareness, §7) so its framing matches the
-    # bumped targets. Best-effort: a Spotter outage just means no training-day framing.
-    trained = await is_training_day(current_user.email, datetime.date.today(), source=workouts)
-    return await chat(req, db, current_user.id, trained=trained)
+    # Tell the coach if the user trained today (Spotter-awareness, §7) and how the training WEEK
+    # looks (federated awareness Link B) so its framing matches the bumped targets and the week's
+    # rhythm. Both best-effort: a Spotter outage just means no training framing.
+    today = datetime.date.today()
+    trained = await is_training_day(current_user.email, today, source=workouts)
+    week = await training_week(current_user.email, today, source=workouts)
+    return await chat(req, db, current_user.id, trained=trained, week=week)

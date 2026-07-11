@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.food_log_entry import FoodLogEntry
 from app.nutrition.totals import sum_entries
 from app.services.goal_service import compute_targets_for, get_active_goal
+from app.services.workout_source import WeekSummary
 
 
 def _round(value: float) -> int:
@@ -23,13 +24,21 @@ def _round(value: float) -> int:
 
 
 async def build_macro_context(
-    db: AsyncSession, user_id: uuid.UUID, day: datetime.date, *, trained: bool = False
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    day: datetime.date,
+    *,
+    trained: bool = False,
+    week: WeekSummary | None = None,
 ) -> str | None:
     """Return a short text block describing the user's goal + remaining macros for ``day``.
 
     ``None`` when there's nothing useful to add (no goal set and nothing logged yet), in which case
     the coach answers from the system prompt alone. ``trained`` (Spotter-awareness, §7) bumps the
-    targets and adds a "trained today" line so the coach frames advice around refueling.
+    targets and adds a "trained today" line so the coach frames advice around refueling. ``week``
+    (federated awareness Link B) adds the last-7-days training summary so the coach frames the
+    WEEK — recovery-day eating after a heavy stretch, protein consistency across sessions — not
+    just today; absent means "Spotter didn't say" and the line simply isn't there.
     """
     goal = await get_active_goal(db, user_id)
     targets = await compute_targets_for(db, user_id, day, trained=trained)
@@ -39,7 +48,7 @@ async def build_macro_context(
     )
     entries = list(result.scalars().all())
 
-    if goal is None and not entries and not trained:
+    if goal is None and not entries and not trained and week is None:
         return None
 
     consumed = sum_entries(entries)
@@ -53,6 +62,19 @@ async def build_macro_context(
             "The user trained today (reported by Spotter). Today's targets already include a "
             "training-day fuel bump; favor carb- and protein-rich foods to help them refuel and "
             "recover."
+        )
+
+    if week is not None:
+        sessions = []
+        if week.strength_sessions:
+            sessions.append(f"{week.strength_sessions} strength")
+        if week.cardio_sessions:
+            sessions.append(f"{week.cardio_sessions} cardio")
+        breakdown = f" ({', '.join(sessions)})" if sessions else ""
+        lines.append(
+            f"This week the user trained {week.days_trained} of the last 7 days{breakdown} "
+            "(reported by Spotter). Frame advice around the training week — consistency, "
+            "recovery-day eating, and protein across sessions."
         )
 
     if goal is not None:
