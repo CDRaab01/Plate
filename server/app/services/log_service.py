@@ -345,3 +345,25 @@ async def get_summary(
         total=total,
         averages=_avg(total, num_days),
     )
+
+
+async def remaining_macros(
+    db: AsyncSession, user_id: uuid.UUID, day: datetime.date, *, trained: bool = False
+) -> dict | None:
+    """Macros left today = targets − consumed (federated awareness Link F — Cookbook ranks recipes
+    that fit). None when the user has no active goal (no personalized targets to subtract against),
+    so the consumer can degrade to absence. Rounded ints, clamped at 0 (never "negative kcal left").
+    """
+    targets = await compute_targets_for(db, user_id, day, trained=trained)
+    if targets is None:
+        return None
+    result = await db.execute(
+        select(FoodLogEntry).where(FoodLogEntry.user_id == user_id, FoodLogEntry.date == day)
+    )
+    consumed = sum_entries(list(result.scalars().all()))
+    return {
+        "kcal_remaining": max(0, round(targets.kcal - consumed.kcal)),
+        "protein_g_remaining": max(0, round(targets.protein_g - consumed.protein_g)),
+        "carbs_g_remaining": max(0, round(targets.carbs_g - consumed.carbs_g)),
+        "fat_g_remaining": max(0, round(targets.fat_g - consumed.fat_g)),
+    }

@@ -1,0 +1,8 @@
+{
+  "_comment": "Contract fixture for GET /cross-app/remaining?date= (Link F). Cookbook parses this to rank recipes that fit; 404 when no active goal.",
+  "date": "2026-07-11",
+  "kcal_remaining": 900,
+  "protein_g_remaining": 60,
+  "carbs_g_remaining": 90,
+  "fat_g_remaining": 25
+}

@@ -6,9 +6,10 @@ JWT signed with ``CROSS_APP_SECRET`` carrying the user's email, validated by
 set. Kept in its own router so the whole cross-app surface is auditable in isolation.
 """
 
+import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -21,6 +22,7 @@ from app.schemas.cross_app import (
 )
 from app.security import CrossAppUser
 from app.services.cross_app_food_service import log_cross_app_recipe, resolve_foods
+from app.services.log_service import remaining_macros
 
 router = APIRouter(prefix="/cross-app", tags=["cross-app"])
 
@@ -49,3 +51,19 @@ async def log_recipe(
 ):
     """Log resolvable items into the user's diary (one snapshotted entry per match)."""
     return await log_cross_app_recipe(db, current_user.id, req)
+
+
+@router.get("/remaining")
+@limiter.limit("60/minute")
+async def remaining(
+    request: Request,
+    current_user: CrossAppUser,
+    db: DbSession,
+    date: datetime.date = Query(..., description="The day to report remaining macros for"),
+):
+    """Macros left today (federated awareness Link F) — Cookbook ranks recipes that fit. 404 when
+    the user has no active goal (no targets to subtract against); the consumer degrades to no badge."""
+    result = await remaining_macros(db, current_user.id, date)
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No active goal — no remaining targets")
+    return {"date": date.isoformat(), **result}
