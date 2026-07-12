@@ -101,6 +101,12 @@ class Settings(BaseSettings):
     # "not a training day" rather than failing the user's request.
     spotter_timeout_seconds: float = 8.0
 
+    # Cookbook awareness (federated awareness Link E, CROSS-APP.md rule 7): the coach reads
+    # tonight's planned meal so it can pace the day around it. Unset ⇒ no plan line (NullPlanSource);
+    # RS256-only, reusing the cross_app_client_id/secret above. Same timeout shape as Spotter.
+    cookbook_base_url: str | None = None
+    cookbook_timeout_seconds: float = 8.0
+
     # Photo logging (Phase 6, CLAUDE.md §6). The vision model estimates the foods + macros in a
     # meal photo; the user always confirms before anything is logged (never auto-committed). Defaults
     # to the same multimodal Gemma 3 the coach uses — override if a separate vision model is loaded.

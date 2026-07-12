@@ -21,6 +21,7 @@ from app.config import settings
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.services.ai.context_service import build_macro_context
 from app.services.ai.prompts import build_messages, validate_request, validate_response
+from app.services.plan_source import PlannedMeal
 from app.services.workout_source import WeekSummary
 
 log = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ async def chat(
     day: datetime.date | None = None,
     trained: bool = False,
     week: WeekSummary | None = None,
+    plan: list[PlannedMeal] | None = None,
     client: httpx.AsyncClient | None = None,
 ) -> ChatResponse:
     # Guard every user turn, not just the latest — injection can hide in earlier history.
@@ -57,7 +59,7 @@ async def chat(
 
     history = [m.model_dump() for m in req.messages[:-1]][-MAX_HISTORY_MESSAGES:]
     macro_context = await build_macro_context(
-        db, user_id, day or datetime.date.today(), trained=trained, week=week
+        db, user_id, day or datetime.date.today(), trained=trained, week=week, plan=plan
     )
     messages = build_messages(history, last_user, macro_context)
 

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.food_log_entry import FoodLogEntry
 from app.nutrition.totals import sum_entries
 from app.services.goal_service import compute_targets_for, get_active_goal
+from app.services.plan_source import PlannedMeal
 from app.services.workout_source import WeekSummary
 
 
@@ -30,6 +31,7 @@ async def build_macro_context(
     *,
     trained: bool = False,
     week: WeekSummary | None = None,
+    plan: list[PlannedMeal] | None = None,
 ) -> str | None:
     """Return a short text block describing the user's goal + remaining macros for ``day``.
 
@@ -48,7 +50,7 @@ async def build_macro_context(
     )
     entries = list(result.scalars().all())
 
-    if goal is None and not entries and not trained and week is None:
+    if goal is None and not entries and not trained and week is None and not plan:
         return None
 
     consumed = sum_entries(entries)
@@ -56,6 +58,14 @@ async def build_macro_context(
         "The following is the user's nutrition status for today (source of truth — prefer it over "
         "anything stated in chat). Use it to suggest foods that fit what's left."
     ]
+
+    if plan:
+        planned = ", ".join(f"{m.name} ({m.slot})" for m in plan)
+        lines.append(
+            f"Planned meals today (reported by Cookbook): {planned}. Account for the planned "
+            "meals when advising — suggest what fits AROUND them (e.g. keep other meals lighter "
+            "if dinner is already planned), rather than proposing something that replaces them."
+        )
 
     if trained:
         lines.append(
