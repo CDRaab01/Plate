@@ -2,6 +2,8 @@ package com.plate.screenshot
 
 import android.app.Application
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -76,6 +78,8 @@ class ScreenshotTest {
 
     @Test fun onboarding_light() = capture("onboarding_light", dark = false) { com.plate.ui.onboarding.PlateOnboarding(onFinish = {}) }
     @Test fun onboarding_dark() = capture("onboarding_dark", dark = true) { com.plate.ui.onboarding.PlateOnboarding(onFinish = {}) }
+    @Test fun metabolism_light() = capture("metabolism_light", dark = false) { MetabolismScene() }
+    @Test fun metabolism_dark() = capture("metabolism_dark", dark = true) { MetabolismScene() }
     @Test fun login_light() = capture("login_light", dark = false) { LoginScene() }
     @Test fun login_dark() = capture("login_dark", dark = true) { LoginScene() }
     @Test fun register_light() = capture("register_light", dark = false) { RegisterScene() }
@@ -281,6 +285,26 @@ internal fun CoachScene() {
         ),
         onSend = {},
     )
+}
+
+@Composable
+internal fun MetabolismScene() {
+    androidx.compose.foundation.layout.Box(Modifier.padding(16.dp)) {
+        com.plate.ui.home.AdaptiveTdeeCard(
+            com.plate.data.remote.AdaptiveTdeeOut(
+                date = "2026-07-14",
+                status = "active",
+                formulaTdee = 2450.0,
+                correctedTdee = 2270.0,
+                observedMaintenance = 2260.0,
+                adjustmentKcal = -180.0,
+                confidence = 0.72,
+                nLoggedDays = 13,
+                windowDays = 14,
+                minLoggedDays = 10,
+            ),
+        )
+    }
 }
 
 @Composable

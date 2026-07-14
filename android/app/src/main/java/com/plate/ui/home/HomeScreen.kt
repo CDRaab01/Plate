@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -351,34 +353,97 @@ internal fun adaptiveDisplay(a: AdaptiveTdeeOut): AdaptiveDisplay = when (a.stat
 }
 
 /**
- * "Your maintenance" card (ROADMAP2 T3 #1): once there's enough logged-day + weigh-in history, Plate
- * back-solves the user's real maintenance from energy balance and adjusts targets. Shows the
- * correction when active, otherwise the progress toward unlocking it.
+ * The "Your metabolism" card (ROADMAP2 T3 #1 engine, ROADMAP3 presentation): once there's enough
+ * logged-day + weigh-in history, Plate back-solves the user's real maintenance from energy balance
+ * and adjusts targets. When active it shows the *correction itself* — the formula estimate vs the
+ * maintenance Plate observed from your data — plus a confidence meter, the way a serious tool
+ * (MacroFactor) does. Otherwise it shows progress toward unlocking it.
  */
 @Composable
-private fun AdaptiveTdeeCard(adaptive: AdaptiveTdeeOut) {
+internal fun AdaptiveTdeeCard(adaptive: AdaptiveTdeeOut) {
     val pulse = PlateTheme.pulse
     val d = adaptiveDisplay(adaptive)
     PanelCard(Modifier.fillMaxWidth()) {
         Column {
-            SectionHeader("Maintenance", modifier = Modifier.fillMaxWidth(), channel = pulse.calories)
+            SectionHeader("Your metabolism", modifier = Modifier.fillMaxWidth(), channel = pulse.calories)
             Spacer(Modifier.height(12.dp))
-            d.heroKcal?.let {
+            if (adaptive.status == "active") {
+                // The correction, shown: what the formula estimated vs what your data revealed.
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.weight(1f)) {
+                        Caption("Formula estimate")
+                        Spacer(Modifier.height(2.dp))
+                        DataText(
+                            "${adaptive.formulaTdee.roundToInt()}",
+                            style = PlateTheme.dataType.dataMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        "→",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Caption("Your maintenance")
+                        Spacer(Modifier.height(2.dp))
+                        DataText(
+                            "${adaptive.correctedTdee.roundToInt()}",
+                            style = PlateTheme.dataType.dataMedium,
+                            color = pulse.calories,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    it,
-                    style = PlateTheme.dataType.dataLarge,
+                    d.title,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(12.dp))
+                ConfidenceBar(adaptive.confidence.toFloat().coerceIn(0f, 1f), pulse.calories)
+                Spacer(Modifier.height(6.dp))
+                Caption(
+                    "${confidenceLabel(adaptive.confidence)} confidence · " +
+                        "${adaptive.nLoggedDays} of ${adaptive.windowDays} days",
+                )
+            } else {
+                Text(
+                    d.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Caption(d.caption)
             }
-            Text(
-                d.title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(2.dp))
-            Caption(d.caption)
         }
+    }
+}
+
+private fun confidenceLabel(c: Double): String = when {
+    c >= 0.66 -> "High"
+    c >= 0.33 -> "Medium"
+    else -> "Low"
+}
+
+/** A thin confidence meter: a hairline track with a channel-filled portion. */
+@Composable
+private fun ConfidenceBar(fraction: Float, channel: androidx.compose.ui.graphics.Color) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(design.pulse.ui.theme.Pulse.structure.hairlineStrong),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(channel),
+        )
     }
 }
 
