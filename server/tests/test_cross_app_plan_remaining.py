@@ -7,7 +7,6 @@ import pytest
 
 from app.config import settings
 from app.database import AsyncSessionLocal
-from app.models.food_log_entry import FoodLogEntry
 from app.models.user_goal import UserGoal
 from app.services.plan_source import (
     CookbookPlanSource,
@@ -69,6 +68,24 @@ async def test_cookbook_plan_source_parses_and_drops_noteless(cross_app_secret):
     assert f"date={TODAY.isoformat()}" in captured["url"]
 
 
+async def test_cookbook_plan_source_parses_eaten(cross_app_secret):
+    def handler(request):
+        return httpx.Response(200, json={
+            "date": TODAY.isoformat(),
+            "entries": [
+                {"slot": "lunch", "recipe_name": "Leftovers", "eaten": True},
+                {"slot": "dinner", "recipe_name": "Chicken Tikka", "eaten": False},
+            ],
+        })
+
+    async with _mock_client(handler) as client:
+        source = CookbookPlanSource("https://cookbook.example/", client=client)
+        meals = await source.planned_on("eater@plate.com", TODAY)
+
+    assert PlannedMeal(slot="lunch", name="Leftovers", eaten=True) in meals
+    assert PlannedMeal(slot="dinner", name="Chicken Tikka", eaten=False) in meals
+
+
 async def test_planned_meals_degrades_to_empty_on_failure():
     meals = await planned_meals("a@b.com", TODAY, source=StubPlanSource([], raises=True))
     assert meals == []
@@ -86,6 +103,19 @@ async def test_macro_context_includes_plan_line():
     assert context is not None
     assert "Planned meals today (reported by Cookbook)" in context
     assert "Chicken Tikka (dinner)" in context
+
+
+async def test_macro_context_marks_eaten_meals():
+    from app.services.ai.context_service import build_macro_context
+
+    async with AsyncSessionLocal() as session:
+        user = await _make_user(session)
+        context = await build_macro_context(
+            session, user.id, TODAY,
+            plan=[PlannedMeal(slot="lunch", name="Leftovers", eaten=True)],
+        )
+    assert context is not None
+    assert "Leftovers (lunch) — already eaten" in context
 
 
 # ── Link F: remaining-macros provider ────────────────────────────────────────

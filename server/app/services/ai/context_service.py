@@ -60,11 +60,15 @@ async def build_macro_context(
     ]
 
     if plan:
-        planned = ", ".join(f"{m.name} ({m.slot})" for m in plan)
+        planned = ", ".join(
+            f"{m.name} ({m.slot}){' — already eaten' if m.eaten else ''}" for m in plan
+        )
         lines.append(
-            f"Planned meals today (reported by Cookbook): {planned}. Account for the planned "
-            "meals when advising — suggest what fits AROUND them (e.g. keep other meals lighter "
-            "if dinner is already planned), rather than proposing something that replaces them."
+            f"Planned meals today (reported by Cookbook): {planned}. Meals marked 'already eaten' "
+            "have happened — treat them as consumed when reasoning about what's left. Account for "
+            "the still-to-come planned meals when advising — suggest what fits AROUND them (e.g. "
+            "keep other meals lighter if dinner is already planned), rather than proposing "
+            "something that replaces them."
         )
 
     if trained:

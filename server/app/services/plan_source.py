@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 class PlannedMeal:
     slot: str  # breakfast | lunch | dinner | snack
     name: str  # recipe name, or a free-text note
+    eaten: bool = False  # Cookbook reports whether the meal was actually eaten (not just planned)
 
 
 class PlanSource(ABC):
@@ -73,7 +74,7 @@ class CookbookPlanSource(PlanSource):
         resp.raise_for_status()
         entries = resp.json().get("entries", [])
         return [
-            PlannedMeal(slot=e["slot"], name=e["recipe_name"])
+            PlannedMeal(slot=e["slot"], name=e["recipe_name"], eaten=bool(e.get("eaten", False)))
             for e in entries
             if e.get("recipe_name")
         ]
