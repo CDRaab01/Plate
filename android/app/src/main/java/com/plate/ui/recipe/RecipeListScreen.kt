@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import design.pulse.ui.components.EmptyState
 import com.plate.data.remote.RecipeOut
 import design.pulse.ui.components.Caption
 import design.pulse.ui.components.DataText
@@ -117,27 +118,11 @@ fun RecipeListContent(
     onLog: (RecipeOut, String) -> Unit,
 ) {
     if (recipes.isEmpty()) {
-        Column(
-            Modifier.fillMaxSize().padding(32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                Icons.Outlined.RestaurantMenu,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                "No saved meals yet",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                "Build a recipe from foods you log often, then log it in one tap.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        EmptyState(
+            icon = Icons.Outlined.RestaurantMenu,
+            title = "No saved meals yet",
+            subtitle = "Build a recipe from foods you log often, then log it in one tap.",
+        )
         return
     }
     LazyColumn(

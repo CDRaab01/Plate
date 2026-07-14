@@ -50,6 +50,7 @@ import design.pulse.ui.components.ChannelDot
 import design.pulse.ui.components.DataText
 import design.pulse.ui.components.EmptyState
 import design.pulse.ui.components.PanelCard
+import design.pulse.ui.components.CelebrationPulse
 import design.pulse.ui.components.ProgressRing
 import design.pulse.ui.components.SectionHeader
 import design.pulse.ui.components.Sparkline
@@ -179,23 +180,34 @@ internal fun HomeContent(
         val consumed = day.totals.kcal
         val remaining = (target - consumed).coerceAtLeast(0.0)
         val progress = if (target > 0) (consumed / target).toFloat() else 0f
+        val goalMet = target > 0 && consumed >= target
         PanelCard(Modifier.fillMaxWidth()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 SectionHeader("Calories", channel = pulse.calories, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(16.dp))
-                ProgressRing(
-                    progress = progress,
-                    channel = pulse.calories,
-                    modifier = Modifier.size(160.dp),
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        TickerNumber(
-                            target = remaining.roundToInt(),
-                            style = PlateTheme.dataType.dataLarge,
-                            color = pulse.calories,
-                        )
-                        Caption("kcal left")
+                // When the day's calorie goal is met, wrap the ring in a sustained CelebrationPulse
+                // glow — the quiet "you did it" reward. Sustained (not a one-shot burst), so it's
+                // safe to render whenever met without edge-detection or re-firing on every visit.
+                val ring: @Composable () -> Unit = {
+                    ProgressRing(
+                        progress = progress,
+                        channel = pulse.calories,
+                        modifier = Modifier.size(160.dp),
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            TickerNumber(
+                                target = remaining.roundToInt(),
+                                style = PlateTheme.dataType.dataLarge,
+                                color = pulse.calories,
+                            )
+                            Caption(if (goalMet) "goal met" else "kcal left")
+                        }
                     }
+                }
+                if (goalMet) {
+                    CelebrationPulse(channel = pulse.calories) { ring() }
+                } else {
+                    ring()
                 }
                 Spacer(Modifier.height(16.dp))
                 Row(

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.plate.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
+import design.pulse.ui.theme.ThemePref
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -27,6 +28,16 @@ class AppPreferences @Inject constructor(
     companion object {
         private val SERVER_URL = stringPreferencesKey("pref_server_url")
         private val UNIT_SYSTEM = stringPreferencesKey("pref_unit_system")
+        private val THEME_PREF = stringPreferencesKey("pref_theme")
+    }
+
+    /** Appearance choice (Dark/Light/System), resolved to a boolean in the theme. Defaults to System. */
+    val themePref: Flow<ThemePref> = context.prefsDataStore.data.map { prefs ->
+        prefs[THEME_PREF]?.let { runCatching { ThemePref.valueOf(it) }.getOrNull() } ?: ThemePref.System
+    }
+
+    suspend fun setThemePref(value: ThemePref) {
+        context.prefsDataStore.edit { it[THEME_PREF] = value.name }
     }
 
     /** Base URL of the Plate server. Defaults to the build-time value when unset. */

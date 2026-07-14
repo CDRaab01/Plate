@@ -8,6 +8,7 @@ import com.plate.data.remote.UserSettingsUpdate
 import com.plate.util.AppPreferences
 import com.plate.util.UnitSystem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import design.pulse.ui.theme.ThemePref
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,14 @@ class SettingsViewModel @Inject constructor(
     /** The lb/kg display preference (cached; server is the source of truth). */
     val unitSystem: StateFlow<UnitSystem> = appPreferences.unitSystem
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UnitSystem.IMPERIAL)
+
+    /** Appearance choice (Dark/Light/System) — local-only, applied by the theme immediately. */
+    val themePref: StateFlow<ThemePref> = appPreferences.themePref
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemePref.System)
+
+    fun setThemePref(value: ThemePref) {
+        viewModelScope.launch { appPreferences.setThemePref(value) }
+    }
 
     init {
         // Reconcile the cache with the server's stored preference on open.
