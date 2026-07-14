@@ -74,6 +74,8 @@ class ScreenshotTest {
         compose.onRoot().captureRoboImage("screenshots/$name.png", roborazziOptions = roborazziOptions)
     }
 
+    @Test fun onboarding_light() = capture("onboarding_light", dark = false) { com.plate.ui.onboarding.PlateOnboarding(onFinish = {}) }
+    @Test fun onboarding_dark() = capture("onboarding_dark", dark = true) { com.plate.ui.onboarding.PlateOnboarding(onFinish = {}) }
     @Test fun login_light() = capture("login_light", dark = false) { LoginScene() }
     @Test fun login_dark() = capture("login_dark", dark = true) { LoginScene() }
     @Test fun register_light() = capture("register_light", dark = false) { RegisterScene() }

@@ -3,6 +3,7 @@ package com.plate.util
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -29,6 +30,14 @@ class AppPreferences @Inject constructor(
         private val SERVER_URL = stringPreferencesKey("pref_server_url")
         private val UNIT_SYSTEM = stringPreferencesKey("pref_unit_system")
         private val THEME_PREF = stringPreferencesKey("pref_theme")
+        private val ONBOARDED = booleanPreferencesKey("pref_onboarded")
+    }
+
+    /** Whether the first-run onboarding has been completed. False until finished/skipped once. */
+    val hasOnboarded: Flow<Boolean> = context.prefsDataStore.data.map { it[ONBOARDED] ?: false }
+
+    suspend fun setOnboarded() {
+        context.prefsDataStore.edit { it[ONBOARDED] = true }
     }
 
     /** Appearance choice (Dark/Light/System), resolved to a boolean in the theme. Defaults to System. */
