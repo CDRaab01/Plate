@@ -27,6 +27,23 @@ the most visible win. The slate, in order:
 5. **Photo-estimate feedback delta** (loop-closer #1) — turns estimator accuracy into data.
 6. Version 0.1.0 → **1.0.0** at the gate.
 
+**Gap review 2026-07-14 (host ROADMAP3 additions — what a MacroFactor user would expect):**
+
+7. **Voice logging** — "two eggs and a banana" → parsed, editable draft (the house AI law:
+   suggest, never auto-commit). LM Studio is already the vision backend; this is a mic button,
+   a transcription hop, and a strict-JSON prompt. No commercial app can do it private and free —
+   the single most "wow per hour" feature available to Plate.
+8. **Nutrition-label scan** — photo of the *label*, not the meal. Higher accuracy than dish
+   estimation, reuses the existing vision pipeline end-to-end, and covers the barcode-miss case
+   (imports, local brands).
+9. **The weekly check-in ritual** — MacroFactor's retention engine: weigh-in trend + adaptive
+   target adjustment presented as a Sunday *event* (celebration/motion, "here's what changed and
+   why"), not a passive card. Pairs with Road-to-1.0 #3's metabolism dashboard.
+10. **Remaining-macros ring widget** (host Tier W4 Pulse widget family) — the most-glanced
+    number in the suite belongs on the home screen.
+11. **Meal reminders / "nothing logged today"** via the suite push pipeline (host Tier W2b) —
+    opt-in, quiet hours, never nagging by default.
+
 ## The one next-level feature worth building
 
 ✓ **Adaptive TDEE correction — SHIPPED 2026-07-04** (ROADMAP2 T3 #1): pure
