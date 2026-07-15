@@ -3,6 +3,8 @@ import uuid
 
 from pydantic import BaseModel, field_validator
 
+from app.schemas.food import FoodOut
+
 MEALS = ("breakfast", "lunch", "dinner", "snack")
 
 
@@ -168,3 +170,20 @@ class RangeSummaryOut(BaseModel):
     days: list[DaySummary]
     total: TotalsOut
     averages: TotalsOut
+
+
+class RecentFoodOut(BaseModel):
+    """A recently-logged food with the last portion used — the quick-log 'recent foods' surface,
+    so re-logging a staple is one tap with the portion pre-filled."""
+
+    food: FoodOut
+    last_meal: str
+    last_quantity: float
+    last_unit: str
+
+
+class CopyDayRequest(BaseModel):
+    """Copy every entry from one day into another (the 'copy yesterday' quick-log)."""
+
+    from_date: datetime.date
+    to_date: datetime.date

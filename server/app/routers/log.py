@@ -9,19 +9,23 @@ from fastapi import HTTPException
 
 from app.database import get_db
 from app.schemas.log import (
+    CopyDayRequest,
     DailyLog,
     LogEntryCreate,
     LogEntryOut,
     LogEntryUpdate,
     QuickAddCreate,
     RangeSummaryOut,
+    RecentFoodOut,
 )
 from app.security import CurrentUser
 from app.services.log_service import (
+    copy_day,
     create_entry,
     create_quick_add,
     delete_entry,
     get_day,
+    get_recent_foods,
     get_summary,
     update_entry,
 )
@@ -96,6 +100,26 @@ async def summary(
             training_days.add(day_i)
 
     return await get_summary(db, current_user.id, start_day, end_day, training_days=training_days)
+
+
+@router.get("/recent-foods", response_model=list[RecentFoodOut])
+async def recent_foods(
+    current_user: CurrentUser,
+    db: DbSession,
+    limit: int = Query(20, ge=1, le=50),
+):
+    """Foods you've logged recently, most-recent first, with the last portion — for one-tap re-log."""
+    return await get_recent_foods(db, current_user.id, limit)
+
+
+@router.post("/copy-day", response_model=list[LogEntryOut], status_code=status.HTTP_201_CREATED)
+async def copy_day_entries(
+    req: CopyDayRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """Copy a whole day's entries into another day (additive) — the 'copy yesterday' quick-log."""
+    return await copy_day(db, current_user.id, req.from_date, req.to_date)
 
 
 @router.put("/{entry_id}", response_model=LogEntryOut)

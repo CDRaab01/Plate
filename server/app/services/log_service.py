@@ -19,6 +19,7 @@ from app.nutrition.constants import STATIC_DAILY_TARGET
 from app.nutrition.portions import MacroSnapshot, scale_food
 from app.nutrition.totals import sum_entries
 from app.services.goal_service import compute_targets_for
+from app.schemas.food import FoodOut
 from app.schemas.log import (
     DailyLog,
     DaySummary,
@@ -28,6 +29,7 @@ from app.schemas.log import (
     MealGroup,
     QuickAddCreate,
     RangeSummaryOut,
+    RecentFoodOut,
     TotalsOut,
     MEALS,
 )
@@ -59,6 +61,101 @@ def _to_out(entry: FoodLogEntry, food_name: str | None) -> LogEntryOut:
     # Source-food name when there is one; otherwise the entry's own label (quick-add entries).
     out.food_name = food_name if food_name is not None else entry.name
     return out
+
+
+async def get_recent_foods(
+    db: AsyncSession, user_id: uuid.UUID, limit: int = 20
+) -> list[RecentFoodOut]:
+    """Distinct foods the user has logged, most-recently-logged first, each with the last portion
+    used so re-logging a staple is one tap. Deduped in Python over a recent window (quick-adds,
+    which have no source food, are excluded — there's nothing to re-log by id)."""
+    result = await db.execute(
+        select(FoodLogEntry)
+        .where(FoodLogEntry.user_id == user_id, FoodLogEntry.food_id.is_not(None))
+        .order_by(FoodLogEntry.created_at.desc())
+        .limit(200)
+    )
+    latest_per_food: dict[uuid.UUID, FoodLogEntry] = {}
+    for entry in result.scalars():
+        if entry.food_id not in latest_per_food:
+            latest_per_food[entry.food_id] = entry
+        if len(latest_per_food) >= limit:
+            break
+    if not latest_per_food:
+        return []
+    foods = {
+        food.id: food
+        for food in (
+            await db.execute(select(Food).where(Food.id.in_(latest_per_food.keys())))
+        ).scalars()
+    }
+    out: list[RecentFoodOut] = []
+    for food_id, entry in latest_per_food.items():
+        food = foods.get(food_id)
+        if food is None:
+            continue  # source food was deleted — nothing to re-log
+        out.append(
+            RecentFoodOut(
+                food=FoodOut.model_validate(food),
+                last_meal=entry.meal,
+                last_quantity=entry.quantity,
+                last_unit=entry.unit,
+            )
+        )
+    return out
+
+
+async def copy_day(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    from_date: datetime.date,
+    to_date: datetime.date,
+) -> list[LogEntryOut]:
+    """Copy every entry from ``from_date`` into ``to_date`` (the 'copy yesterday' quick-log).
+
+    The denormalized macro snapshot is copied verbatim — same food, quantity, and unit, so no
+    re-scaling is needed and history stays intact even if the source food later changes. This is
+    additive (it does not clear the target day), and ``source_ref`` is dropped since a copy isn't
+    cross-app-sourced.
+    """
+    result = await db.execute(
+        select(FoodLogEntry)
+        .where(FoodLogEntry.user_id == user_id, FoodLogEntry.date == from_date)
+        .order_by(FoodLogEntry.created_at)
+    )
+    copies: list[FoodLogEntry] = []
+    for e in result.scalars():
+        copy = FoodLogEntry(
+            user_id=user_id,
+            food_id=e.food_id,
+            name=e.name,
+            date=to_date,
+            meal=e.meal,
+            quantity=e.quantity,
+            unit=e.unit,
+            kcal=e.kcal,
+            protein_g=e.protein_g,
+            carbs_g=e.carbs_g,
+            fat_g=e.fat_g,
+            fiber_g=e.fiber_g,
+            sugar_g=e.sugar_g,
+            sat_fat_g=e.sat_fat_g,
+            cholesterol_mg=e.cholesterol_mg,
+            sodium_mg=e.sodium_mg,
+        )
+        db.add(copy)
+        copies.append(copy)
+    if copies:
+        await db.commit()
+        for copy in copies:
+            await db.refresh(copy)
+
+    food_ids = {c.food_id for c in copies if c.food_id is not None}
+    names: dict[uuid.UUID, str] = {}
+    if food_ids:
+        rows = await db.execute(select(Food.id, Food.name).where(Food.id.in_(food_ids)))
+        names = {fid: name for fid, name in rows.all()}
+    return [_to_out(c, names.get(c.food_id)) for c in copies]
 
 
 async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate) -> LogEntryOut:
