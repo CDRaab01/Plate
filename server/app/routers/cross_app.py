@@ -17,11 +17,16 @@ from app.limiter import limiter
 from app.schemas.cross_app import (
     CrossAppLogRequest,
     CrossAppLogResponse,
+    CrossAppUnlogResponse,
     ResolveFoodsRequest,
     ResolveFoodsResponse,
 )
 from app.security import CrossAppUser
-from app.services.cross_app_food_service import log_cross_app_recipe, resolve_foods
+from app.services.cross_app_food_service import (
+    log_cross_app_recipe,
+    resolve_foods,
+    unlog_cross_app_recipe,
+)
 from app.services.log_service import remaining_macros
 
 router = APIRouter(prefix="/cross-app", tags=["cross-app"])
@@ -51,6 +56,19 @@ async def log_recipe(
 ):
     """Log resolvable items into the user's diary (one snapshotted entry per match)."""
     return await log_cross_app_recipe(db, current_user.id, req)
+
+
+@router.delete("/logged", response_model=CrossAppUnlogResponse)
+@limiter.limit("60/minute")
+async def unlog(
+    request: Request,
+    current_user: CrossAppUser,
+    db: DbSession,
+    client_ref: str = Query(..., min_length=1, max_length=128, description="The ref used at log time"),
+):
+    """Retract the diary entries a prior log created under ``client_ref`` for this user — powers a
+    portion change (delete + re-log) or un-checking a confirmed meal. Idempotent."""
+    return await unlog_cross_app_recipe(db, current_user.id, client_ref)
 
 
 @router.get("/remaining")

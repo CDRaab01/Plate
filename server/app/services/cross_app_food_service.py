@@ -17,7 +17,7 @@ estimates the user can judge — never silently wrong numbers (the Plate photo-l
 import logging
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.food import Food
@@ -27,6 +27,7 @@ from app.schemas.cross_app import (
     CrossAppFoodItem,
     CrossAppLogRequest,
     CrossAppLogResponse,
+    CrossAppUnlogResponse,
     ResolvedFoodOut,
     ResolveFoodsRequest,
     ResolveFoodsResponse,
@@ -115,6 +116,7 @@ async def log_cross_app_recipe(
                 meal=req.meal,
                 quantity=quantity,
                 unit=unit,
+                source_ref=req.client_ref,
                 kcal=snap.kcal,
                 protein_g=snap.protein_g,
                 carbs_g=snap.carbs_g,
@@ -137,3 +139,20 @@ async def log_cross_app_recipe(
             skipped,
         )
     return CrossAppLogResponse(logged=logged, skipped=skipped)
+
+
+async def unlog_cross_app_recipe(
+    db: AsyncSession, user_id: uuid.UUID, client_ref: str
+) -> CrossAppUnlogResponse:
+    """Remove the diary entries a prior /cross-app/log-recipe created under ``client_ref`` for this
+    user — the retract half of the confirm/adjust/un-eat loop. Scoped to (user_id, source_ref) so a
+    ref can never touch another user's diary or Plate's own (null-ref) entries. Idempotent: an
+    unknown ref removes 0."""
+    result = await db.execute(
+        delete(FoodLogEntry).where(
+            FoodLogEntry.user_id == user_id,
+            FoodLogEntry.source_ref == client_ref,
+        )
+    )
+    await db.commit()
+    return CrossAppUnlogResponse(removed=result.rowcount or 0)

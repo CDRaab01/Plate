@@ -57,6 +57,9 @@ class CrossAppLogRequest(BaseModel):
     meal: str
     # Label used for skipped-item logging context only; entries carry their food names.
     recipe_name: str | None = None
+    # Optional correlation tag the caller can later use to adjust/retract this exact log
+    # (DELETE /cross-app/logged?client_ref=). Stored on each created entry as source_ref.
+    client_ref: str | None = Field(default=None, max_length=128)
     items: list[CrossAppFoodItem] = Field(default=[], max_length=200)
 
     @field_validator("meal")
@@ -68,3 +71,8 @@ class CrossAppLogRequest(BaseModel):
 class CrossAppLogResponse(BaseModel):
     logged: int
     skipped: int
+
+
+class CrossAppUnlogResponse(BaseModel):
+    # How many diary entries were removed for the given (user, client_ref).
+    removed: int

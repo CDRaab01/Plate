@@ -31,6 +31,10 @@ class FoodLogEntry(Base):
     meal: Mapped[str] = mapped_column(String(20))  # breakfast | lunch | dinner | snack
     quantity: Mapped[float] = mapped_column(Float)
     unit: Mapped[str] = mapped_column(String(32))
+    # Correlation tag for entries created by a sister app (Cookbook) on behalf of the user, so it
+    # can adjust (delete-by-ref + re-log) or retract (delete-by-ref) that meal. NULL for entries
+    # Plate logs itself.
+    source_ref: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
 
     # Denormalized macro snapshot
     kcal: Mapped[float] = mapped_column(Float)
