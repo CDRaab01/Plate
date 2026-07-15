@@ -70,6 +70,7 @@ import kotlin.math.roundToInt
 fun HomeScreen(
     onOpenSettings: () -> Unit,
     onAddFood: () -> Unit,
+    onOpenMetabolism: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -116,6 +117,7 @@ fun HomeScreen(
                     unitSystem = unit,
                     onLogWeight = viewModel::logBodyweight,
                     onAddFood = onAddFood,
+                    onOpenMetabolism = onOpenMetabolism,
                 )
             }
         }
@@ -133,6 +135,7 @@ internal fun HomeContent(
     unitSystem: UnitSystem,
     onLogWeight: (Double) -> Unit,
     onAddFood: () -> Unit,
+    onOpenMetabolism: () -> Unit = {},
 ) {
     val pulse = PlateTheme.pulse
     Column(
@@ -238,7 +241,7 @@ internal fun HomeContent(
         )
 
         // Adaptive maintenance — sits under the trend since it's derived from weight + intake.
-        adaptive?.let { AdaptiveTdeeCard(it) }
+        adaptive?.let { AdaptiveTdeeCard(it, onClick = onOpenMetabolism) }
     }
 }
 
@@ -360,10 +363,10 @@ internal fun adaptiveDisplay(a: AdaptiveTdeeOut): AdaptiveDisplay = when (a.stat
  * (MacroFactor) does. Otherwise it shows progress toward unlocking it.
  */
 @Composable
-internal fun AdaptiveTdeeCard(adaptive: AdaptiveTdeeOut) {
+internal fun AdaptiveTdeeCard(adaptive: AdaptiveTdeeOut, onClick: (() -> Unit)? = null) {
     val pulse = PlateTheme.pulse
     val d = adaptiveDisplay(adaptive)
-    PanelCard(Modifier.fillMaxWidth()) {
+    PanelCard(Modifier.fillMaxWidth(), onClick = onClick) {
         Column {
             SectionHeader("Your metabolism", modifier = Modifier.fillMaxWidth(), channel = pulse.calories)
             Spacer(Modifier.height(12.dp))

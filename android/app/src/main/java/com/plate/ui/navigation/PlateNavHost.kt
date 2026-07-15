@@ -30,6 +30,7 @@ import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.FoodSearchScreen
 import com.plate.ui.goals.GoalScreen
 import com.plate.ui.home.HomeScreen
+import com.plate.ui.metabolism.MetabolismScreen
 import com.plate.ui.photo.PhotoLogScreen
 import com.plate.ui.recipe.DiscoverRecipesScreen
 import com.plate.ui.recipe.RecipeEditScreen
@@ -55,6 +56,7 @@ object Routes {
     const val GOALS = "goals"
     const val ABOUT = "about"
     const val SETTINGS = "settings"
+    const val METABOLISM = "metabolism"
 
     // Phase 8 top-level destinations (bottom bar) + recipe editor detail.
     const val COACH = "coach"
@@ -191,7 +193,12 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                     // Jump straight to food search. Navigating to this nested destination puts the
                     // diary graph on the back stack, so the search screen's DiaryViewModel resolves.
                     onAddFood = { navController.navigate(Routes.SEARCH) },
+                    onOpenMetabolism = { navController.navigate(Routes.METABOLISM) },
                 )
+            }
+
+            composable(Routes.METABOLISM) {
+                MetabolismScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.RECIPES) {
