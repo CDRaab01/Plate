@@ -1,0 +1,21 @@
+# gitleaks config — extends the default ruleset and allowlists ONE historical incident.
+#
+# On 2026-07-14 two `.env.bak` files were briefly committed to the public repo in commit
+# c86d163 (a `git add -A` staged them). The commit was force-pushed out of `main`'s history the
+# same day, and every secret it contained (SECRET_KEY, CROSS_APP_SECRET, CROSS_APP_CLIENT_SECRET,
+# DB password, API keys) was ROTATED — the leaked values are dead. The blob still lingers as an
+# unreachable object in GitHub's store until GitHub garbage-collects it, so the full-history scan
+# keeps re-finding it. Allowlisting that one commit keeps CI honest (a genuinely NEW leak still
+# fails) without a standing red on a resolved-and-rotated incident.
+#
+# Recurrence is prevented separately: `.gitignore` now blocks timestamped `.env.bak` files in
+# every repo, so a future `git add -A` can't re-commit one.
+
+title = "Plate gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Rotated + history-rewritten .env.bak leak (c86d163, 2026-07-14) — values are dead."
+commits = ["c86d1637189a1282f46fed3f6036f0921775781f"]
