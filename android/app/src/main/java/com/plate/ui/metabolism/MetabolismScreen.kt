@@ -13,9 +13,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clip
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -74,13 +76,13 @@ fun MetabolismScreen(
                 is MetabolismState.Loading ->
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is MetabolismState.NoGoal -> EmptyState(
-                    icon = null,
+                    icon = Icons.Filled.Info,
                     title = "No goal yet",
                     subtitle = "Set a goal and Plate starts learning your real maintenance from your logs and weigh-ins.",
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                 )
                 is MetabolismState.Error -> EmptyState(
-                    icon = null,
+                    icon = Icons.Filled.Refresh,
                     title = "Couldn't load your metabolism",
                     subtitle = "Check your connection and try again.",
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
