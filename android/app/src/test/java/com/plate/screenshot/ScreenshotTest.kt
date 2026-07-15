@@ -116,6 +116,8 @@ class ScreenshotTest {
 
     @Test fun metabolism_dashboard_light() = capture("metabolism_dashboard_light", dark = false) { MetabolismDashboardScene() }
     @Test fun metabolism_dashboard_dark() = capture("metabolism_dashboard_dark", dark = true) { MetabolismDashboardScene() }
+    @Test fun metabolism_learning_light() = capture("metabolism_learning_light", dark = false) { MetabolismLearningScene() }
+    @Test fun metabolism_learning_dark() = capture("metabolism_learning_dark", dark = true) { MetabolismLearningScene() }
 }
 
 @Composable
@@ -130,6 +132,24 @@ private fun MetabolismDashboardScene() {
             adjustmentKcal = 145.0,
             confidence = 0.72,
             nLoggedDays = 12,
+            windowDays = 14,
+            minLoggedDays = 10,
+        ),
+    )
+}
+
+@Composable
+private fun MetabolismLearningScene() {
+    MetabolismContent(
+        AdaptiveTdeeOut(
+            date = "2026-07-15",
+            status = "learning",
+            formulaTdee = 2320.0,
+            correctedTdee = 2320.0,
+            observedMaintenance = null,
+            adjustmentKcal = 0.0,
+            confidence = 0.3,
+            nLoggedDays = 6,
             windowDays = 14,
             minLoggedDays = 10,
         ),
