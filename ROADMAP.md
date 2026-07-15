@@ -46,6 +46,9 @@ the most visible win. The slate, in order:
 9. **The weekly check-in ritual** — MacroFactor's retention engine: weigh-in trend + adaptive
    target adjustment presented as a Sunday *event* (celebration/motion, "here's what changed and
    why"), not a passive card. Pairs with Road-to-1.0 #3's metabolism dashboard.
+   *Server core DONE 2026-07-15:* `GET /checkin/weekly` composes days-logged-this-week, the
+   ~7-day weight move, and the adaptive-TDEE read (`checkin_service`, tested). Remaining: the
+   client "Sunday event" presentation + a weekly "due" trigger.
 10. **Remaining-macros ring widget** (host Tier W4 Pulse widget family) — the most-glanced
     number in the suite belongs on the home screen.
 11. **Meal reminders / "nothing logged today"** via the suite push pipeline (host Tier W2b) —

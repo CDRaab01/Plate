@@ -115,3 +115,16 @@ class AdaptiveTDEEOut(BaseModel):
     n_logged_days: int
     window_days: int
     min_logged_days: int
+
+
+class WeeklyCheckinOut(BaseModel):
+    """The once-a-week check-in snapshot: how consistent you were (days logged in the last 7),
+    which way the scale moved over the week (canonical kg; the client converts), and how the
+    adaptive engine reads your maintenance now. A composite the client frames as a Sunday ritual."""
+
+    days_logged: int
+    days_in_window: int = 7
+    # Latest weigh-in minus one ~a week earlier, in kg; null when there aren't two weigh-ins to compare.
+    weight_change_kg: float | None = None
+    # Null until the user has a goal (compute_adaptive_for returns None without one).
+    adaptive: AdaptiveTDEEOut | None = None

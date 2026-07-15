@@ -10,6 +10,7 @@ from app.limiter import limiter
 from app.routers import (
     ai,
     auth,
+    checkin,
     cross_app,
     export,
     foods,
@@ -92,6 +93,7 @@ app.include_router(suite_auth.router)
 app.include_router(users.router)
 app.include_router(foods.router)
 app.include_router(goals.router)
+app.include_router(checkin.router)
 app.include_router(log.router)
 app.include_router(metrics.router)
 app.include_router(recipes.router)
