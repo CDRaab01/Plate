@@ -122,6 +122,54 @@ async def test_log_recipe_creates_diary_entries(client, food):
     assert any(e["food_name"] == food.name for e in dinner["entries"])
 
 
+async def test_log_and_unlog_by_client_ref(client, food):
+    """A confirmed-meal log tagged with client_ref can be retracted by that ref (portion
+    change = delete + re-log; un-check = delete). Scoped to the user; idempotent."""
+    email = await _register(client)
+    headers = {"Authorization": f"Bearer {_mint(email)}"}
+    today = date.today().isoformat()
+    ref = "plan-entry-abc123"
+
+    logged = await client.post(
+        "/cross-app/log-recipe",
+        json={
+            "date": today,
+            "meal": "lunch",
+            "recipe_name": "Shared Plan Meal",
+            "client_ref": ref,
+            "items": [{"name": food.name, "quantity": 100, "unit": "g"}],
+        },
+        headers=headers,
+    )
+    assert logged.status_code == 200, logged.text
+    assert logged.json() == {"logged": 1, "skipped": 0}
+
+    # Unknown ref removes nothing (idempotent / no cross-user reach).
+    miss = await client.delete(
+        "/cross-app/logged", params={"client_ref": "not-a-ref"}, headers=headers
+    )
+    assert miss.status_code == 200, miss.text
+    assert miss.json() == {"removed": 0}
+
+    # The real ref retracts exactly the entry it created.
+    removed = await client.delete(
+        "/cross-app/logged", params={"client_ref": ref}, headers=headers
+    )
+    assert removed.status_code == 200, removed.text
+    assert removed.json() == {"removed": 1}
+
+    # Diary is empty for that day again.
+    login = await client.post(
+        "/auth/login", json={"email": email, "password": "Testpass123!"}
+    )
+    token = login.json()["access_token"]
+    day = await client.get(
+        "/log", params={"date": today}, headers={"Authorization": f"Bearer {token}"}
+    )
+    lunch = next((g for g in day.json()["meals"] if g["meal"] == "lunch"), None)
+    assert lunch is None or lunch["entries"] == []
+
+
 async def test_cross_app_rejects_normal_tokens(auth_client):
     resp = await auth_client.post("/cross-app/resolve-foods", json={"items": []})
     assert resp.status_code == 401
