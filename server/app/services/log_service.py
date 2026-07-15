@@ -10,7 +10,7 @@ import datetime
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import distinct, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.food import Food
@@ -304,6 +304,30 @@ def _totals_out(entries) -> TotalsOut:
     )
 
 
+async def get_logging_streak(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """Consecutive days the user has logged anything, ending today — or yesterday, giving one
+    grace day so the streak survives until midnight of a not-yet-logged day. 0 when the run is
+    broken. Always relative to the real current date, not any viewed day."""
+    result = await db.execute(
+        select(distinct(FoodLogEntry.date)).where(FoodLogEntry.user_id == user_id)
+    )
+    logged_days = {row[0] for row in result.all()}
+    if not logged_days:
+        return 0
+    today = datetime.date.today()
+    if today in logged_days:
+        cursor = today
+    elif (today - datetime.timedelta(days=1)) in logged_days:
+        cursor = today - datetime.timedelta(days=1)  # grace: today isn't logged yet
+    else:
+        return 0
+    streak = 0
+    while cursor in logged_days:
+        streak += 1
+        cursor -= datetime.timedelta(days=1)
+    return streak
+
+
 async def get_day(
     db: AsyncSession, user_id: uuid.UUID, day: datetime.date, *, trained: bool = False
 ) -> DailyLog:
@@ -339,6 +363,7 @@ async def get_day(
         totals=_totals_out(entries),
         targets=targets,
         trained_today=trained,
+        streak=await get_logging_streak(db, user_id),
     )
 
 

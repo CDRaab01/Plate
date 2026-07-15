@@ -151,6 +151,9 @@ class DailyLog(BaseModel):
     totals: TotalsOut
     targets: TotalsOut
     trained_today: bool = False
+    # Consecutive days logged, ending today (or yesterday, one grace day). Relative to the
+    # current date, so it reads as a "current streak" even when viewing a past day.
+    streak: int = 0
 
 
 class DaySummary(BaseModel):
