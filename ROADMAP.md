@@ -18,7 +18,10 @@ the most visible win. The slate, in order:
 
 1. **Port the Spotter polish patterns** — branded Empty/Loading/Error states, onboarding,
    motion — as they land in Pulse (host ROADMAP3 Tier P), not as a hand-copied fork.
-2. **Celebration moments** — macro goal hit, logging streaks — via the shared Pulse primitives.
+2. **Celebration moments** — macro goal hit (✓ Home wraps the calorie ring in `CelebrationPulse`
+   when the goal is met) and **✓ logging streaks DONE 2026-07-15**: `DailyLog.streak` (consecutive
+   days logged, one grace day) surfaces as a flame pill on the Home hero, with a weekly-milestone
+   cheer. *Still open:* a bigger celebration flourish at milestones (motion), via shared Pulse primitives.
 3. **The "metabolism dashboard"** — the adaptive-TDEE engine (shipped, below) presented the way
    MacroFactor presents it: what we observed, why targets moved, confidence — instead of one
    Home card. The premium feature is the *explanation*, and the engine already computes it.

@@ -112,4 +112,6 @@ data class DailyLog(
     // Spotter-awareness (Phase 7): the user trained that day, so `targets` already include the
     // training-day bump and the diary shows a "trained today" hint. Defaults false for older servers.
     @SerialName("trained_today") val trainedToday: Boolean = false,
+    /** Consecutive days logged, ending today (or yesterday, one grace day). 0 = no active streak. */
+    val streak: Int = 0,
 )

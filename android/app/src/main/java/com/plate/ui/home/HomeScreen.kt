@@ -178,6 +178,24 @@ internal fun HomeContent(
                     Caption("Trained today — targets bumped", color = androidx.compose.ui.graphics.Color.White)
                 }
             }
+            if (day.streak > 0) {
+                Spacer(Modifier.height(if (day.trainedToday) 6.dp else 12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Whatshot,
+                        contentDescription = null,
+                        tint = androidx.compose.ui.graphics.Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    // Weekly milestones get a little cheer; every day counts otherwise.
+                    val cheer = if (day.streak >= 7 && day.streak % 7 == 0) " — on fire!" else ""
+                    Caption(
+                        "${day.streak}-day logging streak$cheer",
+                        color = androidx.compose.ui.graphics.Color.White,
+                    )
+                }
+            }
         }
 
         // Calorie ring + remaining
