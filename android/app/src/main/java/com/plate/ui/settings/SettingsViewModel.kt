@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.BuildConfig
 import com.plate.data.remote.ApiService
+import com.plate.data.remote.UserOut
 import com.plate.data.remote.UserSettingsUpdate
 import com.plate.util.AppPreferences
 import com.plate.util.UnitSystem
@@ -37,15 +38,21 @@ class SettingsViewModel @Inject constructor(
     val themePref: StateFlow<ThemePref> = appPreferences.themePref
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemePref.System)
 
+    /** The signed-in account (name + email), for the Settings account header. Null until loaded. */
+    private val _profile = MutableStateFlow<UserOut?>(null)
+    val profile: StateFlow<UserOut?> = _profile
+
     fun setThemePref(value: ThemePref) {
         viewModelScope.launch { appPreferences.setThemePref(value) }
     }
 
     init {
-        // Reconcile the cache with the server's stored preference on open.
+        // Load the account for the header and reconcile the unit cache with the server on open.
         viewModelScope.launch {
-            runCatching { api.me().unitSystem }
-                .onSuccess { appPreferences.setUnitSystem(UnitSystem.fromWire(it)) }
+            runCatching { api.me() }.onSuccess { me ->
+                _profile.value = me
+                appPreferences.setUnitSystem(UnitSystem.fromWire(me.unitSystem))
+            }
         }
     }
 
