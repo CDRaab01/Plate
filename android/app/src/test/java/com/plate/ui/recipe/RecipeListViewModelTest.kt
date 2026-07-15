@@ -53,6 +53,8 @@ private class FakeLogRepository(var loggedRecipe: String? = null, var loggedMeal
     override suspend fun deleteEntry(id: String) = throw IllegalStateException()
     override suspend fun quickAdd(date: String, meal: String, name: String?, kcal: Double, proteinG: Double, carbsG: Double, fatG: Double) =
         throw IllegalStateException()
+    override suspend fun copyDay(fromDate: String, toDate: String) = emptyList<com.plate.data.remote.LogEntryOut>()
+
     override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> {
         loggedRecipe = recipeId
         loggedMeal = meal

@@ -86,6 +86,14 @@ private class FakeLogRepository(
         return LogEntryOut("q", null, name ?: "Quick add", date, meal, 1.0, "serving", kcal, proteinG, carbsG, fatG)
     }
 
+    var copiedFrom: String? = null
+    var copiedTo: String? = null
+    override suspend fun copyDay(fromDate: String, toDate: String): List<LogEntryOut> {
+        copiedFrom = fromDate
+        copiedTo = toDate
+        return emptyList()
+    }
+
     override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
         emptyList()
 
@@ -160,6 +168,21 @@ class DiaryViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repo.quickAdded)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `copyYesterday copies the previous day into the current day then reloads`() = runTest {
+        val repo = FakeLogRepository(day = dailyLog("2026-06-16"))
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+        val today = vm.date.value
+
+        vm.copyYesterday()
+        advanceUntilIdle()
+
+        assertEquals(LocalDate.parse(today).minusDays(1).toString(), repo.copiedFrom)
+        assertEquals(today, repo.copiedTo)
         assertTrue(vm.day.value is UiState.Success)
     }
 

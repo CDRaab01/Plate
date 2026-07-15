@@ -40,6 +40,8 @@ private class FakeFoodRepository(
     var lookupCount = 0
     var lastCode: String? = null
 
+    override suspend fun recentFoods(limit: Int) = emptyList<com.plate.data.remote.RecentFoodOut>()
+
     override suspend fun search(query: String): List<FoodOut> = emptyList()
 
     override suspend fun lookupBarcode(code: String): FoodOut {

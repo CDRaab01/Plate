@@ -44,6 +44,8 @@ private class FakeFoodRepository(
     var lastCreate: FoodCreateRequest? = null
 
     override suspend fun search(query: String) = emptyList<FoodOut>()
+
+    override suspend fun recentFoods(limit: Int) = emptyList<com.plate.data.remote.RecentFoodOut>()
     override suspend fun lookupBarcode(code: String): FoodOut = throw IllegalStateException()
 
     override suspend fun createFood(req: FoodCreateRequest): FoodOut {
@@ -108,6 +110,8 @@ private class FakeLogRepository : LogRepository {
         carbsG: Double,
         fatG: Double,
     ): LogEntryOut = throw IllegalStateException()
+
+    override suspend fun copyDay(fromDate: String, toDate: String) = emptyList<com.plate.data.remote.LogEntryOut>()
 
     override suspend fun logRecipe(recipeId: String, date: String, meal: String) =
         throw IllegalStateException()

@@ -22,8 +22,10 @@ the most visible win. The slate, in order:
 3. **The "metabolism dashboard"** — the adaptive-TDEE engine (shipped, below) presented the way
    MacroFactor presents it: what we observed, why targets moved, confidence — instead of one
    Home card. The premium feature is the *explanation*, and the engine already computes it.
-4. **Quick-log ergonomics** — copy yesterday's meal, recent-foods-first ranking (loop-closer #5
-   below; this file's own "#1 real-world friction" call).
+4. ✓ **Quick-log ergonomics** — DONE 2026-07-15. **Recent foods** surface (`GET /log/recent-foods`)
+   fills the search screen while the query is empty — one tap re-logs a staple with its last
+   portion pre-filled; **Copy yesterday** (`POST /log/copy-day`) appears on an empty day to pull
+   the previous day's meals in. Server-deduped/additive; VM + endpoint tests.
 5. **Photo-estimate feedback delta** (loop-closer #1) — turns estimator accuracy into data.
 6. Version 0.1.0 → **1.0.0** at the gate.
 

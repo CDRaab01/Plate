@@ -77,6 +77,14 @@ interface ApiService {
     @POST("log/quick-add")
     suspend fun quickAdd(@Body body: QuickAddRequest): LogEntryOut
 
+    /** Recently-logged foods, most-recent first, with the last portion used — one-tap re-log. */
+    @GET("log/recent-foods")
+    suspend fun getRecentFoods(@Query("limit") limit: Int = 20): List<RecentFoodOut>
+
+    /** Copy every entry from one day into another (additive) — "copy yesterday". */
+    @POST("log/copy-day")
+    suspend fun copyDay(@Body body: CopyDayRequest): List<LogEntryOut>
+
     /** Per-day totals + period total/averages. Defaults server-side to the last 7 days. */
     @GET("log/summary")
     suspend fun getSummary(

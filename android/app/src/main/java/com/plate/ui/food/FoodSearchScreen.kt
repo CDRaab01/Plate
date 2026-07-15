@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.FoodOut
+import com.plate.data.remote.RecentFoodOut
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.util.UiState
 import kotlin.math.roundToInt
@@ -67,14 +68,18 @@ fun FoodSearchScreen(
 ) {
     val query by searchViewModel.query.collectAsState()
     val results by searchViewModel.results.collectAsState()
-    var selected by remember { mutableStateOf<FoodOut?>(null) }
+    val recent by searchViewModel.recent.collectAsState()
+    var selected by remember { mutableStateOf<Selection?>(null) }
 
-    selected?.let { food ->
+    selected?.let { sel ->
         AddFoodDialog(
-            food = food,
+            food = sel.food,
+            initialMeal = sel.meal,
+            initialUnit = sel.unit,
+            initialQuantity = sel.quantity,
             onDismiss = { selected = null },
             onConfirm = { meal, quantity, unit ->
-                diaryViewModel.addEntry(food.id, meal, quantity, unit)
+                diaryViewModel.addEntry(sel.food.id, meal, quantity, unit)
                 selected = null
                 onLogged()
             },
@@ -85,12 +90,22 @@ fun FoodSearchScreen(
         query = query,
         onQueryChange = searchViewModel::onQueryChange,
         results = results,
+        recent = recent,
         onBack = onBack,
         onScan = onScan,
         onPhoto = onPhoto,
-        onPick = { selected = it },
+        onPick = { selected = Selection(it) },
+        onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
     )
 }
+
+/** A chosen food plus the portion to pre-fill the dialog with (a recent re-log carries its last). */
+private data class Selection(
+    val food: FoodOut,
+    val meal: String? = null,
+    val quantity: Double? = null,
+    val unit: String? = null,
+)
 
 /** Stateless search body — rendered by [FoodSearchScreen] in the app and by screenshot tests. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,6 +118,8 @@ fun FoodSearchContent(
     onScan: () -> Unit,
     onPhoto: () -> Unit,
     onPick: (FoodOut) -> Unit,
+    recent: List<RecentFoodOut> = emptyList(),
+    onPickRecent: (RecentFoodOut) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -139,16 +156,31 @@ fun FoodSearchContent(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(12.dp))
-            SearchResults(results = results, onPick = onPick)
+            SearchResults(
+                results = results,
+                recent = recent,
+                onPick = onPick,
+                onPickRecent = onPickRecent,
+            )
         }
     }
 }
 
 @Composable
-private fun SearchResults(results: UiState<List<FoodOut>>, onPick: (FoodOut) -> Unit) {
+private fun SearchResults(
+    results: UiState<List<FoodOut>>,
+    recent: List<RecentFoodOut>,
+    onPick: (FoodOut) -> Unit,
+    onPickRecent: (RecentFoodOut) -> Unit,
+) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         when (results) {
-            is UiState.Idle -> Hint("Search for a food to log it")
+            // Query empty: offer recent foods for one-tap re-log, else the search hint.
+            is UiState.Idle -> if (recent.isNotEmpty()) {
+                RecentFoods(recent = recent, onPick = onPickRecent)
+            } else {
+                Hint("Search for a food to log it")
+            }
             is UiState.Loading -> CircularProgressIndicator(Modifier.padding(top = 32.dp))
             is UiState.Error -> Text(
                 results.message,
@@ -176,6 +208,44 @@ private fun Hint(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 32.dp),
     )
+}
+
+/** The "log again" surface shown while the search box is empty: tap a recent food to re-log it
+ *  with its last portion pre-filled. */
+@Composable
+private fun RecentFoods(recent: List<RecentFoodOut>, onPick: (RecentFoodOut) -> Unit) {
+    LazyColumn(Modifier.fillMaxSize()) {
+        item {
+            Text(
+                "RECENT",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+            )
+        }
+        items(recent, key = { it.food.id }) { r ->
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onPick(r) }
+                    .padding(vertical = 12.dp),
+            ) {
+                Text(r.food.name, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Last: ${formatPortion(r.lastQuantity, r.lastUnit)} · " +
+                        (MEAL_LABELS[r.lastMeal] ?: r.lastMeal),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+private fun formatPortion(quantity: Double, unit: String): String {
+    val q = if (quantity % 1.0 == 0.0) quantity.toInt().toString() else quantity.toString()
+    val u = if (unit == "serving") (if (quantity == 1.0) "serving" else "servings") else unit
+    return "$q $u"
 }
 
 @Composable
@@ -209,11 +279,20 @@ fun AddFoodDialog(
     food: FoodOut,
     onDismiss: () -> Unit,
     onConfirm: (meal: String, quantity: Double, unit: String) -> Unit,
+    initialMeal: String? = null,
+    initialUnit: String? = null,
+    initialQuantity: Double? = null,
 ) {
     val hasServing = food.kcalPerServing != null || food.servingSize != null
-    var unit by remember { mutableStateOf(if (hasServing) "serving" else "g") }
-    var meal by remember { mutableStateOf("breakfast") }
-    var quantityText by remember { mutableStateOf(if (unit == "serving") "1" else "100") }
+    var unit by remember { mutableStateOf(initialUnit ?: if (hasServing) "serving" else "g") }
+    var meal by remember { mutableStateOf(initialMeal ?: "breakfast") }
+    var quantityText by remember {
+        mutableStateOf(
+            initialQuantity?.let {
+                if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
+            } ?: if (unit == "serving") "1" else "100",
+        )
+    }
 
     val quantity = quantityText.toDoubleOrNull()
     val estimatedKcal = quantity?.let { estimateKcal(food, it, unit) }

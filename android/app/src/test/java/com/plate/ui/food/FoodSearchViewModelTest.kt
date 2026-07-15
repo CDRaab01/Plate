@@ -3,6 +3,7 @@ package com.plate.ui.food
 import com.plate.data.remote.FoodCreateRequest
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
+import com.plate.data.remote.RecentFoodOut
 import com.plate.data.repository.FoodRepository
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
@@ -27,9 +28,12 @@ private fun food(id: String, name: String) = FoodOut(
 private class FakeFoodRepository(
     private val results: List<FoodOut> = emptyList(),
     private val failWith: Exception? = null,
+    private val recent: List<RecentFoodOut> = emptyList(),
 ) : FoodRepository {
     var searchCount = 0
     var lastQuery: String? = null
+
+    override suspend fun recentFoods(limit: Int) = recent
 
     override suspend fun search(query: String): List<FoodOut> {
         searchCount++
@@ -65,6 +69,20 @@ class FoodSearchViewModelTest {
         assertTrue(state is UiState.Success)
         assertEquals(listOf(food("1", "Banana")), (state as UiState.Success).data)
         assertEquals("banana", repo.lastQuery)
+    }
+
+    @Test
+    fun `recent foods load on init for the empty-query surface`() = runTest {
+        val recent = RecentFoodOut(
+            food = food("1", "Eggs"),
+            lastMeal = "breakfast",
+            lastQuantity = 2.0,
+            lastUnit = "serving",
+        )
+        val vm = FoodSearchViewModel(FakeFoodRepository(recent = listOf(recent)))
+        advanceUntilIdle()
+
+        assertEquals(listOf(recent), vm.recent.value)
     }
 
     @Test

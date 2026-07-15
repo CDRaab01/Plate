@@ -4,6 +4,7 @@ import com.plate.data.remote.ApiService
 import com.plate.data.remote.FoodCreateRequest
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
+import com.plate.data.remote.RecentFoodOut
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -15,6 +16,8 @@ class FoodRepositoryImpl @Inject constructor(
     private val api: ApiService,
 ) : FoodRepository {
     override suspend fun search(query: String): List<FoodOut> = api.searchFoods(query)
+
+    override suspend fun recentFoods(limit: Int): List<RecentFoodOut> = api.getRecentFoods(limit)
 
     override suspend fun lookupBarcode(code: String): FoodOut = api.lookupBarcode(code)
 

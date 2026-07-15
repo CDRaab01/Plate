@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
@@ -140,6 +141,7 @@ fun DiaryScreen(
                     onToday = viewModel::goToToday,
                     onEditEntry = { editing = it },
                     onDeleteEntry = viewModel::deleteEntry,
+                    onCopyYesterday = viewModel::copyYesterday,
                 )
                 is UiState.Error -> Text(
                     s.message,
@@ -183,7 +185,9 @@ fun DiaryContent(
     onToday: () -> Unit,
     onEditEntry: (LogEntryOut) -> Unit,
     onDeleteEntry: (String) -> Unit,
+    onCopyYesterday: () -> Unit = {},
 ) {
+    val dayIsEmpty = day.meals.all { it.entries.isEmpty() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
@@ -205,6 +209,23 @@ fun DiaryContent(
                 targets = day.targets,
                 trainedToday = day.trainedToday,
             )
+        }
+        // Nothing logged for this day yet → one tap to copy the previous day's meals in.
+        if (dayIsEmpty) {
+            item {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onCopyYesterday,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.height(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Copy yesterday")
+                }
+            }
         }
         item { Spacer(Modifier.height(12.dp)) }
 

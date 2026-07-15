@@ -9,6 +9,7 @@ import com.plate.data.remote.LogEntryCreate
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.LogEntryUpdate
 import com.plate.data.remote.MealGroup
+import com.plate.data.remote.CopyDayRequest
 import com.plate.data.remote.QuickAddRequest
 import com.plate.data.remote.RecipeLogRequest
 import com.plate.data.remote.TotalsOut
@@ -103,6 +104,9 @@ class LogRepositoryImpl @Inject constructor(
 
     override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
         api.logRecipe(recipeId, RecipeLogRequest(date = date, meal = meal))
+
+    override suspend fun copyDay(fromDate: String, toDate: String): List<LogEntryOut> =
+        api.copyDay(CopyDayRequest(fromDate = fromDate, toDate = toDate))
 
     override suspend fun syncPending() {
         for (entry in diaryDao.allPending()) {

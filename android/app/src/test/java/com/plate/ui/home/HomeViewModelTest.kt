@@ -60,6 +60,8 @@ private class FakeLog(private val day: DailyLog) : LogRepository {
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?) = error("unused")
     override suspend fun deleteEntry(id: String) {}
     override suspend fun quickAdd(date: String, meal: String, name: String?, kcal: Double, proteinG: Double, carbsG: Double, fatG: Double) = error("unused")
+    override suspend fun copyDay(fromDate: String, toDate: String) = emptyList<com.plate.data.remote.LogEntryOut>()
+
     override suspend fun logRecipe(recipeId: String, date: String, meal: String) = emptyList<com.plate.data.remote.LogEntryOut>()
     override suspend fun syncPending() {}
 }

@@ -38,6 +38,9 @@ interface LogRepository {
     /** Expand a saved recipe into the given day's meal. */
     suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut>
 
+    /** Copy every entry from [fromDate] into [toDate] (additive) — the "copy yesterday" quick-log. */
+    suspend fun copyDay(fromDate: String, toDate: String): List<LogEntryOut>
+
     /** Push any quick-adds that were queued while offline. Best-effort; safe to call repeatedly. */
     suspend fun syncPending()
 }

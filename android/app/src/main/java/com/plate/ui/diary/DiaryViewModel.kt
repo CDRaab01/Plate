@@ -136,6 +136,20 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    /** Copy the previous day's entries into the current day (the "copy yesterday" quick-log). */
+    fun copyYesterday() {
+        viewModelScope.launch {
+            val target = _date.value
+            val from = LocalDate.parse(target).minusDays(1).toString()
+            try {
+                logRepository.copyDay(from, target)
+                load()
+            } catch (e: Exception) {
+                _day.value = UiState.Error(e.message ?: "Couldn't copy yesterday")
+            }
+        }
+    }
+
     /** Quick add (Phase 8): log raw macros directly, with no source food, then reload the day. */
     fun quickAdd(
         meal: String,

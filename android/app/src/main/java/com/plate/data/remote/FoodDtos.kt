@@ -45,6 +45,21 @@ data class LogEntryCreate(
     val unit: String,
 )
 
+/** A recently-logged food + the last portion used, for one-tap re-logging. */
+@Serializable
+data class RecentFoodOut(
+    val food: FoodOut,
+    @SerialName("last_meal") val lastMeal: String,
+    @SerialName("last_quantity") val lastQuantity: Double,
+    @SerialName("last_unit") val lastUnit: String,
+)
+
+@Serializable
+data class CopyDayRequest(
+    @SerialName("from_date") val fromDate: String,
+    @SerialName("to_date") val toDate: String,
+)
+
 @Serializable
 data class LogEntryUpdate(
     val date: String? = null,

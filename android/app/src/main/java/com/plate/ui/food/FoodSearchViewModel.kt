@@ -3,6 +3,7 @@ package com.plate.ui.food
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.FoodOut
+import com.plate.data.remote.RecentFoodOut
 import com.plate.data.repository.FoodRepository
 import com.plate.util.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +30,21 @@ class FoodSearchViewModel @Inject constructor(
     private val _results = MutableStateFlow<UiState<List<FoodOut>>>(UiState.Idle)
     val results: StateFlow<UiState<List<FoodOut>>> = _results
 
+    /** Recently-logged foods, shown as one-tap re-log chips while the query is empty. */
+    private val _recent = MutableStateFlow<List<RecentFoodOut>>(emptyList())
+    val recent: StateFlow<List<RecentFoodOut>> = _recent
+
     private var searchJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            _recent.value = try {
+                foodRepository.recentFoods()
+            } catch (_: Exception) {
+                emptyList() // recents are a convenience; never block search on them
+            }
+        }
+    }
 
     fun onQueryChange(value: String) {
         _query.value = value
