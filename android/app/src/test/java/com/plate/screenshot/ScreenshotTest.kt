@@ -23,8 +23,10 @@ import com.plate.data.remote.RecipeOut
 import com.plate.data.remote.TotalsOut
 import com.plate.data.remote.WeightTrendOut
 import com.plate.data.remote.WeightTrendPoint
+import com.plate.data.remote.AdaptiveTdeeOut
 import com.plate.ui.about.AboutContent
 import com.plate.ui.home.HomeContent
+import com.plate.ui.metabolism.MetabolismContent
 import com.plate.util.UnitSystem
 import com.plate.ui.auth.LoginContent
 import com.plate.ui.auth.RegisterContent
@@ -111,6 +113,27 @@ class ScreenshotTest {
     @Test fun home_behind_light() = capture("home_behind_light", dark = false) { HomeScene(onPace = false) }
     @Test fun discover_light() = capture("discover_light", dark = false) { DiscoverScene() }
     @Test fun discover_dark() = capture("discover_dark", dark = true) { DiscoverScene() }
+
+    @Test fun metabolism_light() = capture("metabolism_light", dark = false) { MetabolismScene() }
+    @Test fun metabolism_dark() = capture("metabolism_dark", dark = true) { MetabolismScene() }
+}
+
+@Composable
+private fun MetabolismScene() {
+    MetabolismContent(
+        AdaptiveTdeeOut(
+            date = "2026-07-15",
+            status = "active",
+            formulaTdee = 2320.0,
+            correctedTdee = 2465.0,
+            observedMaintenance = 2465.0,
+            adjustmentKcal = 145.0,
+            confidence = 0.72,
+            nLoggedDays = 12,
+            windowDays = 14,
+            minLoggedDays = 10,
+        ),
+    )
 }
 
 @Composable
