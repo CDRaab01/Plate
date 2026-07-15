@@ -28,7 +28,9 @@ the most visible win. The slate, in order:
 4. ✓ **Quick-log ergonomics** — DONE 2026-07-15. **Recent foods** surface (`GET /log/recent-foods`)
    fills the search screen while the query is empty — one tap re-logs a staple with its last
    portion pre-filled; **Copy yesterday** (`POST /log/copy-day`) appears on an empty day to pull
-   the previous day's meals in. Server-deduped/additive; VM + endpoint tests.
+   the previous day's meals in. Server-deduped/additive; VM + endpoint tests. **Also: `/foods/search`
+   now ranks the user's recently-logged matches first (then alphabetical)** so re-logging a staple
+   is a top hit, not buried — the "recent-foods-first ranking" half (server-only, per-user, tested).
 5. **Photo-estimate feedback delta** (loop-closer #1) — turns estimator accuracy into data.
 6. Version 0.1.0 → **1.0.0** at the gate.
 

@@ -17,24 +17,48 @@ from app.foods.normalize import NormalizedFood, normalized_name
 from app.foods.off import OpenFoodFactsSource
 from app.foods.usda import UsdaFoodSource
 from app.models.food import Food
+from app.models.food_log_entry import FoodLogEntry
 
 log = logging.getLogger(__name__)
 
 
-async def _search_local(db: AsyncSession, query: str, limit: int) -> list[Food]:
+async def _recent_food_rank(db: AsyncSession, user_id) -> dict:
+    """{food_id: rank} for the user's logged foods, most-recently-logged first (rank 0)."""
+    result = await db.execute(
+        select(FoodLogEntry.food_id, func.max(FoodLogEntry.created_at).label("last"))
+        .where(FoodLogEntry.user_id == user_id, FoodLogEntry.food_id.is_not(None))
+        .group_by(FoodLogEntry.food_id)
+        .order_by(func.max(FoodLogEntry.created_at).desc())
+        .limit(200)
+    )
+    return {food_id: rank for rank, (food_id, _) in enumerate(result.all())}
+
+
+async def _search_local(db: AsyncSession, query: str, limit: int, user_id=None) -> list[Food]:
     """Case-insensitive substring match on the cached ``foods`` table.
 
     Recipe-ingredient foods (``source='spoonacular'``, created by recipe import) are excluded — they
     carry recipe-specific per-serving nutrition and would be confusing as standalone search hits.
+
+    When ``user_id`` is given, matches the user has logged are surfaced first (most-recent first),
+    then the rest alphabetically — so re-logging a staple is a top hit, not buried alphabetically.
+    A generous fetch cap ensures a recent-but-alphabetically-late food isn't dropped before ranking.
     """
     pattern = f"%{query}%"
+    fetch = limit if user_id is None else max(limit * 5, 100)
     result = await db.execute(
         select(Food)
         .where(Food.name.ilike(pattern), Food.source != "spoonacular")
         .order_by(Food.name)
-        .limit(limit)
+        .limit(fetch)
     )
-    return list(result.scalars().all())
+    matches = list(result.scalars().all())
+    if user_id is None:
+        return matches[:limit]
+
+    rank = await _recent_food_rank(db, user_id)
+    matches.sort(key=lambda f: (rank.get(f.id, len(rank) + 1), f.name.lower()))
+    return matches[:limit]
 
 
 def _build_live_sources(client: httpx.AsyncClient) -> list[FoodSource]:
@@ -123,6 +147,7 @@ async def search_foods(
     db: AsyncSession,
     query: str,
     *,
+    user_id=None,
     sources: list[FoodSource] | None = None,
 ) -> list[Food]:
     """Local-cache-first food search that still enriches from external sources.
@@ -141,7 +166,7 @@ async def search_foods(
         return []
 
     limit = settings.external_search_limit
-    local = await _search_local(db, q, limit)
+    local = await _search_local(db, q, limit, user_id=user_id)
     if len(local) >= limit:
         return local  # cache already has a full page — no need to hit the network
 

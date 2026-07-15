@@ -37,8 +37,9 @@ async def search(
     db: DbSession,
     q: Annotated[str, Query(min_length=1, description="Search text")],
 ):
-    """Local-cache-first food search. External sources are hit only on a cache miss."""
-    return await search_foods(db, q)
+    """Local-cache-first food search, ranked with the user's recently-logged foods first.
+    External sources are hit only on a cache miss."""
+    return await search_foods(db, q, user_id=current_user.id)
 
 
 @router.get("/barcode/{code}", response_model=FoodOut)
