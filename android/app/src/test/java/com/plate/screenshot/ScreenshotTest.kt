@@ -114,12 +114,12 @@ class ScreenshotTest {
     @Test fun discover_light() = capture("discover_light", dark = false) { DiscoverScene() }
     @Test fun discover_dark() = capture("discover_dark", dark = true) { DiscoverScene() }
 
-    @Test fun metabolism_light() = capture("metabolism_light", dark = false) { MetabolismScene() }
-    @Test fun metabolism_dark() = capture("metabolism_dark", dark = true) { MetabolismScene() }
+    @Test fun metabolism_dashboard_light() = capture("metabolism_dashboard_light", dark = false) { MetabolismDashboardScene() }
+    @Test fun metabolism_dashboard_dark() = capture("metabolism_dashboard_dark", dark = true) { MetabolismDashboardScene() }
 }
 
 @Composable
-private fun MetabolismScene() {
+private fun MetabolismDashboardScene() {
     MetabolismContent(
         AdaptiveTdeeOut(
             date = "2026-07-15",
