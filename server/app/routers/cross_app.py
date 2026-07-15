@@ -64,7 +64,9 @@ async def unlog(
     request: Request,
     current_user: CrossAppUser,
     db: DbSession,
-    client_ref: str = Query(..., min_length=1, max_length=128, description="The ref used at log time"),
+    client_ref: str = Query(
+        ..., min_length=1, max_length=128, description="The ref used at log time"
+    ),
 ):
     """Retract the diary entries a prior log created under ``client_ref`` for this user — powers a
     portion change (delete + re-log) or un-checking a confirmed meal. Idempotent."""
