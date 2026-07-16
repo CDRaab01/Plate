@@ -17,15 +17,20 @@ git history (this file, pre-2026-07-03).
 
 Food logging across Breakfast/Lunch/Dinner/Snacks; food search backed by USDA FoodData Central +
 Open Food Facts (local-cache-first: `foods` table → USDA → OFF; barcodes straight to OFF then
-cached); ML Kit barcode scanning; photo-a-meal macro estimation via the LM Studio vision model
-(always an editable draft — **never auto-committed**); an AI coach whose system prompt carries
-remaining macros, goal, and today's Spotter training status; recipes/saved meals, quick-add,
-weekly summaries; bodyweight tracking with trend/target support; daily targets computed
-server-side (Mifflin-St Jeor TDEE, goal adjustment, protein from bodyweight, fat floor, carbs
-fill) with a **training-day bump** when Spotter reports a workout. Once there's enough logged-day +
-weigh-in history, an **adaptive TDEE correction** back-solves the user's real maintenance from the
-energy balance between intake and weight change and self-corrects the targets (`GET /goals/adaptive`;
-ROADMAP2 T3 #1).
+cached); ML Kit barcode scanning; three AI draft-logging paths through the LM Studio vision/parse pipeline —
+**photo-a-meal** estimation, **nutrition-label** transcription (`POST /foods/label`), and **voice
+logging** (`POST /foods/voice`; speech→text is on-device, the server only parses the text and
+resolves foods against trusted search) — each **always an editable draft, never auto-committed**;
+an AI coach whose system prompt carries remaining macros, goal, and today's Spotter training
+status; recipes/saved meals, quick-add, recent-foods / copy-yesterday re-logging, weekly summaries;
+bodyweight tracking with trend/target support; daily targets computed server-side (Mifflin-St Jeor
+TDEE, goal adjustment, protein from bodyweight, fat floor, carbs fill) with a **training-day bump**
+when Spotter reports a workout. Once there's enough logged-day + weigh-in history, an **adaptive
+TDEE correction** back-solves the user's real maintenance from the energy balance between intake
+and weight change and self-corrects the targets (`GET /goals/adaptive`; ROADMAP2 T3 #1), presented
+in a MacroFactor-style **metabolism dashboard**. Client extras: a home-screen Glance **widget**
+(remaining macros), opt-in **retention nudges** (client-only alarms, quiet hours), static launcher
+**shortcuts**, and a **logging-streak** flame on Home.
 
 ## Decisions that were once open and are now closed (do not relitigate)
 
@@ -54,7 +59,9 @@ ROADMAP2 T3 #1).
   signed with the **one suite-wide `CROSS_APP_SECRET`** (shared identical value across Spotter/
   Plate/Cookbook `.env`s — rotate everywhere at once), email-resolved user, disabled (401) when
   the secret is unset. Cookbook uses these to import Plate recipes and log cooked meals back
-  into the food diary.
+  into the food diary. The same auth surface serves the suite's **read** endpoints:
+  `GET /cross-app/remaining?date=` (Cookbook's fits-today badge) and
+  `GET /cross-app/summary?start=&end=` (the weekly-digest window aggregates).
 
 ## Suite membership (Dragonfly hub / SSO / releases)
 
@@ -145,3 +152,20 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 - External nutrition data is cached, attributed (OFF/ODbL + USDA in Settings → About), and
   rate-limited — never live-hit OFF/USDA per keystroke, and never ship API keys in the APK.
 - Personal-use app, not a medical product — keep that scope in coach prompts and UI copy.
+
+## Build log
+
+- **2026-07-15/16 — Road-to-1.0 feature round.** Nearly the whole "Road to 1.0" slate landed:
+  the **metabolism dashboard** (`ui/metabolism/`, opened from the Home card) presenting adaptive
+  TDEE the MacroFactor way; **voice logging** (`POST /foods/voice`, on-device speech→text) and
+  **nutrition-label scan** (`POST /foods/label`) as new draft paths on the shared confirm screen;
+  a home-screen Glance **widget** for remaining macros (`widget/`, `SnapshotStore`); opt-in
+  **retention nudges** (`util/nudges/`, client-only alarms + quiet hours); static launcher
+  **shortcuts**; designed **error states** (Pulse `ErrorState`); **quick-log ergonomics**
+  (recent-foods, copy-day, recent-first search ranking) and a **logging-streak** flame; and the
+  cross-app **weekly summary** read (`GET /cross-app/summary`) for the suite digest. Correctness:
+  **`goal_type` is now authoritative for cut/bulk direction** (`schemas/goal.py`
+  `normalize_rate_sign` — a cut can no longer serve a surplus; goal screen takes a positive
+  magnitude), with **migration 0005** healing existing wrong-sign rows on boot. Alembic is now at
+  `0005`; server test count ~32. **Still 0.1.0** — the `versionName` → 1.0.0 bump and the
+  on-device pass are the gate's remaining work (see ROADMAP.md).

@@ -5,9 +5,14 @@ A calorie & macro tracking app with an on-device AI coach — sister application
 (Android/Kotlin/Compose client + FastAPI/Postgres server + LM Studio for local LLM inference).
 
 Track calories, protein, carbs and fat across Breakfast/Lunch/Dinner/Snacks; search USDA &
-Open Food Facts foods; scan barcodes; estimate a meal from a photo; chat with a macro-aware
-coach; save **recipes**, **quick-add** raw macros, and review a **weekly summary**. Daily targets
-adjust on days you trained (Spotter-awareness).
+Open Food Facts foods; scan barcodes; estimate a meal from a **photo**, transcribe a
+**nutrition label**, or log by **voice** ("two eggs and a banana" — speech→text on-device, every
+result an editable draft you confirm); chat with a macro-aware coach; save **recipes**,
+**quick-add** raw macros, re-log from **recent foods** or **copy yesterday**, and review a
+**weekly summary**. Daily targets adjust on days you trained (Spotter-awareness) and self-correct
+from your observed metabolism (**adaptive TDEE**, surfaced in a metabolism dashboard). A
+home-screen **widget** shows today's remaining macros, and opt-in **meal reminders** keep logging
+on track. Hit a goal and the app celebrates; keep a **logging streak** and it shows.
 
 See [CLAUDE.md](./CLAUDE.md) for the full architecture and build phases, and
 [server/README.md](./server/README.md) for backend details (incl. the Spotter integration).
@@ -86,14 +91,17 @@ Full reference in [server/README.md](./server/README.md). Authenticated unless n
 | Area | Endpoints |
 | --- | --- |
 | Auth | `POST /auth/register\|login\|refresh\|forgot-password\|reset-password`, `GET /users/me` |
-| Foods | `GET /foods/search`, `GET /foods/barcode/{code}`, `POST /foods`, `POST /foods/photo` |
-| Log | `POST /log`, `GET /log?date=`, `PUT/DELETE /log/{id}`, **`POST /log/quick-add`**, **`GET /log/summary?start=&end=`** |
+| Foods | `GET /foods/search`, `GET /foods/barcode/{code}`, `POST /foods`, `POST /foods/photo`, `POST /foods/label`, `POST /foods/voice` |
+| Log | `POST /log`, `GET /log?date=`, `PUT/DELETE /log/{id}`, **`POST /log/quick-add`**, **`GET /log/summary?start=&end=`**, `GET /log/recent-foods`, `POST /log/copy-day` |
 | Recipes | **`GET/POST /recipes`**, **`GET/PATCH/DELETE /recipes/{id}`**, **`PUT /recipes/{id}/items`**, **`POST /recipes/{id}/log`** |
-| Goals | `PUT/GET /goals`, `GET /goals/targets?date=` |
+| Goals | `PUT/GET /goals`, `GET /goals/targets?date=`, `GET /goals/adaptive` |
+| Check-in | `GET /checkin/weekly` |
 | Coach | `POST /ai/chat` |
+| Cross-app | `GET /recipes/export`, `POST /cross-app/resolve-foods\|log-recipe`, `DELETE /cross-app/logged`, `GET /cross-app/remaining?date=`, `GET /cross-app/summary?start=&end=` (all cross-app-token auth) |
 | Ops | `GET /health`, `GET /version` (both unauthenticated) |
 
-(**bold** = added in Phase 8.)
+(**bold** = added in Phase 8; the label/voice, recent-foods/copy-day, adaptive, check-in, and
+cross-app read endpoints are the Road-to-1.0 round.)
 
 ## Testing
 

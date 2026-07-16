@@ -16,6 +16,7 @@ Android (Kotlin/Compose) ⇄ FastAPI :8001 ⇄ Postgres :5433
                                 ├→ USDA FoodData Central + Open Food Facts (cached external food data)
                                 └→ Spotter GET /workouts?date= (training-day awareness)
 Provides to Cookbook: GET /recipes/export, POST /cross-app/resolve-foods, POST /cross-app/log-recipe
+Provides to the suite: GET /cross-app/remaining?date= (fits-today badge), GET /cross-app/summary?start=&end= (weekly digest)
 ```
 
 ## Server (`server/`)
@@ -86,7 +87,8 @@ then legacy HS256; `services/cross_app_token.fetch_cross_app_token` mints RS256 
 
 ### Migrations & tests
 
-Alembic (3 consolidated revisions), migrate-on-boot. 24 pytest files; CI also runs
+Alembic (5 revisions, `0001`–`0005`; `0005` back-fills the goal-rate sign invariant onto existing
+rows), migrate-on-boot. 32 pytest files; CI also runs
 `ruff format --check` (run it locally before pushing). Local recipe (CLAUDE.md "Testing"):
 throwaway Postgres container, `DATABASE_URL` on **127.0.0.1**, `DB_NULLPOOL` — the live
 `server/.env` DB password is deliberately stale for pytest purposes. One env-dependent local-only
@@ -107,6 +109,13 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
   `PhotoLogViewModel.analyzeVoice` → `/foods/voice` → the shared draft editor. Entry points for
   photo / label / voice all live on the food-search top bar.
 - `ui/coach/` — AI coach chat.
+- `ui/metabolism/` — the adaptive-TDEE "metabolism dashboard" (`MetabolismScreen`/
+  `MetabolismViewModel`), opened by tapping the Home metabolism card: presents observed
+  maintenance, why targets moved, and confidence (MacroFactor-style) over the `/goals/adaptive`
+  read; the pre-unlock learning state has its own screenshot baselines.
+- `widget/` — a Glance home-screen app widget (`PlateWidget`) showing today's remaining macros,
+  fed by `data/local/SnapshotStore` that the diary/home VMs stamp on change
+  (`WidgetSnapshotWriter`/`WidgetRefresher`). Read-only mirror; never a write path.
 - `ui/goals/`, `ui/home/`, `ui/calendar/` — targets, dashboard (rings/remaining), history.
 - `util/Units.kt` — the client half of metric-canonical/imperial-display; display defaults
   imperial (lb/oz) with a lb↔kg toggle persisted in `users.settings`.

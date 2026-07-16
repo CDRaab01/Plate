@@ -18,13 +18,19 @@ the most visible win. The slate, in order:
 
 1. **Port the Spotter polish patterns** — branded Empty/Loading/Error states, onboarding,
    motion — as they land in Pulse (host ROADMAP3 Tier P), not as a hand-copied fork.
+   *Mostly DONE:* first-run onboarding (Pulse `OnboardingScaffold`), consistent empty states,
+   and **designed error states DONE 2026-07-15** (Pulse `ErrorState` on the full-screen
+   load-error surfaces — Diary/Goals/Recipe list). *Still open:* the milestone motion flourish.
 2. **Celebration moments** — macro goal hit (✓ Home wraps the calorie ring in `CelebrationPulse`
    when the goal is met) and **✓ logging streaks DONE 2026-07-15**: `DailyLog.streak` (consecutive
    days logged, one grace day) surfaces as a flame pill on the Home hero, with a weekly-milestone
    cheer. *Still open:* a bigger celebration flourish at milestones (motion), via shared Pulse primitives.
-3. **The "metabolism dashboard"** — the adaptive-TDEE engine (shipped, below) presented the way
-   MacroFactor presents it: what we observed, why targets moved, confidence — instead of one
-   Home card. The premium feature is the *explanation*, and the engine already computes it.
+3. ✓ **The "metabolism dashboard"** — DONE 2026-07-15. The adaptive-TDEE engine (shipped, below)
+   presented the MacroFactor way: what we observed, why targets moved, confidence — a full
+   `ui/metabolism/` dashboard (`MetabolismScreen`/`MetabolismViewModel`) opened by tapping the
+   Home metabolism card, with the pre-unlock learning state covered by screenshot baselines,
+   instead of one Home card. The premium feature is the *explanation*, and the engine already
+   computed it.
 4. ✓ **Quick-log ergonomics** — DONE 2026-07-15. **Recent foods** surface (`GET /log/recent-foods`)
    fills the search screen while the query is empty — one tap re-logs a staple with its last
    portion pre-filled; **Copy yesterday** (`POST /log/copy-day`) appears on an empty day to pull
@@ -36,23 +42,49 @@ the most visible win. The slate, in order:
 
 **Gap review 2026-07-14 (host ROADMAP3 additions — what a MacroFactor user would expect):**
 
-7. **Voice logging** — "two eggs and a banana" → parsed, editable draft (the house AI law:
-   suggest, never auto-commit). LM Studio is already the vision backend; this is a mic button,
-   a transcription hop, and a strict-JSON prompt. No commercial app can do it private and free —
-   the single most "wow per hour" feature available to Plate.
-8. **Nutrition-label scan** — photo of the *label*, not the meal. Higher accuracy than dish
-   estimation, reuses the existing vision pipeline end-to-end, and covers the barcode-miss case
-   (imports, local brands).
+7. ✓ **Voice logging** — DONE 2026-07-16. "two eggs and a banana" → parsed, editable draft (the
+   house AI law: suggest, never auto-commit). Speech→text is **on-device** (`RecognizerIntent`,
+   no audio leaves the phone); the server (`POST /foods/voice`) runs a strict-JSON LM Studio parse,
+   resolves each spoken food against the trusted food search for real macros, and returns the
+   shared draft editor. Private and free — no commercial app does this.
+8. ✓ **Nutrition-label scan** — DONE 2026-07-15. Photo of the *label*, not the meal
+   (`POST /foods/label`): the same vision seam with a label-specific transcription prompt (one
+   food = one serving), reusing the `PhotoEstimateResponse` draft + the never-auto-committed
+   guarantee. Higher accuracy than dish estimation; covers the barcode-miss case (imports,
+   local brands). Photo / label / voice share entry points on the food-search top bar.
 9. **The weekly check-in ritual** — MacroFactor's retention engine: weigh-in trend + adaptive
    target adjustment presented as a Sunday *event* (celebration/motion, "here's what changed and
    why"), not a passive card. Pairs with Road-to-1.0 #3's metabolism dashboard.
    *Server core DONE 2026-07-15:* `GET /checkin/weekly` composes days-logged-this-week, the
    ~7-day weight move, and the adaptive-TDEE read (`checkin_service`, tested). Remaining: the
    client "Sunday event" presentation + a weekly "due" trigger.
-10. **Remaining-macros ring widget** (host Tier W4 Pulse widget family) — the most-glanced
-    number in the suite belongs on the home screen.
-11. **Meal reminders / "nothing logged today"** via the suite push pipeline (host Tier W2b) —
-    opt-in, quiet hours, never nagging by default.
+10. ✓ **Remaining-macros home-screen widget** — DONE 2026-07-15. A Glance app widget
+    (`widget/PlateWidget.kt`) shows today's remaining macros on the launcher, fed by a
+    `SnapshotStore` that the diary/home VMs stamp on every change (`WidgetSnapshotWriter`/
+    `WidgetRefresher`). The most-glanced number in the suite now lives on the home screen.
+11. ✓ **Meal reminders / "nothing logged today"** — DONE 2026-07-15. Opt-in retention nudges,
+    **client-only** (no server push): two meal reminders + an evening "nothing logged today"
+    nudge via self-rescheduling inexact AlarmManager alarms (`util/nudges/`), with quiet hours,
+    reboot restore, and the runtime notifications-permission gate. Never nagging by default.
+
+12. ✓ **Static launcher shortcuts** — DONE 2026-07-15 (`res/xml/shortcuts.xml`): long-press the
+    icon for Log food / Scan barcode / Snap a meal, routed through `MainActivity` → `PlateNavHost`.
+
+**What genuinely remains for 1.0 (2026-07-16):** the polish round has landed nearly all the
+feature work above — metabolism dashboard, voice logging, label scan, the macro widget, retention
+nudges, launcher shortcuts, error states, quick-log ergonomics, logging streaks, and the
+cross-app summary read are all shipped, and a data-correctness bug (a "Cut" goal that stored a
+positive rate served a *surplus*) was healed at the source — `goal_type` is now authoritative for
+direction (`schemas/goal.py` `normalize_rate_sign`: cut → −|rate|, bulk → +|rate|, maintain → 0),
+the goal screen takes a positive magnitude, and **migration 0005** back-fills the invariant onto
+existing rows on boot. What's left is the **1.0 gate**, not new features:
+
+- The **on-device pass** (host ROADMAP3 gate item) — exercise every surface on real hardware.
+- The **weekly check-in "Sunday event"** client presentation + weekly "due" trigger (#9 above;
+  server core already shipped).
+- The **milestone celebration motion** flourish (#2) and the **photo-estimate feedback delta**
+  (#5 / loop-closer #1) — both nice-to-have, not gate-blocking.
+- **`versionName` 0.1.0 → 1.0.0** (#6) as the round's **last** commit. *Still 0.1.0 today.*
 
 ## The one next-level feature worth building
 
@@ -87,9 +119,9 @@ explain itself.
 3. **USDA bulk import as a documented operator step.** `scripts/import_usda_bulk.py` exists —
    make sure the deployed DB actually ran it and record that in deploy/README (search quality
    silently degrades to live-API-with-key or OFF-only without it).
-4. **Weekly summary → suite digest.** The `GET /log/summary` aggregation is the natural data
-   source for the cross-app weekly digest idea (host ROADMAP Tier 3) — design any summary
-   changes with that consumer in mind.
+4. ✓ **Weekly summary → suite digest — SHIPPED 2026-07-16.** Delivered as the cross-app
+   `GET /cross-app/summary?start=&end=` window read (see Cross-app work #4) rather than exposing
+   `/log/summary` directly — the digest gets aggregates only, no raw diary.
 5. **Quick-log ergonomics:** "copy yesterday's breakfast" / recent-foods-first search ranking.
    Cheap, and it's the #1 real-world friction in daily logging apps.
 
@@ -105,8 +137,12 @@ Plate is the hub of the approved cross-app roadmap (nutrition is the shared lang
    auto-logged.
 3. ✓ **Remaining-macros surface — SHIPPED 2026-07-11** (Link F): `GET /cross-app/remaining?date=`
    feeds Cookbook's `fits_today` badge; 404-when-no-goal ⇒ no badge.
-4. **Digest range read** (item 4): expose the existing `/log/summary?start=&end=` on the
-   cross-app auth surface — the suite weekly digest (host ROADMAP3 Tier W1) is the consumer.
+4. ✓ **Digest range read — SHIPPED 2026-07-16** (item 4): `GET /cross-app/summary?start=&end=`
+   on the cross-app auth surface (RS256/HS256 token, email-resolved, 401 when unset — mirrors
+   `/cross-app/remaining`). Returns window aggregates only — days_logged, days_in_window,
+   avg_calories, calorie/protein adherence %, weight_change_kg (adherence reuses the targets
+   engine over logged days that have a goal; ±10% calorie band, protein ≥ target; window capped
+   at 92 days). The suite weekly digest (host ROADMAP3 Tier W1) is the consumer.
 
 Follow the CROSS-APP.md infra rules: provider-committed contract fixtures under
 `server/tests/contracts/`, and write new surfaces against a swappable token-verify helper
