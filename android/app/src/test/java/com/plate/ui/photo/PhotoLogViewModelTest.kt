@@ -75,6 +75,16 @@ private class FakeFoodRepository(
         estimateError?.let { throw it }
         return estimate ?: PhotoEstimateResponse(emptyList(), lowConfidence = true)
     }
+
+    var voiceAnalyzeCount = 0
+    var lastVoiceText: String? = null
+
+    override suspend fun parseVoice(text: String): PhotoEstimateResponse {
+        voiceAnalyzeCount++
+        lastVoiceText = text
+        estimateError?.let { throw it }
+        return estimate ?: PhotoEstimateResponse(emptyList(), lowConfidence = true)
+    }
 }
 
 private class FakeLogRepository : LogRepository {
@@ -162,6 +172,32 @@ class PhotoLogViewModelTest {
         assertEquals(1, food.labelAnalyzeCount)
         assertEquals(0, food.analyzeCount)
         assertEquals("Oats", vm.state.value.drafts.single().name)
+    }
+
+    @Test
+    fun `analyzeVoice sends the text to the voice endpoint and populates drafts`() = runTest {
+        val food = FakeFoodRepository(estimate = PhotoEstimateResponse(listOf(item("Egg")), false))
+        val vm = PhotoLogViewModel(food, FakeLogRepository())
+
+        vm.analyzeVoice("  two eggs  ")
+        advanceUntilIdle()
+
+        assertEquals(1, food.voiceAnalyzeCount)
+        assertEquals("two eggs", food.lastVoiceText) // trimmed
+        assertEquals(0, food.analyzeCount)
+        assertEquals("Egg", vm.state.value.drafts.single().name)
+    }
+
+    @Test
+    fun `analyzeVoice ignores blank text`() = runTest {
+        val food = FakeFoodRepository(estimate = PhotoEstimateResponse(listOf(item()), false))
+        val vm = PhotoLogViewModel(food, FakeLogRepository())
+
+        vm.analyzeVoice("   ")
+        advanceUntilIdle()
+
+        assertEquals(0, food.voiceAnalyzeCount)
+        assertFalse(vm.state.value.analyzing)
     }
 
     @Test

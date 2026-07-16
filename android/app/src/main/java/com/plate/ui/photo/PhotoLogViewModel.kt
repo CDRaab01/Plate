@@ -3,6 +3,7 @@ package com.plate.ui.photo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.FoodCreateRequest
+import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.repository.FoodRepository
 import com.plate.data.repository.LogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,13 +66,31 @@ class PhotoLogViewModel @Inject constructor(
      * return the same draft shape, so the confirm-and-log flow below is shared.
      */
     fun analyze(image: ByteArray, mimeType: String, label: Boolean = false) {
+        runAnalysis("Couldn't analyze that photo") {
+            if (label) foodRepository.estimateLabel(image, mimeType)
+            else foodRepository.estimatePhoto(image, mimeType)
+        }
+    }
+
+    /**
+     * Analyze on-device-recognized speech ("two eggs and a banana") into the same editable draft.
+     * Only the text is sent to the server; nothing is logged until the user confirms each item.
+     */
+    fun analyzeVoice(text: String) {
+        val spoken = text.trim()
+        if (spoken.isEmpty()) return
+        runAnalysis("Couldn't understand that") {
+            foodRepository.parseVoice(spoken)
+        }
+    }
+
+    /** Shared analyze→draft pipeline for the photo, label, and voice sources. */
+    private fun runAnalysis(errorFallback: String, request: suspend () -> PhotoEstimateResponse) {
         if (_state.value.analyzing) return
         _state.value = PhotoUiState(analyzing = true)
         viewModelScope.launch {
             _state.value = try {
-                val result =
-                    if (label) foodRepository.estimateLabel(image, mimeType)
-                    else foodRepository.estimatePhoto(image, mimeType)
+                val result = request()
                 PhotoUiState(
                     analyzed = true,
                     drafts = result.items.mapIndexed { i, item ->
@@ -90,7 +109,7 @@ class PhotoLogViewModel @Inject constructor(
                     note = result.note,
                 )
             } catch (e: Exception) {
-                PhotoUiState(error = e.message ?: "Couldn't analyze that photo")
+                PhotoUiState(error = e.message ?: errorFallback)
             }
         }
     }
@@ -129,6 +148,9 @@ class PhotoLogViewModel @Inject constructor(
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
+
+    /** Surface a client-side error (e.g. speech recognition unavailable) on the shared snackbar. */
+    fun showError(message: String) = _state.update { it.copy(error = message) }
 
     /** Discard the current estimate so a new photo can be analysed. */
     fun reset() {

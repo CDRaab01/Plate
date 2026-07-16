@@ -53,6 +53,9 @@ private class FakeFoodRepository(
 
     override suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse =
         throw IllegalStateException("not used")
+
+    override suspend fun parseVoice(text: String): PhotoEstimateResponse =
+        throw IllegalStateException("not used")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

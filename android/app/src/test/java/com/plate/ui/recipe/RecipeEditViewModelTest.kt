@@ -52,6 +52,9 @@ private class EditFakeFoodRepository(private val results: List<FoodOut>) : FoodR
 
     override suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse =
         throw IllegalStateException()
+
+    override suspend fun parseVoice(text: String): PhotoEstimateResponse =
+        throw IllegalStateException()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

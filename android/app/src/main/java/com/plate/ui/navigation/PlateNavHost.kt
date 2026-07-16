@@ -36,6 +36,7 @@ import com.plate.ui.recipe.DiscoverRecipesScreen
 import com.plate.ui.recipe.RecipeEditScreen
 import com.plate.ui.recipe.RecipeListScreen
 import com.plate.ui.scan.BarcodeScanScreen
+import com.plate.ui.voice.VoiceLogScreen
 import com.plate.ui.calendar.CalendarScreen
 
 object Routes {
@@ -54,6 +55,7 @@ object Routes {
     const val SCAN = "scan"
     const val PHOTO = "photo"
     const val LABEL = "label"
+    const val VOICE = "voice"
     const val GOALS = "goals"
     const val ABOUT = "about"
     const val SETTINGS = "settings"
@@ -180,6 +182,7 @@ fun PlateNavHost(
                         onScan = { navController.navigate(Routes.SCAN) },
                         onPhoto = { navController.navigate(Routes.PHOTO) },
                         onLabel = { navController.navigate(Routes.LABEL) },
+                        onVoice = { navController.navigate(Routes.VOICE) },
                         diaryViewModel = diaryViewModel,
                     )
                 }
@@ -199,6 +202,15 @@ fun PlateNavHost(
                         onDone = { navController.popBackStack(Routes.DIARY, inclusive = false) },
                         onBack = { navController.popBackStack() },
                         labelMode = true,
+                        diaryViewModel = diaryViewModel,
+                    )
+                }
+                composable(Routes.VOICE) { entry ->
+                    val parent = remember(entry) { navController.getBackStackEntry(Routes.DIARY_GRAPH) }
+                    val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
+                    VoiceLogScreen(
+                        onDone = { navController.popBackStack(Routes.DIARY, inclusive = false) },
+                        onBack = { navController.popBackStack() },
                         diaryViewModel = diaryViewModel,
                     )
                 }

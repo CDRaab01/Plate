@@ -232,12 +232,19 @@ private fun PickPrompt(labelMode: Boolean, onPickGallery: () -> Unit, onTakePhot
     }
 }
 
+/**
+ * The shared "confirm the draft" editor — a list of editable estimate cards with retake/done
+ * actions. Reused by the photo/label capture screen and the voice-logging screen (same never-auto-
+ * logged draft contract). [retakeLabel] names the "analyze again" action per source.
+ */
 @Composable
-private fun EstimateList(
+internal fun EstimateList(
     state: PhotoUiState,
     onRetake: () -> Unit,
     onDone: () -> Unit,
     onLog: (PhotoDraft, String) -> Unit,
+    retakeLabel: String = "Analyze another photo",
+    emptyRetakeLabel: String = "Try another photo",
 ) {
     // Estimates are never auto-logged — make that explicit (CLAUDE.md §3, §11).
     Text(
@@ -252,7 +259,7 @@ private fun EstimateList(
     if (state.drafts.isEmpty()) {
         Spacer(Modifier.height(8.dp))
         OutlinedButton(onClick = onRetake, modifier = Modifier.fillMaxWidth()) {
-            Text("Try another photo")
+            Text(emptyRetakeLabel)
         }
         return
     }
@@ -261,7 +268,7 @@ private fun EstimateList(
         DraftCard(draft = draft, onLog = onLog)
     }
     OutlinedButton(onClick = onRetake, modifier = Modifier.fillMaxWidth()) {
-        Text("Analyze another photo")
+        Text(retakeLabel)
     }
     Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("Done") }
 }

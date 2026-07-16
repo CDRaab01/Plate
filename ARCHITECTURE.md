@@ -70,6 +70,11 @@ validated structured output, no tool access). Two surfaces:
   prompt that *transcribes* a Nutrition Facts panel (one food = one serving) rather than
   estimating a meal. Reuses `parse_estimate` + the `PhotoEstimateResponse` draft shape and the
   never-auto-committed guarantee; higher accuracy than a meal photo.
+- **Voice logging** (`POST /foods/voice`) — speech→text is done **on-device** on the client (no
+  audio leaves the phone); the server takes only the text, runs a structured LM Studio parse
+  (`voice_prompts` → `{food, quantity, unit}`, Pydantic-shaped, forgiving parser), resolves each
+  spoken food against the **trusted food search** for real macros, and returns the same editable
+  `PhotoEstimateResponse` draft (unresolved foods kept as low-confidence stubs). Never auto-logged.
 
 ### Cross-app auth (both directions)
 
@@ -97,7 +102,10 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 - `ui/scan/` — ML Kit barcode → OFF lookup.
 - `ui/photo/` — photo-a-meal capture → server estimate → **editable confirm screen** (the draft
   contract, client side). The same screen serves the **nutrition-label scan** via a `labelMode`
-  flag (label endpoint + label copy); entry points live on the food-search top bar.
+  flag (label endpoint + label copy); the draft editor (`EstimateList`) is reused by voice too.
+- `ui/voice/` — voice logging: on-device `RecognizerIntent` speech→text (offline preferred) →
+  `PhotoLogViewModel.analyzeVoice` → `/foods/voice` → the shared draft editor. Entry points for
+  photo / label / voice all live on the food-search top bar.
 - `ui/coach/` — AI coach chat.
 - `ui/goals/`, `ui/home/`, `ui/calendar/` — targets, dashboard (rings/remaining), history.
 - `util/Units.kt` — the client half of metric-canonical/imperial-display; display defaults

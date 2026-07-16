@@ -29,4 +29,10 @@ interface FoodRepository {
      * than [estimatePhoto]; likewise never logs anything by itself.
      */
     suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse
+
+    /**
+     * Parse on-device-recognized speech (e.g. "two eggs and a banana") into an editable food draft.
+     * Only the text is sent; the server resolves foods + macros. Never logs anything by itself.
+     */
+    suspend fun parseVoice(text: String): PhotoEstimateResponse
 }

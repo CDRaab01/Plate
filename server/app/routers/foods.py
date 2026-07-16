@@ -17,8 +17,10 @@ from app.database import get_db
 from app.limiter import limiter
 from app.schemas.food import FoodCreate, FoodOut
 from app.schemas.photo import PhotoEstimateResponse
+from app.schemas.voice import VoiceParseRequest
 from app.security import CurrentUser
 from app.services.ai.vision import estimate_label, estimate_photo
+from app.services.ai.voice import parse_voice_log
 from app.services.food_service import (
     create_custom_food,
     get_food,
@@ -124,6 +126,24 @@ async def estimate_from_label(
     """
     data, content_type = await _read_validated_image(image)
     return await estimate_label(data, content_type)
+
+
+@router.post("/voice", response_model=PhotoEstimateResponse)
+@limiter.limit("20/minute")
+async def parse_from_voice(
+    request: Request,
+    body: VoiceParseRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """Voice logging (CLAUDE.md §6): recognized text → structured parse → foods → editable draft.
+
+    Speech→text happens on-device (no audio leaves the phone); the client sends only the text. The
+    server runs a structured LM Studio parse, resolves each spoken food against the food search for
+    real macros, and returns the same never-auto-committed editable draft the photo path uses — the
+    user confirms/edits before anything is logged. Rate-limited because each call hits the model.
+    """
+    return await parse_voice_log(body.text, db, current_user.id)
 
 
 @router.get("/{food_id}", response_model=FoodOut)

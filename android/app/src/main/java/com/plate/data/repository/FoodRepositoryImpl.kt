@@ -5,6 +5,7 @@ import com.plate.data.remote.FoodCreateRequest
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.remote.RecentFoodOut
+import com.plate.data.remote.VoiceParseRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -28,6 +29,9 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse =
         api.estimateLabel(imagePart(image, mimeType))
+
+    override suspend fun parseVoice(text: String): PhotoEstimateResponse =
+        api.parseVoice(VoiceParseRequest(text))
 
     private fun imagePart(image: ByteArray, mimeType: String): MultipartBody.Part {
         val body = image.toRequestBody(mimeType.toMediaTypeOrNull())

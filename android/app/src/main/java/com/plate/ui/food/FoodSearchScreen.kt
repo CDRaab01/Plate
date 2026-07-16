@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AddAPhoto
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.AlertDialog
@@ -65,6 +66,7 @@ fun FoodSearchScreen(
     onScan: () -> Unit,
     onPhoto: () -> Unit,
     onLabel: () -> Unit = {},
+    onVoice: () -> Unit = {},
     searchViewModel: FoodSearchViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -97,6 +99,7 @@ fun FoodSearchScreen(
         onScan = onScan,
         onPhoto = onPhoto,
         onLabel = onLabel,
+        onVoice = onVoice,
         onPick = { selected = Selection(it) },
         onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
     )
@@ -124,6 +127,7 @@ fun FoodSearchContent(
     recent: List<RecentFoodOut> = emptyList(),
     onPickRecent: (RecentFoodOut) -> Unit = {},
     onLabel: () -> Unit = {},
+    onVoice: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -135,6 +139,12 @@ fun FoodSearchContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onVoice) {
+                        Icon(
+                            Icons.Outlined.Mic,
+                            contentDescription = "Log by voice",
+                        )
+                    }
                     IconButton(onClick = onLabel) {
                         Icon(
                             Icons.Outlined.ReceiptLong,

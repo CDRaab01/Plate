@@ -64,6 +64,10 @@ interface ApiService {
     @POST("foods/label")
     suspend fun estimateLabel(@Part image: MultipartBody.Part): PhotoEstimateResponse
 
+    /** Voice logging: parse on-device-recognized text into an editable, never-logged food draft. */
+    @POST("foods/voice")
+    suspend fun parseVoice(@Body body: VoiceParseRequest): PhotoEstimateResponse
+
     @POST("log")
     suspend fun createLogEntry(@Body body: LogEntryCreate): LogEntryOut
 

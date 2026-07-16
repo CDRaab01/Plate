@@ -25,3 +25,13 @@ data class PhotoEstimateResponse(
     @SerialName("low_confidence") val lowConfidence: Boolean,
     val note: String? = null,
 )
+
+/**
+ * Voice-logging request (CLAUDE.md §6). Speech→text is on-device; only the recognized [text] is
+ * sent. The server parses it, resolves foods, and returns the same [PhotoEstimateResponse] editable
+ * draft — nothing is auto-logged.
+ */
+@Serializable
+data class VoiceParseRequest(
+    val text: String,
+)
