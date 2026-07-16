@@ -8,7 +8,7 @@ in :mod:`app.nutrition.targets`.
 import datetime
 import uuid
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 GOAL_TYPES = ("maintain", "cut", "bulk")
 SEXES = ("male", "female")
@@ -65,6 +65,23 @@ class GoalUpsert(BaseModel):
         if not 1 <= v <= 120:
             raise ValueError("age must be between 1 and 120")
         return v
+
+    @model_validator(mode="after")
+    def normalize_rate_sign(self):
+        """``goal_type`` is authoritative for the *direction*; the rate is stored as a signed
+        magnitude derived from it. A **cut is always a deficit** (negative rate), a **bulk always a
+        surplus** (positive), and **maintain is 0** — regardless of the sign the client sent. This
+        closes the bug where selecting "Cut" but entering a positive rate added a surplus and handed
+        back too-high calories: the goal type and the rate can no longer contradict.
+        """
+        magnitude = abs(self.rate_kg_per_week)
+        if self.goal_type == "cut":
+            self.rate_kg_per_week = -magnitude
+        elif self.goal_type == "bulk":
+            self.rate_kg_per_week = magnitude
+        else:  # maintain
+            self.rate_kg_per_week = 0.0
+        return self
 
 
 class GoalOut(BaseModel):

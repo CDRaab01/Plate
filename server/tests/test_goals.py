@@ -4,6 +4,7 @@ Exercises setting/reading a goal, target computation (including that the daily-l
 after a goal is set), and the 404 path for users with no goal. All math corner cases live in
 ``test_targets.py``; here we just confirm the API surface and that the engine wires up correctly.
 """
+
 import pytest
 
 MALE_MODERATE = {
@@ -154,7 +155,9 @@ async def test_targets_prefer_latest_weigh_in_over_goal_weight(auth_client):
     await auth_client.post(
         "/metrics/weight", json={"date": "2026-09-01", "weight": 90.0, "unit": "kg"}
     )
-    heavier = (await auth_client.get("/goals/targets", params={"date": "2026-09-02"})).json()["kcal"]
+    heavier = (await auth_client.get("/goals/targets", params={"date": "2026-09-02"})).json()[
+        "kcal"
+    ]
     assert heavier > base_kcal
 
 
@@ -164,7 +167,9 @@ async def test_targets_weigh_in_after_day_is_ignored(auth_client):
     await auth_client.post(
         "/metrics/weight", json={"date": "2026-09-10", "weight": 90.0, "unit": "kg"}
     )
-    earlier = (await auth_client.get("/goals/targets", params={"date": "2026-09-01"})).json()["kcal"]
+    earlier = (await auth_client.get("/goals/targets", params={"date": "2026-09-01"})).json()[
+        "kcal"
+    ]
     assert earlier == pytest.approx(2759.0, abs=1.0)  # falls back to goal's 80 kg
 
 
@@ -175,6 +180,7 @@ async def test_goals_are_user_scoped(auth_client, client):
     await auth_client.put("/goals", json=MALE_MODERATE)
 
     import uuid
+
     uid = uuid.uuid4().hex[:8]
     r = await client.post(
         "/auth/register",
@@ -185,3 +191,47 @@ async def test_goals_are_user_scoped(auth_client, client):
 
     resp = await client.get("/goals")
     assert resp.status_code == 404
+
+
+# ── goal_type is authoritative for the rate sign (cut = deficit, bulk = surplus) ──
+
+
+def test_goalupsert_normalizes_rate_sign_from_goal_type():
+    from app.schemas.goal import GoalUpsert
+
+    base = dict(weight_kg=80.0, height_cm=180.0, age=30, sex="male", activity_level="moderate")
+    # A "cut" is always a deficit even if the client sent a positive (or unsigned) rate — the bug.
+    assert GoalUpsert(goal_type="cut", rate_kg_per_week=0.5, **base).rate_kg_per_week == -0.5
+    assert GoalUpsert(goal_type="cut", rate_kg_per_week=-0.5, **base).rate_kg_per_week == -0.5
+    # A "bulk" is always a surplus.
+    assert GoalUpsert(goal_type="bulk", rate_kg_per_week=-0.5, **base).rate_kg_per_week == 0.5
+    assert GoalUpsert(goal_type="bulk", rate_kg_per_week=0.5, **base).rate_kg_per_week == 0.5
+    # "maintain" forces 0 regardless.
+    assert GoalUpsert(goal_type="maintain", rate_kg_per_week=-0.7, **base).rate_kg_per_week == 0.0
+
+
+async def test_cut_with_positive_rate_still_gives_a_deficit(auth_client):
+    # The reported bug: pick "Cut", enter a natural positive rate → it added a surplus (too-high kcal).
+    await auth_client.put(
+        "/goals", json={**MALE_MODERATE, "goal_type": "cut", "rate_kg_per_week": 0.5}
+    )
+    assert (await auth_client.get("/goals")).json()["rate_kg_per_week"] == -0.5
+    cut_kcal = (await auth_client.get("/goals/targets")).json()["kcal"]
+
+    await auth_client.put("/goals", json={**MALE_MODERATE, "goal_type": "maintain"})
+    maintain_kcal = (await auth_client.get("/goals/targets")).json()["kcal"]
+
+    assert cut_kcal < maintain_kcal  # a cut MUST land below maintenance
+
+
+async def test_bulk_with_negative_rate_still_gives_a_surplus(auth_client):
+    await auth_client.put(
+        "/goals", json={**MALE_MODERATE, "goal_type": "bulk", "rate_kg_per_week": -0.5}
+    )
+    assert (await auth_client.get("/goals")).json()["rate_kg_per_week"] == 0.5
+    bulk_kcal = (await auth_client.get("/goals/targets")).json()["kcal"]
+
+    await auth_client.put("/goals", json={**MALE_MODERATE, "goal_type": "maintain"})
+    maintain_kcal = (await auth_client.get("/goals/targets")).json()["kcal"]
+
+    assert bulk_kcal > maintain_kcal  # a bulk MUST land above maintenance
