@@ -14,10 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.limiter import limiter
+from app.nutrition.constants import MAX_SUMMARY_WINDOW_DAYS
 from app.schemas.cross_app import (
     CrossAppLogRequest,
     CrossAppLogResponse,
     CrossAppUnlogResponse,
+    CrossAppWeeklySummary,
     ResolveFoodsRequest,
     ResolveFoodsResponse,
 )
@@ -27,7 +29,7 @@ from app.services.cross_app_food_service import (
     resolve_foods,
     unlog_cross_app_recipe,
 )
-from app.services.log_service import remaining_macros
+from app.services.log_service import remaining_macros, weekly_summary
 
 router = APIRouter(prefix="/cross-app", tags=["cross-app"])
 
@@ -87,3 +89,26 @@ async def remaining(
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No active goal — no remaining targets")
     return {"date": date.isoformat(), **result}
+
+
+@router.get("/summary", response_model=CrossAppWeeklySummary)
+@limiter.limit("60/minute")
+async def summary(
+    request: Request,
+    current_user: CrossAppUser,
+    db: DbSession,
+    start: datetime.date = Query(..., description="First day of the window (inclusive)"),
+    end: datetime.date = Query(..., description="Last day of the window (inclusive)"),
+):
+    """Weekly cross-app roll-up feeding the suite digest — aggregates only (days logged, average
+    calories, calorie/protein adherence, net weight change) over ``[start, end]``. Same trust model
+    as ``/cross-app/remaining``. Unlike ``/remaining`` it never 404s on a missing goal: a user with
+    no goal simply reports null adherence."""
+    if end < start:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "end must be on or after start")
+    if (end - start).days + 1 > MAX_SUMMARY_WINDOW_DAYS:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"window must be at most {MAX_SUMMARY_WINDOW_DAYS} days",
+        )
+    return await weekly_summary(db, current_user.id, start, end)

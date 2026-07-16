@@ -76,3 +76,22 @@ class CrossAppLogResponse(BaseModel):
 class CrossAppUnlogResponse(BaseModel):
     # How many diary entries were removed for the given (user, client_ref).
     removed: int
+
+
+class CrossAppWeeklySummary(BaseModel):
+    """A small aggregate roll-up of a user's diary over ``[start, end]`` for the suite weekly digest.
+
+    Aggregates only — no per-day or per-entry rows leave this surface. Adherence percentages are on a
+    0–100 scale, computed over the *logged* days that have a target for the day (days with no goal are
+    excluded); they are ``None`` when nothing was computable. ``weight_change_kg`` is canonical kg and
+    ``None`` unless the window holds at least two weigh-ins.
+    """
+
+    start: datetime.date
+    end: datetime.date
+    days_in_window: int
+    days_logged: int
+    avg_calories: float
+    calorie_adherence_pct: float | None = None
+    protein_adherence_pct: float | None = None
+    weight_change_kg: float | None = None

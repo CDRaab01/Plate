@@ -87,6 +87,14 @@ MAX_BLEND = 0.7
 # transient weight swing) can't tank or balloon targets.
 MAX_TDEE_DEVIATION = 0.30
 
+# ── Weekly cross-app summary (suite digest) ───────────────────────────────────
+# A logged day counts as calorie-adherent when its total kcal lands within this fraction of the
+# day's target (a ±10% band). Protein adherence is a plain "≥ target" check, so it needs no band.
+CALORIE_ADHERENCE_BAND = 0.10
+# Guardrail on the summary window: the digest asks for aggregates over a bounded range only (mirrors
+# Magpie's summary cap).
+MAX_SUMMARY_WINDOW_DAYS = 92
+
 # ── Training-day bump (Spotter-awareness, §7) ─────────────────────────────────
 # On a day the user trained (reported by Spotter), add fuel to refuel/recover. The bump is
 # expressed as gram additions skewed to carbs + protein — fat is left at its hormonal floor — and

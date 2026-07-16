@@ -8,6 +8,7 @@ the stored snapshot so the entry stays internally consistent.
 
 import datetime
 import uuid
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 from sqlalchemy import distinct, select
@@ -33,6 +34,9 @@ from app.schemas.log import (
     TotalsOut,
     MEALS,
 )
+
+if TYPE_CHECKING:
+    from app.schemas.cross_app import CrossAppWeeklySummary
 
 
 def _apply_snapshot(entry: FoodLogEntry, snap: MacroSnapshot) -> None:
@@ -489,3 +493,74 @@ async def remaining_macros(
         "carbs_g_remaining": max(0, round(targets.carbs_g - consumed.carbs_g)),
         "fat_g_remaining": max(0, round(targets.fat_g - consumed.fat_g)),
     }
+
+
+async def weekly_summary(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    start: datetime.date,
+    end: datetime.date,
+) -> "CrossAppWeeklySummary":
+    """Aggregate the user's diary over ``[start, end]`` for the suite weekly digest (cross-app).
+
+    Reuses the same targets engine the diary uses (:func:`compute_targets_for`) so adherence is
+    measured against the very targets the user sees — no duplicated goal math. Targets are computed
+    without the training-day bump (this surface has no per-day Spotter signal), matching the base
+    ``/cross-app/remaining`` behaviour. Adherence is evaluated only over logged days that have a
+    target; a logged day whose user has no goal is excluded from the adherence denominators.
+    """
+    from app.nutrition.constants import CALORIE_ADHERENCE_BAND
+    from app.schemas.cross_app import CrossAppWeeklySummary
+    from app.services.metric_service import weight_change_kg_in_window
+
+    result = await db.execute(
+        select(FoodLogEntry).where(
+            FoodLogEntry.user_id == user_id,
+            FoodLogEntry.date >= start,
+            FoodLogEntry.date <= end,
+        )
+    )
+    entries = list(result.scalars().all())
+    by_date: dict[datetime.date, list[FoodLogEntry]] = {}
+    for e in entries:
+        by_date.setdefault(e.date, []).append(e)
+
+    days_in_window = (end - start).days + 1
+    logged_days = sorted(by_date)
+    days_logged = len(logged_days)
+
+    total_kcal = sum(e.kcal for e in entries)
+    avg_calories = round(total_kcal / days_logged, 1) if days_logged else 0.0
+
+    cal_adherent = cal_evaluated = 0
+    protein_adherent = protein_evaluated = 0
+    for day in logged_days:
+        targets = await compute_targets_for(db, user_id, day)
+        if targets is None:
+            continue  # no goal/target that day → excluded from adherence
+        totals = sum_entries(by_date[day])
+        cal_evaluated += 1
+        if abs(totals.kcal - targets.kcal) <= targets.kcal * CALORIE_ADHERENCE_BAND:
+            cal_adherent += 1
+        protein_evaluated += 1
+        if totals.protein_g >= targets.protein_g:
+            protein_adherent += 1
+
+    calorie_adherence_pct = (
+        round(100.0 * cal_adherent / cal_evaluated, 1) if cal_evaluated else None
+    )
+    protein_adherence_pct = (
+        round(100.0 * protein_adherent / protein_evaluated, 1) if protein_evaluated else None
+    )
+
+    weight_change = await weight_change_kg_in_window(db, user_id, start, end)
+    return CrossAppWeeklySummary(
+        start=start,
+        end=end,
+        days_in_window=days_in_window,
+        days_logged=days_logged,
+        avg_calories=avg_calories,
+        calorie_adherence_pct=calorie_adherence_pct,
+        protein_adherence_pct=protein_adherence_pct,
+        weight_change_kg=None if weight_change is None else round(weight_change, 2),
+    )

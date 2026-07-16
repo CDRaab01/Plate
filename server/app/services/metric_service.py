@@ -66,6 +66,29 @@ async def latest_weight_kg_on_or_before(
     return result.scalars().first()
 
 
+async def weight_change_kg_in_window(
+    db: AsyncSession, user_id: uuid.UUID, start: datetime.date, end: datetime.date
+) -> float | None:
+    """Latest weigh-in minus the earliest one (canonical kg) within ``[start, end]`` inclusive.
+
+    ``None`` when the window holds fewer than two weigh-ins (no change is computable). Ties on a
+    date break by insertion order, so same-day weigh-ins still yield a well-defined first/last.
+    """
+    result = await db.execute(
+        select(BodyMetric.weight)
+        .where(
+            BodyMetric.user_id == user_id,
+            BodyMetric.date >= start,
+            BodyMetric.date <= end,
+        )
+        .order_by(BodyMetric.date.asc(), BodyMetric.created_at.asc())
+    )
+    weights = list(result.scalars().all())
+    if len(weights) < 2:
+        return None
+    return weights[-1] - weights[0]
+
+
 async def compute_weight_trend(db: AsyncSession, user_id: uuid.UUID) -> WeightTrend:
     """Build the user's weight trend (smoothed series + observed rate + on-pace status).
 
