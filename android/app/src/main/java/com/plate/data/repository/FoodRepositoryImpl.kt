@@ -23,10 +23,15 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun createFood(req: FoodCreateRequest): FoodOut = api.createFood(req)
 
-    override suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse {
+    override suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse =
+        api.estimatePhoto(imagePart(image, mimeType))
+
+    override suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse =
+        api.estimateLabel(imagePart(image, mimeType))
+
+    private fun imagePart(image: ByteArray, mimeType: String): MultipartBody.Part {
         val body = image.toRequestBody(mimeType.toMediaTypeOrNull())
         // The server keys the upload on "image" (the multipart field name); the filename is cosmetic.
-        val part = MultipartBody.Part.createFormData("image", "meal.jpg", body)
-        return api.estimatePhoto(part)
+        return MultipartBody.Part.createFormData("image", "image.jpg", body)
     }
 }

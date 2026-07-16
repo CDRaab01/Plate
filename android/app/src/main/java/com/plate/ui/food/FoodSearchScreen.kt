@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,6 +64,7 @@ fun FoodSearchScreen(
     onBack: () -> Unit,
     onScan: () -> Unit,
     onPhoto: () -> Unit,
+    onLabel: () -> Unit = {},
     searchViewModel: FoodSearchViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -94,6 +96,7 @@ fun FoodSearchScreen(
         onBack = onBack,
         onScan = onScan,
         onPhoto = onPhoto,
+        onLabel = onLabel,
         onPick = { selected = Selection(it) },
         onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
     )
@@ -120,6 +123,7 @@ fun FoodSearchContent(
     onPick: (FoodOut) -> Unit,
     recent: List<RecentFoodOut> = emptyList(),
     onPickRecent: (RecentFoodOut) -> Unit = {},
+    onLabel: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -131,6 +135,12 @@ fun FoodSearchContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onLabel) {
+                        Icon(
+                            Icons.Outlined.ReceiptLong,
+                            contentDescription = "Scan nutrition label",
+                        )
+                    }
                     IconButton(onClick = onPhoto) {
                         Icon(
                             Icons.Outlined.AddAPhoto,

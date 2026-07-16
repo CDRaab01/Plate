@@ -59,12 +59,19 @@ class PhotoLogViewModel @Inject constructor(
     private val _state = MutableStateFlow(PhotoUiState())
     val state: StateFlow<PhotoUiState> = _state
 
-    fun analyze(image: ByteArray, mimeType: String) {
+    /**
+     * Analyze an image into an editable draft. [label] switches to the higher-accuracy
+     * nutrition-label endpoint (one food = one serving) instead of the meal-photo estimator; both
+     * return the same draft shape, so the confirm-and-log flow below is shared.
+     */
+    fun analyze(image: ByteArray, mimeType: String, label: Boolean = false) {
         if (_state.value.analyzing) return
         _state.value = PhotoUiState(analyzing = true)
         viewModelScope.launch {
             _state.value = try {
-                val result = foodRepository.estimatePhoto(image, mimeType)
+                val result =
+                    if (label) foodRepository.estimateLabel(image, mimeType)
+                    else foodRepository.estimatePhoto(image, mimeType)
                 PhotoUiState(
                     analyzed = true,
                     drafts = result.items.mapIndexed { i, item ->

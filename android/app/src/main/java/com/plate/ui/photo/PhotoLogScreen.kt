@@ -78,6 +78,7 @@ private val MEAL_LABELS = mapOf(
 fun PhotoLogScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
+    labelMode: Boolean = false,
     photoViewModel: PhotoLogViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -90,7 +91,7 @@ fun PhotoLogScreen(
     fun analyzeUri(read: () -> Pair<ByteArray, String>?) {
         scope.launch {
             val data = withContext(Dispatchers.IO) { read() } ?: return@launch
-            photoViewModel.analyze(data.first, data.second)
+            photoViewModel.analyze(data.first, data.second, label = labelMode)
         }
     }
 
@@ -129,6 +130,7 @@ fun PhotoLogScreen(
     PhotoLogContent(
         state = state,
         snackbar = snackbar,
+        labelMode = labelMode,
         onBack = onBack,
         onDone = onDone,
         onPickGallery = {
@@ -155,11 +157,12 @@ internal fun PhotoLogContent(
     onTakePhoto: () -> Unit,
     onRetake: () -> Unit,
     onLog: (PhotoDraft, String) -> Unit,
+    labelMode: Boolean = false,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log from photo") },
+                title = { Text(if (labelMode) "Scan nutrition label" else "Log from photo") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -179,8 +182,12 @@ internal fun PhotoLogContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             when {
-                state.analyzing -> Analyzing()
-                !state.analyzed -> PickPrompt(onPickGallery = onPickGallery, onTakePhoto = onTakePhoto)
+                state.analyzing -> Analyzing(labelMode)
+                !state.analyzed -> PickPrompt(
+                    labelMode = labelMode,
+                    onPickGallery = onPickGallery,
+                    onTakePhoto = onTakePhoto,
+                )
                 else -> EstimateList(state = state, onRetake = onRetake, onDone = onDone, onLog = onLog)
             }
         }
@@ -188,28 +195,36 @@ internal fun PhotoLogContent(
 }
 
 @Composable
-private fun Analyzing() {
+private fun Analyzing(labelMode: Boolean) {
     Column(
         Modifier.fillMaxWidth().padding(top = 48.dp),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         CircularProgressIndicator()
-        Text("Estimating the food in your photo…", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            if (labelMode) "Reading the nutrition label…" else "Estimating the food in your photo…",
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
 @Composable
-private fun PickPrompt(onPickGallery: () -> Unit, onTakePhoto: () -> Unit) {
+private fun PickPrompt(labelMode: Boolean, onPickGallery: () -> Unit, onTakePhoto: () -> Unit) {
     Text(
-        "Snap or choose a photo of your meal and Plate will estimate the foods and macros for you " +
-            "to confirm.",
+        if (labelMode) {
+            "Snap or choose a photo of the Nutrition Facts label and Plate will read the macros for " +
+                "you to confirm — more accurate than estimating from a meal photo."
+        } else {
+            "Snap or choose a photo of your meal and Plate will estimate the foods and macros for " +
+                "you to confirm."
+        },
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Button(onClick = onTakePhoto, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Outlined.AddAPhoto, contentDescription = null)
-        Text("  Take a photo")
+        Text(if (labelMode) "  Take a photo of the label" else "  Take a photo")
     }
     OutlinedButton(onClick = onPickGallery, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Outlined.PhotoLibrary, contentDescription = null)

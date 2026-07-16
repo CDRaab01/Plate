@@ -59,6 +59,11 @@ interface ApiService {
     @POST("foods/photo")
     suspend fun estimatePhoto(@Part image: MultipartBody.Part): PhotoEstimateResponse
 
+    /** Scan a nutrition label (higher-accuracy than a meal photo). Editable, never-logged draft. */
+    @Multipart
+    @POST("foods/label")
+    suspend fun estimateLabel(@Part image: MultipartBody.Part): PhotoEstimateResponse
+
     @POST("log")
     suspend fun createLogEntry(@Body body: LogEntryCreate): LogEntryOut
 

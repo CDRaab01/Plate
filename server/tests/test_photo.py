@@ -15,10 +15,11 @@ from app.config import settings
 from app.schemas.photo import PhotoEstimateResponse
 from app.services.ai.photo_prompts import (
     MAX_ITEMS,
+    build_label_messages,
     build_vision_messages,
     parse_estimate,
 )
-from app.services.ai.vision import estimate_photo
+from app.services.ai.vision import estimate_label, estimate_photo
 
 # A tiny but valid-looking JPEG header is unnecessary — the route only checks the declared
 # content-type and size, and the model is mocked, so any bytes stand in for "an image".
@@ -298,3 +299,60 @@ async def test_photo_route_rejects_oversize_image(auth_client, monkeypatch):
         "/foods/photo", files={"image": ("meal.jpg", FAKE_IMAGE, "image/jpeg")}
     )
     assert resp.status_code == 413
+
+
+# ── Nutrition-label scan (reuses the parser + draft shape) ────────────────────
+
+
+def test_build_label_messages_embeds_image_and_label_prompt():
+    messages = build_label_messages("data:image/jpeg;base64,QUJD")
+    assert messages[0]["role"] == "system"
+    # The label prompt asks the model to READ the panel (transcribe), distinct from the meal prompt.
+    user = messages[1]
+    text = next(p["text"] for p in user["content"] if p["type"] == "text")
+    assert "Nutrition Facts" in text
+    image_part = next(p for p in user["content"] if p["type"] == "image_url")
+    assert image_part["image_url"]["url"].startswith("data:image/jpeg;base64,")
+
+
+async def test_estimate_label_returns_single_serving_draft():
+    label_reply = (
+        '[{"name":"Greek yogurt","est_grams":170,"kcal":100,"protein_g":17,'
+        '"carbs_g":6,"fat_g":0,"confidence":0.95}]'
+    )
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["payload"] = request.read()
+        return _lm_response(label_reply)
+
+    async with _mock_client(handler) as client:
+        resp = await estimate_label(FAKE_IMAGE, "image/jpeg", client=client)
+
+    assert isinstance(resp, PhotoEstimateResponse)
+    assert resp.items[0].name == "Greek yogurt"
+    assert resp.items[0].kcal == 100.0
+    assert resp.low_confidence is False
+    assert settings.lm_studio_vision_model.encode() in captured["payload"]
+
+
+async def test_estimate_label_empty_on_unreadable_label():
+    async with _mock_client(lambda r: _lm_response("can't read it")) as client:
+        resp = await estimate_label(FAKE_IMAGE, "image/jpeg", client=client)
+    assert resp.items == []
+    assert resp.low_confidence is True
+    assert resp.note is not None
+
+
+async def test_label_route_requires_auth(client):
+    resp = await client.post(
+        "/foods/label", files={"image": ("label.jpg", FAKE_IMAGE, "image/jpeg")}
+    )
+    assert resp.status_code == 401
+
+
+async def test_label_route_rejects_non_image(auth_client):
+    resp = await auth_client.post(
+        "/foods/label", files={"image": ("notes.txt", b"hello", "text/plain")}
+    )
+    assert resp.status_code == 415

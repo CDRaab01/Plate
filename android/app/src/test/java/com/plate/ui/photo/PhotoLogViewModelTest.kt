@@ -67,6 +67,14 @@ private class FakeFoodRepository(
         estimateError?.let { throw it }
         return estimate ?: PhotoEstimateResponse(emptyList(), lowConfidence = true)
     }
+
+    var labelAnalyzeCount = 0
+
+    override suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse {
+        labelAnalyzeCount++
+        estimateError?.let { throw it }
+        return estimate ?: PhotoEstimateResponse(emptyList(), lowConfidence = true)
+    }
 }
 
 private class FakeLogRepository : LogRepository {
@@ -141,6 +149,19 @@ class PhotoLogViewModelTest {
         assertEquals("Grilled chicken", state.drafts[0].name)
         // Stable, distinct ids so per-card edit state and logging track correctly.
         assertEquals(listOf(0, 1), state.drafts.map { it.id })
+    }
+
+    @Test
+    fun `analyze in label mode hits the label endpoint, not the meal one`() = runTest {
+        val food = FakeFoodRepository(estimate = PhotoEstimateResponse(listOf(item("Oats")), false))
+        val vm = PhotoLogViewModel(food, FakeLogRepository())
+
+        vm.analyze(byteArrayOf(1, 2, 3), "image/jpeg", label = true)
+        advanceUntilIdle()
+
+        assertEquals(1, food.labelAnalyzeCount)
+        assertEquals(0, food.analyzeCount)
+        assertEquals("Oats", vm.state.value.drafts.single().name)
     }
 
     @Test

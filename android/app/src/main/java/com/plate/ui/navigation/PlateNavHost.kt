@@ -53,6 +53,7 @@ object Routes {
     const val SEARCH = "search"
     const val SCAN = "scan"
     const val PHOTO = "photo"
+    const val LABEL = "label"
     const val GOALS = "goals"
     const val ABOUT = "about"
     const val SETTINGS = "settings"
@@ -178,6 +179,7 @@ fun PlateNavHost(
                         onBack = { navController.popBackStack() },
                         onScan = { navController.navigate(Routes.SCAN) },
                         onPhoto = { navController.navigate(Routes.PHOTO) },
+                        onLabel = { navController.navigate(Routes.LABEL) },
                         diaryViewModel = diaryViewModel,
                     )
                 }
@@ -187,6 +189,16 @@ fun PlateNavHost(
                     PhotoLogScreen(
                         onDone = { navController.popBackStack(Routes.DIARY, inclusive = false) },
                         onBack = { navController.popBackStack() },
+                        diaryViewModel = diaryViewModel,
+                    )
+                }
+                composable(Routes.LABEL) { entry ->
+                    val parent = remember(entry) { navController.getBackStackEntry(Routes.DIARY_GRAPH) }
+                    val diaryViewModel: DiaryViewModel = hiltViewModel(parent)
+                    PhotoLogScreen(
+                        onDone = { navController.popBackStack(Routes.DIARY, inclusive = false) },
+                        onBack = { navController.popBackStack() },
+                        labelMode = true,
                         diaryViewModel = diaryViewModel,
                     )
                 }

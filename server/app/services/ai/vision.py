@@ -18,13 +18,22 @@ from fastapi import HTTPException, status
 
 from app.config import settings
 from app.schemas.photo import PhotoEstimateItem, PhotoEstimateResponse
-from app.services.ai.photo_prompts import build_vision_messages, parse_estimate
+from app.services.ai.photo_prompts import (
+    build_label_messages,
+    build_vision_messages,
+    parse_estimate,
+)
 
 log = logging.getLogger(__name__)
 
 _NO_FOOD_NOTE = (
     "Couldn't identify the food in this photo. Try a clearer, closer shot — or search for it "
     "manually."
+)
+
+_NO_LABEL_NOTE = (
+    "Couldn't read the nutrition label. Try a clearer, straight-on shot of the Nutrition Facts "
+    "panel — or search for the food manually."
 )
 
 
@@ -47,22 +56,46 @@ async def estimate_photo(
     with a note, so the user is guided to retake or search rather than shown an error.
     """
     messages = build_vision_messages(_data_url(image_bytes, content_type))
+    raw_reply = await _run(messages, client)
+    items = [PhotoEstimateItem(**item) for item in parse_estimate(raw_reply)]
+    return _to_response(items, empty_note=_NO_FOOD_NOTE)
 
+
+async def estimate_label(
+    image_bytes: bytes,
+    content_type: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> PhotoEstimateResponse:
+    """Read a **nutrition label** photo and return an editable draft of the one food it describes.
+
+    Higher-accuracy sibling of :func:`estimate_photo`: a Nutrition Facts panel states the macros
+    exactly, so the model transcribes rather than estimates. Reuses the same parser + draft response
+    (a label is a single item = one serving); the estimate is still never auto-committed (CLAUDE.md
+    §3). Failure/degradation behaviour matches the meal path.
+    """
+    messages = build_label_messages(_data_url(image_bytes, content_type))
+    raw_reply = await _run(messages, client)
+    items = [PhotoEstimateItem(**item) for item in parse_estimate(raw_reply)]
+    return _to_response(items, empty_note=_NO_LABEL_NOTE)
+
+
+async def _run(messages: list[dict], client: httpx.AsyncClient | None) -> str:
+    """Reuse an injected client (tests) or open one per call (production), then complete."""
     async with contextlib.AsyncExitStack() as stack:
         if client is None:
             client = await stack.enter_async_context(
                 httpx.AsyncClient(timeout=settings.lm_studio_timeout)
             )
-        raw_reply = await _complete(client, messages)
-
-    items = [PhotoEstimateItem(**item) for item in parse_estimate(raw_reply)]
-    return _to_response(items)
+        return await _complete(client, messages)
 
 
-def _to_response(items: list[PhotoEstimateItem]) -> PhotoEstimateResponse:
+def _to_response(
+    items: list[PhotoEstimateItem], *, empty_note: str = _NO_FOOD_NOTE
+) -> PhotoEstimateResponse:
     """Wrap parsed items with the low-confidence flag + a helpful note when there's nothing usable."""
     if not items:
-        return PhotoEstimateResponse(items=[], low_confidence=True, note=_NO_FOOD_NOTE)
+        return PhotoEstimateResponse(items=[], low_confidence=True, note=empty_note)
 
     threshold = settings.photo_low_confidence_threshold
     low = any(item.confidence <= threshold for item in items)

@@ -66,6 +66,10 @@ validated structured output, no tool access). Two surfaces:
   an **editable draft the user confirms** — never auto-logged. Low confidence → prompt the user
   to refine/search. This pipeline seeded Cookbook's photo import; improvements here should be
   offered there too (and vice versa — don't let the forks drift).
+- **Nutrition-label scan** (`POST /foods/label`) — the same vision seam with a label-specific
+  prompt that *transcribes* a Nutrition Facts panel (one food = one serving) rather than
+  estimating a meal. Reuses `parse_estimate` + the `PhotoEstimateResponse` draft shape and the
+  never-auto-committed guarantee; higher accuracy than a meal photo.
 
 ### Cross-app auth (both directions)
 
@@ -92,7 +96,8 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 - `ui/food/` — search (cache-first), portion entry (g and oz both accepted).
 - `ui/scan/` — ML Kit barcode → OFF lookup.
 - `ui/photo/` — photo-a-meal capture → server estimate → **editable confirm screen** (the draft
-  contract, client side).
+  contract, client side). The same screen serves the **nutrition-label scan** via a `labelMode`
+  flag (label endpoint + label copy); entry points live on the food-search top bar.
 - `ui/coach/` — AI coach chat.
 - `ui/goals/`, `ui/home/`, `ui/calendar/` — targets, dashboard (rings/remaining), history.
 - `util/Units.kt` — the client half of metric-canonical/imperial-display; display defaults

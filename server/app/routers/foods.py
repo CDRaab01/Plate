@@ -18,7 +18,7 @@ from app.limiter import limiter
 from app.schemas.food import FoodCreate, FoodOut
 from app.schemas.photo import PhotoEstimateResponse
 from app.security import CurrentUser
-from app.services.ai.vision import estimate_photo
+from app.services.ai.vision import estimate_label, estimate_photo
 from app.services.food_service import (
     create_custom_food,
     get_food,
@@ -68,18 +68,10 @@ async def create_food(
     return await create_custom_food(db, req.model_dump())
 
 
-@router.post("/photo", response_model=PhotoEstimateResponse)
-@limiter.limit("10/minute")
-async def estimate_from_photo(
-    request: Request,
-    image: UploadFile,
-    current_user: CurrentUser,
-):
-    """Photo logging (Phase 6, CLAUDE.md §6): estimate the foods + macros in a meal photo.
+async def _read_validated_image(image: UploadFile) -> tuple[bytes, str]:
+    """Validate an uploaded image (type/non-empty/size) and return its bytes + content-type.
 
-    The vision model returns an **editable draft** — this endpoint never logs anything itself. The
-    client shows the estimate for the user to confirm/edit, then logs via the normal food + log
-    endpoints. Rate-limited because each call hits the model.
+    Shared by the meal-photo and nutrition-label routes so both enforce the same upload rules.
     """
     content_type = (image.content_type or "").lower()
     if not content_type.startswith("image/"):
@@ -96,8 +88,42 @@ async def estimate_from_photo(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="That image is too large — try a smaller photo.",
         )
+    return data, content_type
 
+
+@router.post("/photo", response_model=PhotoEstimateResponse)
+@limiter.limit("10/minute")
+async def estimate_from_photo(
+    request: Request,
+    image: UploadFile,
+    current_user: CurrentUser,
+):
+    """Photo logging (Phase 6, CLAUDE.md §6): estimate the foods + macros in a meal photo.
+
+    The vision model returns an **editable draft** — this endpoint never logs anything itself. The
+    client shows the estimate for the user to confirm/edit, then logs via the normal food + log
+    endpoints. Rate-limited because each call hits the model.
+    """
+    data, content_type = await _read_validated_image(image)
     return await estimate_photo(data, content_type)
+
+
+@router.post("/label", response_model=PhotoEstimateResponse)
+@limiter.limit("10/minute")
+async def estimate_from_label(
+    request: Request,
+    image: UploadFile,
+    current_user: CurrentUser,
+):
+    """Nutrition-label scan (CLAUDE.md §6): read a Nutrition Facts panel into an editable draft.
+
+    Higher-accuracy sibling of ``/photo`` — a label states the macros exactly, so the model
+    transcribes one food (one serving) rather than estimating a whole meal. Reuses the same
+    editable-draft response and the same never-auto-committed guarantee; the client confirms/edits
+    before logging. Rate-limited because each call hits the model.
+    """
+    data, content_type = await _read_validated_image(image)
+    return await estimate_label(data, content_type)
 
 
 @router.get("/{food_id}", response_model=FoodOut)

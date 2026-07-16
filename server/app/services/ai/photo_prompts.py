@@ -39,18 +39,51 @@ VISION_USER_PROMPT = (
 )
 
 
+# ── Nutrition-label scan (CLAUDE.md §6) ──────────────────────────────────────
+# A photo of a *Nutrition Facts panel* (not the meal) is a higher-accuracy path: the label states
+# the macros exactly, so we ask the model to transcribe them rather than estimate. It reuses the same
+# strict per-item JSON contract (and :func:`parse_estimate`) as the meal path — the only differences
+# are the instructions and that a label describes exactly ONE food (one serving).
+
+LABEL_SYSTEM_PROMPT = (
+    "You are a nutrition-label reading assistant for a food-logging app. You look at a photo of a "
+    "product's Nutrition Facts panel and transcribe the values for ONE serving. You only output "
+    "JSON — never prose, never Markdown, never an explanation."
+)
+
+LABEL_USER_PROMPT = (
+    "This photo shows a Nutrition Facts label. Read the values for a SINGLE serving. Respond with "
+    "ONLY a JSON array containing exactly one object (no prose, no code fences): "
+    '{"name": string, "est_grams": number, "kcal": number, "protein_g": number, '
+    '"carbs_g": number, "fat_g": number, "confidence": number between 0 and 1}. '
+    'Use the serving size in grams for "est_grams" (0 if the label gives no gram weight); use the '
+    'product name if visible, otherwise a short description like "Packaged food". Transcribe the '
+    "printed numbers exactly — do not estimate or round beyond what is shown. If you cannot read the "
+    "label, return an empty array []."
+)
+
+
 def build_vision_messages(image_data_url: str) -> list[dict]:
     """Assemble the LM Studio (OpenAI-compatible) message list for a single meal photo.
 
     The image rides as a ``image_url`` content part with a base64 data URL, which LM Studio's vision
     models accept the same way the OpenAI API does.
     """
+    return _image_messages(VISION_SYSTEM_PROMPT, VISION_USER_PROMPT, image_data_url)
+
+
+def build_label_messages(image_data_url: str) -> list[dict]:
+    """Assemble the message list for a nutrition-label photo (reuses the meal image-part shape)."""
+    return _image_messages(LABEL_SYSTEM_PROMPT, LABEL_USER_PROMPT, image_data_url)
+
+
+def _image_messages(system_prompt: str, user_prompt: str, image_data_url: str) -> list[dict]:
     return [
-        {"role": "system", "content": VISION_SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": VISION_USER_PROMPT},
+                {"type": "text", "text": user_prompt},
                 {"type": "image_url", "image_url": {"url": image_data_url}},
             ],
         },

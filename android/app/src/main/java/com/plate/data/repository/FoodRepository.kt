@@ -23,4 +23,10 @@ interface FoodRepository {
      * user confirms before logging — nothing is logged by this call.
      */
     suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse
+
+    /**
+     * Read a nutrition-label photo into an editable draft (one food = one serving). Higher-accuracy
+     * than [estimatePhoto]; likewise never logs anything by itself.
+     */
+    suspend fun estimateLabel(image: ByteArray, mimeType: String): PhotoEstimateResponse
 }
