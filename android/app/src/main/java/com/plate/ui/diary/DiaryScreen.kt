@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Settings
@@ -66,6 +67,7 @@ import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
 import design.pulse.ui.components.DataText
+import design.pulse.ui.components.ErrorState
 import design.pulse.ui.components.PanelCard
 import design.pulse.ui.components.SectionHeader
 import design.pulse.ui.components.TickerNumber
@@ -143,10 +145,11 @@ fun DiaryScreen(
                     onDeleteEntry = viewModel::deleteEntry,
                     onCopyYesterday = viewModel::copyYesterday,
                 )
-                is UiState.Error -> Text(
-                    s.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                is UiState.Error -> ErrorState(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Couldn't load your day",
+                    detail = s.message,
+                    onRetry = viewModel::load,
                 )
                 else -> CircularProgressIndicator(Modifier.align(Alignment.Center))
             }

@@ -17,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.CloudOff
+import design.pulse.ui.components.ErrorState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -91,10 +93,11 @@ fun GoalScreen(
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (val s = goalState) {
                 is UiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                is UiState.Error -> Text(
-                    s.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                is UiState.Error -> ErrorState(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Couldn't load your goal",
+                    detail = s.message,
+                    onRetry = viewModel::load,
                 )
                 is UiState.Success -> GoalContent(
                     existing = s.data,

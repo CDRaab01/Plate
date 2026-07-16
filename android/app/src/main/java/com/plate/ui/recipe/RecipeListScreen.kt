@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.TravelExplore
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import design.pulse.ui.components.EmptyState
+import design.pulse.ui.components.ErrorState
 import com.plate.data.remote.RecipeOut
 import design.pulse.ui.components.Caption
 import design.pulse.ui.components.DataText
@@ -99,10 +101,11 @@ fun RecipeListScreen(
                     onDelete = viewModel::delete,
                     onLog = viewModel::logToday,
                 )
-                is UiState.Error -> Text(
-                    s.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                is UiState.Error -> ErrorState(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Couldn't load your meals",
+                    detail = s.message,
+                    onRetry = viewModel::load,
                 )
                 else -> CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
