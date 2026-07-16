@@ -9,16 +9,22 @@ import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.QuickAddRequest
 import com.plate.data.remote.TotalsOut
+import android.app.Application
+import com.plate.util.AppPreferences
+import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /** In-memory [DiaryDao] so the offline cache/queue logic can be exercised without Room. */
 private class FakeDiaryDao : DiaryDao {
@@ -45,10 +51,14 @@ private class FakeDiaryDao : DiaryDao {
     }
 }
 
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class, sdk = [34])
 class LogRepositoryImplTest {
 
     private val json = Json { ignoreUnknownKeys = true }
     private val dao = FakeDiaryDao()
+    private val appPreferences =
+        AppPreferences(ApplicationProvider.getApplicationContext())
 
     private fun zeroTotals() = TotalsOut(kcal = 0.0, proteinG = 0.0, carbsG = 0.0, fatG = 0.0)
 
@@ -68,7 +78,7 @@ class LogRepositoryImplTest {
     fun `quickAdd offline queues and returns a synthetic entry`() = runTest {
         val api = mock<ApiService>()
         doThrow(RuntimeException("offline")).whenever(api).quickAdd(any())
-        val repo = LogRepositoryImpl(api, dao, json)
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
 
         val entry = repo.quickAdd("2026-06-18", "lunch", "Protein bar", 200.0, 20.0, 25.0, 6.0)
 
@@ -95,7 +105,7 @@ class LogRepositoryImplTest {
         val api = mock<ApiService>()
         doThrow(RuntimeException("offline")).whenever(api).getDay(any())
         doThrow(RuntimeException("offline")).whenever(api).quickAdd(any())
-        val repo = LogRepositoryImpl(api, dao, json)
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
 
         val day = repo.getDay("2026-06-18")
 
@@ -118,7 +128,7 @@ class LogRepositoryImplTest {
         val api = mock<ApiService>()
         whenever(api.quickAdd(any())).thenReturn(syncedEntry())
         whenever(api.getDay("2026-06-18")).thenReturn(emptyDay("2026-06-18"))
-        val repo = LogRepositoryImpl(api, dao, json)
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
 
         val day = repo.getDay("2026-06-18")
 

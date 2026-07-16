@@ -13,7 +13,10 @@ import com.plate.data.remote.CopyDayRequest
 import com.plate.data.remote.QuickAddRequest
 import com.plate.data.remote.RecipeLogRequest
 import com.plate.data.remote.TotalsOut
+import com.plate.util.AppPreferences
+import com.plate.util.nudges.NudgeLogic
 import kotlinx.serialization.json.Json
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,7 +33,20 @@ class LogRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val diaryDao: DiaryDao,
     private val json: Json,
+    private val appPreferences: AppPreferences,
 ) : LogRepository {
+
+    /**
+     * Record that the user logged food today, so the evening "nothing logged today" nudge can skip
+     * itself. Best-effort — a preference write must never fail a log.
+     */
+    private suspend fun markLoggedToday() {
+        runCatching {
+            appPreferences.setLastLogEpochDay(
+                NudgeLogic.todayEpochDay(System.currentTimeMillis(), ZoneId.systemDefault()),
+            )
+        }
+    }
 
     override suspend fun getDay(date: String): DailyLog {
         // Flush anything queued offline first so a fresh fetch already reflects it on the server.
@@ -53,6 +69,7 @@ class LogRepositoryImpl @Inject constructor(
         quantity: Double,
         unit: String,
     ): LogEntryOut = api.createLogEntry(LogEntryCreate(foodId, date, meal, quantity, unit))
+        .also { markLoggedToday() }
 
     override suspend fun updateEntry(
         id: String,
@@ -81,6 +98,7 @@ class LogRepositoryImpl @Inject constructor(
             carbsG = carbsG,
             fatG = fatG,
         )
+        markLoggedToday()
         return try {
             api.quickAdd(request)
         } catch (_: Exception) {
@@ -103,10 +121,10 @@ class LogRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logRecipe(recipeId: String, date: String, meal: String): List<LogEntryOut> =
-        api.logRecipe(recipeId, RecipeLogRequest(date = date, meal = meal))
+        api.logRecipe(recipeId, RecipeLogRequest(date = date, meal = meal)).also { markLoggedToday() }
 
     override suspend fun copyDay(fromDate: String, toDate: String): List<LogEntryOut> =
-        api.copyDay(CopyDayRequest(fromDate = fromDate, toDate = toDate))
+        api.copyDay(CopyDayRequest(fromDate = fromDate, toDate = toDate)).also { markLoggedToday() }
 
     override suspend fun syncPending() {
         for (entry in diaryDao.allPending()) {

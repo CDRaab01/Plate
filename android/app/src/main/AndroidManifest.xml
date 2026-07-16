@@ -5,6 +5,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Retention nudges (Tier W2b): opt-in local reminders via AlarmManager. POST_NOTIFICATIONS is
+         requested at runtime before the first nudge; RECEIVE_BOOT_COMPLETED lets us re-arm the
+         (non-persistent) alarms after a reboot. Inexact alarms are used, so no SCHEDULE_EXACT_ALARM. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- Phase 4: barcode scanning. Camera is optional so devices without one can still install. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
@@ -63,6 +69,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/plate_widget_info" />
+        </receiver>
+
+        <!-- Retention nudges: an AlarmManager broadcast target that posts the reminder and re-arms
+             tomorrow's alarm, plus a boot receiver to restore alarms after a reboot. -->
+        <receiver
+            android:name=".util.nudges.NudgeReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".util.nudges.NudgeBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
         </receiver>
     </application>
 

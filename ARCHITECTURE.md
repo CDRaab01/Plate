@@ -97,6 +97,12 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 - `ui/goals/`, `ui/home/`, `ui/calendar/` — targets, dashboard (rings/remaining), history.
 - `util/Units.kt` — the client half of metric-canonical/imperial-display; display defaults
   imperial (lb/oz) with a lb↔kg toggle persisted in `users.settings`.
+- `util/nudges/` — opt-in retention nudges (client-only, no server): two meal reminders +
+  an evening "nothing logged today" nudge, scheduled with **inexact** AlarmManager alarms that
+  self-reschedule (`NudgeScheduler`/`NudgeReceiver`; `NudgeBootReceiver` restores them after a
+  reboot). Pure scheduling/quiet-hours logic lives in `NudgeLogic`. The opt-in flag + quiet hours
+  live in `AppPreferences`; `LogRepositoryImpl` stamps the last-logged day so the evening nudge
+  can skip itself. Gated on the runtime notifications permission.
 - `ui/theme/PlateTheme.kt` — Pulse semantics: Plate **leads green**; nutrition channels
   protein/carbs/fat/calories; its own emerald hero gradient (not the library's accent gradient).
 
