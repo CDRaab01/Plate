@@ -44,6 +44,20 @@
             android:name="net.openid.appauth.RedirectUriReceiverActivity"
             android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar"
             tools:node="merge" />
+
+        <!-- Home-screen macro glance (today's remaining calories + protein/carbs/fat), reads the
+             last-known snapshot the app persisted — no network of its own. -->
+        <receiver
+            android:name=".widget.PlateWidgetReceiver"
+            android:exported="true"
+            android:label="Plate macros">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/plate_widget_info" />
+        </receiver>
     </application>
 
 </manifest>

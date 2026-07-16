@@ -7,6 +7,7 @@ import com.plate.data.remote.DailyLog
 import com.plate.data.repository.LogRepository
 import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
+import com.plate.widget.WidgetSnapshotWriter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,9 @@ class DiaryViewModel @Inject constructor(
     private val logRepository: LogRepository,
     private val api: ApiService,
     private val pendingDate: PendingDiaryDate = PendingDiaryDate(),
+    // Nullable/default so plain-JVM unit tests can construct the VM without a Context-backed writer;
+    // Hilt always injects the real one in production (same pattern as pendingDate).
+    private val widgetSnapshotWriter: WidgetSnapshotWriter? = null,
 ) : ViewModel() {
 
     private val _date = MutableStateFlow(LocalDate.now().toString())
@@ -95,7 +99,13 @@ class DiaryViewModel @Inject constructor(
         viewModelScope.launch {
             _day.value = UiState.Loading
             _day.value = try {
-                UiState.Success(logRepository.getDay(_date.value))
+                val day = logRepository.getDay(_date.value)
+                // Keep the home-screen widget current when the diary being edited is today's — every
+                // add/edit/delete/quick-add reloads through here.
+                if (_date.value == LocalDate.now().toString()) {
+                    runCatching { widgetSnapshotWriter?.write(day) }
+                }
+                UiState.Success(day)
             } catch (e: Exception) {
                 UiState.Error(e.message ?: "Couldn't load your day")
             }

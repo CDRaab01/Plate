@@ -11,6 +11,7 @@ import com.plate.data.repository.MetricRepository
 import com.plate.util.Greetings
 import com.plate.util.UiState
 import com.plate.util.UnitSystem
+import com.plate.widget.WidgetSnapshotWriter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,6 +44,9 @@ class HomeViewModel @Inject constructor(
     private val metricRepository: MetricRepository,
     private val appPreferences: com.plate.util.AppPreferences,
     private val api: ApiService,
+    // Nullable/default so plain-JVM unit tests can construct the VM without a Context-backed writer;
+    // Hilt always injects the real one in production (same pattern as DiaryViewModel's pendingDate).
+    private val widgetSnapshotWriter: WidgetSnapshotWriter? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<UiState<HomeData>>(UiState.Loading)
@@ -92,6 +96,8 @@ class HomeViewModel @Inject constructor(
                 val trend = runCatching { metricRepository.getTrend() }.getOrNull()
                 val adaptive = runCatching { api.getAdaptiveTdee() }.getOrNull()
                 val series = weightSeriesKg.value
+                // Keep the home-screen widget in step with today's remaining macros.
+                runCatching { widgetSnapshotWriter?.write(day) }
                 UiState.Success(
                     HomeData(day = day, trend = trend, weightSeriesKg = series, adaptive = adaptive)
                 )

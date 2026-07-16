@@ -137,6 +137,11 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Home-screen Glance widget (today's remaining macros). Reads the last-known Home snapshot via
+    // a Hilt EntryPoint — no network of its own — mirroring Magpie's/Cookbook's widget precedent.
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
     // Suite SSO (BROKER.md Phase 2c): OpenID Connect authorization-code + PKCE via AppAuth.
     implementation(libs.appauth)
 
