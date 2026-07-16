@@ -2,4 +2,12 @@
 <resources>
     <string name="app_name">Plate</string>
     <string name="widget_description">Today\'s remaining calories and macros</string>
+
+    <!-- Static launcher shortcuts (long-press the app icon). See res/xml/shortcuts.xml. -->
+    <string name="shortcut_log_short">Log food</string>
+    <string name="shortcut_log_long">Log food</string>
+    <string name="shortcut_scan_short">Scan barcode</string>
+    <string name="shortcut_scan_long">Scan barcode</string>
+    <string name="shortcut_photo_short">Snap a meal</string>
+    <string name="shortcut_photo_long">Snap a meal</string>
 </resources>

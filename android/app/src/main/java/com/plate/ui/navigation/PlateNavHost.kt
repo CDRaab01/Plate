@@ -67,13 +67,33 @@ object Routes {
 
     fun recipeEdit(id: String? = null) =
         if (id == null) RECIPE_EDIT else "$RECIPE_EDIT?recipeId=$id"
+
+    /** The pre-authentication gate: no launcher shortcut is honored while on one of these. */
+    val authRoutes = setOf(LOGIN, REGISTER, FORGOT)
+
+    /**
+     * Maps a `plate://shortcut/<target>` segment (see res/xml/shortcuts.xml) to its in-app route,
+     * or null for an unknown target. The three shortcut targets all live in the diary graph, so
+     * navigating to them puts that graph on the back stack (its DiaryViewModel resolves).
+     */
+    fun shortcutRoute(target: String): String? = when (target) {
+        "log" -> SEARCH
+        "scan" -> SCAN
+        "photo" -> PHOTO
+        else -> null
+    }
 }
 
 @Composable
-fun PlateNavHost(navController: NavHostController = rememberNavController()) {
+fun PlateNavHost(
+    navController: NavHostController = rememberNavController(),
+    shortcutTarget: String? = null,
+    onShortcutHandled: () -> Unit = {},
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    val showBar = currentDestination?.route in TopLevelDestination.barRoutes
+    val currentRoute = currentDestination?.route
+    val showBar = currentRoute in TopLevelDestination.barRoutes
 
     // A rejected refresh token (or explicit logout) clears the session; bounce back to login.
     val authViewModel: AuthViewModel = hiltViewModel()
@@ -84,6 +104,19 @@ fun PlateNavHost(navController: NavHostController = rememberNavController()) {
                 launchSingleTop = true
             }
         }
+    }
+
+    // Honor a launcher shortcut, but only once the user is past the auth gate (login/register/
+    // forgot). A shortcut tapped while signed out is held (in MainActivity) until login lands us on
+    // Home, then routed to its target here — never dropped. Re-keyed on currentRoute so it fires
+    // the moment the gate is cleared; cleared immediately after so it runs once per tap.
+    LaunchedEffect(shortcutTarget, currentRoute) {
+        val target = shortcutTarget ?: return@LaunchedEffect
+        if (currentRoute == null || currentRoute in Routes.authRoutes) return@LaunchedEffect
+        Routes.shortcutRoute(target)?.let { route ->
+            navController.navigate(route) { launchSingleTop = true }
+        }
+        onShortcutHandled()
     }
 
     Scaffold(

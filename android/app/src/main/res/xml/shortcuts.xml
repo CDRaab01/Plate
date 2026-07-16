@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static launcher shortcuts (long-press the app icon). Each opens MainActivity with a
+     plate://shortcut/<target> URI that the app routes once the user is past the onboarding +
+     login gate (see MainActivity + PlateNavHost). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="log"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_log_short"
+        android:shortcutLongLabel="@string/shortcut_log_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.plate"
+            android:targetClass="com.plate.MainActivity"
+            android:data="plate://shortcut/log" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="scan"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_scan_short"
+        android:shortcutLongLabel="@string/shortcut_scan_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.plate"
+            android:targetClass="com.plate.MainActivity"
+            android:data="plate://shortcut/scan" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="photo"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_photo_short"
+        android:shortcutLongLabel="@string/shortcut_photo_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.plate"
+            android:targetClass="com.plate.MainActivity"
+            android:data="plate://shortcut/photo" />
+    </shortcut>
+</shortcuts>

@@ -29,11 +29,17 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Plate">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Static launcher shortcuts (long-press the icon): Log food / Scan barcode /
+                 Snap a meal. singleTop delivers a warm-launch shortcut via onNewIntent. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- AppAuth (BROKER.md Phase 2c) themes its AuthorizationManagementActivity as AppCompat but
