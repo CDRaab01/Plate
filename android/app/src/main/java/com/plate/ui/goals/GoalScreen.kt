@@ -127,7 +127,12 @@ fun GoalContent(
     var age by remember { mutableStateOf(existing?.age?.toString() ?: "") }
     var sex by remember { mutableStateOf(existing?.sex ?: "male") }
     var activityLevel by remember { mutableStateOf(existing?.activityLevel ?: "moderate") }
-    var rate by remember(unitSystem) { mutableStateOf(existing?.rateKgPerWeek?.let { display(rateKgToUnit(it, imperial)) } ?: "0") }
+    // Stored/displayed as a positive magnitude; the goal-type chip owns the direction (a cut is a
+    // deficit, a bulk a surplus). We keep the sign off the field so "Cut" + a natural positive rate
+    // can't read as a surplus — the server enforces the same rule as the source of truth.
+    var rate by remember(unitSystem) {
+        mutableStateOf(existing?.rateKgPerWeek?.let { display(rateKgToUnit(kotlin.math.abs(it), imperial)) } ?: "0.5")
+    }
 
     val isSaving = saveState is UiState.Loading
 
@@ -183,16 +188,20 @@ fun GoalContent(
                 label = "Age",
                 value = age,
                 onChange = { age = it },
-                modifier = Modifier.weight(1f),
+                modifier = if (goalType == "maintain") Modifier.fillMaxWidth() else Modifier.weight(1f),
                 isDecimal = false,
             )
-            NumberField(
-                label = "Rate ($weightUnit/week)",
-                value = rate,
-                onChange = { rate = it },
-                modifier = Modifier.weight(1f),
-                supportingText = "Negative to cut",
-            )
+            // Maintain has no rate; for cut/bulk the goal chip owns the direction, so this is just
+            // "how fast" as a positive number — no sign for the user to get wrong.
+            if (goalType != "maintain") {
+                NumberField(
+                    label = "Rate ($weightUnit/week)",
+                    value = rate,
+                    onChange = { rate = it },
+                    modifier = Modifier.weight(1f),
+                    supportingText = if (goalType == "cut") "Weight to lose/week" else "Weight to gain/week",
+                )
+            }
         }
 
         if (saveState is UiState.Error) {
@@ -209,7 +218,10 @@ fun GoalContent(
                 val w = weight.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
                 val h = height.toDoubleOrNull() ?: return@PrimaryButtonFullWidth
                 val a = age.toIntOrNull() ?: return@PrimaryButtonFullWidth
-                val r = rate.toDoubleOrNull() ?: 0.0
+                // Rate is entered as a positive magnitude; the goal type owns the direction. Send it
+                // unsigned — the server derives the sign from goal_type (cut → deficit, bulk → surplus,
+                // maintain → 0), so "Cut" can never come back as a surplus.
+                val r = kotlin.math.abs(rate.toDoubleOrNull() ?: 0.0)
                 // Convert the user's units back to the canonical kg / cm / kg-per-week the API expects.
                 onSave(
                     GoalUpsertRequest(
