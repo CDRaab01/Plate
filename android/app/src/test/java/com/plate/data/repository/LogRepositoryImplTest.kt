@@ -20,11 +20,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.any
-import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
 
 /** In-memory [DiaryDao] so the offline cache/queue logic can be exercised without Room. */
 private class FakeDiaryDao : DiaryDao {
@@ -74,10 +79,13 @@ class LogRepositoryImplTest {
         targets = TotalsOut(kcal = 2000.0, proteinG = 150.0, carbsG = 200.0, fatG = 60.0),
     )
 
+    private fun httpException(code: Int = 422) =
+        HttpException(Response.error<Any>(code, "rejected".toResponseBody("text/plain".toMediaType())))
+
     @Test
     fun `quickAdd offline queues and returns a synthetic entry`() = runTest {
         val api = mock<ApiService>()
-        doThrow(RuntimeException("offline")).whenever(api).quickAdd(any())
+        doAnswer { throw IOException("offline") }.whenever(api).quickAdd(any())
         val repo = LogRepositoryImpl(api, dao, json, appPreferences)
 
         val entry = repo.quickAdd("2026-06-18", "lunch", "Protein bar", 200.0, 20.0, 25.0, 6.0)
@@ -103,8 +111,8 @@ class LogRepositoryImplTest {
             ),
         )
         val api = mock<ApiService>()
-        doThrow(RuntimeException("offline")).whenever(api).getDay(any())
-        doThrow(RuntimeException("offline")).whenever(api).quickAdd(any())
+        doAnswer { throw IOException("offline") }.whenever(api).getDay(any())
+        doAnswer { throw IOException("offline") }.whenever(api).quickAdd(any())
         val repo = LogRepositoryImpl(api, dao, json, appPreferences)
 
         val day = repo.getDay("2026-06-18")
@@ -136,6 +144,69 @@ class LogRepositoryImplTest {
         assertTrue(dao.pending.isEmpty())
         assertEquals(0.0, day.totals.kcal, 0.0)
         assertTrue(dao.days.containsKey("2026-06-18"))
+    }
+
+    @Test
+    fun `getDayStale surfaces the cache capture time when served offline`() = runTest {
+        dao.days["2026-06-18"] = CachedDayEntity(
+            "2026-06-18",
+            json.encodeToString(DailyLog.serializer(), emptyDay("2026-06-18")),
+            cachedAtMs = 123_456L,
+        )
+        val api = mock<ApiService>()
+        doAnswer { throw IOException("offline") }.whenever(api).getDay(any())
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
+
+        val stale = repo.getDayStale("2026-06-18")
+
+        assertEquals(123_456L, stale.asOfMs)
+        assertEquals("2026-06-18", stale.value.date)
+    }
+
+    @Test
+    fun `getDayStale is fresh (null asOf) when the server responds`() = runTest {
+        val api = mock<ApiService>()
+        whenever(api.getDay("2026-06-18")).thenReturn(emptyDay("2026-06-18"))
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
+
+        val stale = repo.getDayStale("2026-06-18")
+
+        assertNull(stale.asOfMs)
+        // And the write-through stamped a real capture time on the cached row.
+        assertTrue(dao.days.getValue("2026-06-18").cachedAtMs > 0L)
+    }
+
+    @Test
+    fun `getDay rethrows an HttpException even when a cache exists`() = runTest {
+        dao.days["2026-06-18"] = CachedDayEntity(
+            "2026-06-18",
+            json.encodeToString(DailyLog.serializer(), emptyDay("2026-06-18")),
+        )
+        val api = mock<ApiService>()
+        doAnswer { throw httpException(500) }.whenever(api).getDay(any())
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
+
+        try {
+            repo.getDay("2026-06-18")
+            org.junit.Assert.fail("expected HttpException — only unreachability degrades to cache")
+        } catch (_: HttpException) {
+            // expected
+        }
+    }
+
+    @Test
+    fun `quickAdd rethrows an HttpException instead of queueing it`() = runTest {
+        val api = mock<ApiService>()
+        doAnswer { throw httpException() }.whenever(api).quickAdd(any())
+        val repo = LogRepositoryImpl(api, dao, json, appPreferences)
+
+        try {
+            repo.quickAdd("2026-06-18", "lunch", "Bad entry", -1.0, 0.0, 0.0, 0.0)
+            org.junit.Assert.fail("expected HttpException — a rejected write must never queue")
+        } catch (_: HttpException) {
+            // expected
+        }
+        assertTrue(dao.pending.isEmpty())
     }
 
     private fun syncedEntry() = LogEntryOut(

@@ -6,6 +6,7 @@ import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
 import com.plate.data.repository.LogRepository
+import com.plate.data.repository.Stale
 import com.plate.util.MainDispatcherRule
 import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
@@ -42,6 +43,8 @@ private fun dailyLog(
 private class FakeLogRepository(
     var day: DailyLog = dailyLog("2026-06-16"),
     private val failWith: Exception? = null,
+    /** Non-null = the day is served as if from the offline cache, captured at this time. */
+    private val dayAsOfMs: Long? = null,
 ) : LogRepository {
     var added = 0
     var deleted = 0
@@ -51,6 +54,8 @@ private class FakeLogRepository(
         failWith?.let { throw it }
         return day
     }
+
+    override suspend fun getDayStale(date: String) = Stale(getDay(date), dayAsOfMs)
 
     override suspend fun addEntry(
         foodId: String,
@@ -271,5 +276,40 @@ class DiaryViewModelTest {
         val state = vm.day.value
         assertTrue(state is UiState.Error)
         assertEquals("offline", (state as UiState.Error).message)
+    }
+
+    @Test
+    fun `unreachable server with no cache reads as a plain server-unreachable error`() = runTest {
+        val repo = FakeLogRepository(failWith = java.io.IOException("Unable to resolve host"))
+        val vm = DiaryViewModel(repo, fakeApi)
+
+        advanceUntilIdle()
+
+        val state = vm.day.value
+        assertTrue(state is UiState.Error)
+        assertEquals("Can't reach the Plate server", (state as UiState.Error).message)
+        assertNull(vm.staleAsOfMs.value)
+    }
+
+    @Test
+    fun `a cache-served day surfaces its capture time for the stale banner`() = runTest {
+        val repo = FakeLogRepository(day = dailyLog("2026-06-16"), dayAsOfMs = 42_000L)
+        val vm = DiaryViewModel(repo, fakeApi)
+
+        advanceUntilIdle()
+
+        assertTrue(vm.day.value is UiState.Success)
+        assertEquals(42_000L, vm.staleAsOfMs.value)
+    }
+
+    @Test
+    fun `a fresh day clears the stale banner`() = runTest {
+        val repo = FakeLogRepository(day = dailyLog("2026-06-16"))
+        val vm = DiaryViewModel(repo, fakeApi)
+
+        advanceUntilIdle()
+
+        assertTrue(vm.day.value is UiState.Success)
+        assertNull(vm.staleAsOfMs.value)
     }
 }

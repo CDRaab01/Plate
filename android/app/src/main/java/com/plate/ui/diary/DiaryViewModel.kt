@@ -7,6 +7,7 @@ import com.plate.data.remote.DailyLog
 import com.plate.data.repository.LogRepository
 import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
+import com.plate.util.userMessage
 import com.plate.widget.WidgetSnapshotWriter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,13 @@ class DiaryViewModel @Inject constructor(
 
     private val _day = MutableStateFlow<UiState<DailyLog>>(UiState.Loading)
     val day: StateFlow<UiState<DailyLog>> = _day
+
+    /**
+     * Non-null when the currently shown day was served from the offline cache: its capture time,
+     * driving the stale banner. Null whenever the day is fresh (or errored).
+     */
+    private val _staleAsOfMs = MutableStateFlow<Long?>(null)
+    val staleAsOfMs: StateFlow<Long?> = _staleAsOfMs
 
     private val now get() = LocalTime.now()
     private val _greeting = MutableStateFlow(greetingForTime(LocalTime.now()))
@@ -99,7 +107,9 @@ class DiaryViewModel @Inject constructor(
         viewModelScope.launch {
             _day.value = UiState.Loading
             _day.value = try {
-                val day = logRepository.getDay(_date.value)
+                val stale = logRepository.getDayStale(_date.value)
+                val day = stale.value
+                _staleAsOfMs.value = stale.asOfMs
                 // Keep the home-screen widget current when the diary being edited is today's — every
                 // add/edit/delete/quick-add reloads through here.
                 if (_date.value == LocalDate.now().toString()) {
@@ -107,7 +117,8 @@ class DiaryViewModel @Inject constructor(
                 }
                 UiState.Success(day)
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Couldn't load your day")
+                _staleAsOfMs.value = null
+                UiState.Error(e.userMessage("Couldn't load your day"))
             }
         }
     }

@@ -128,9 +128,42 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 - `ui/theme/PlateTheme.kt` — Pulse semantics: Plate **leads green**; nutrition channels
   protein/carbs/fat/calories; its own emerald hero gradient (not the library's accent gradient).
 
-Offline: Plate is online-first (a food diary without search/targets is of limited use offline);
-Room caches for reads. No sync-queue ambition here — that's Spotter's and Cookbook's problem
-domain.
+### Offline model (2026-07-17 — supersedes the old "online-first, no sync-queue" stance)
+
+With the backend unreachable, Plate opens, renders its core read surfaces from caches with an
+honest banner, and queues its two entry-anywhere writes. The rule that decides everything:
+**only `IOException` (server unreachable) degrades; `retrofit2.HttpException` (a reachable
+server rejecting the request) always errors** — a rejection is never cached over or queued.
+
+- **Startup gate** — `Routes.GATE` is the nav start destination; `GateViewModel`
+  (`ui/navigation/PlateNavHost.kt`, the Cookbook pattern) resolves purely from the persisted
+  `TokenStore` token, so a cached session lands on Home with zero network. Auth screens are
+  unchanged; expired tokens are handled where they always were (the 401 refresh/logout path).
+- **Write queues (write-through + drain, the Spotter pattern)** — two, both in Room:
+  1. diary **quick-adds** (`pending_quick_add`, pre-existing) and
+  2. **weigh-ins** (`body_metrics` rows with `syncPending`; `MetricRepositoryImpl` inserts the
+     local row first — converted to **canonical kg before it persists**, and drained in explicit
+     kg, so a lb↔kg toggle can never corrupt a queued entry — then best-effort POSTs and
+     "promotes" the row to its server id on ack). An offline weigh-in *succeeds silently*.
+  Draining runs on reconnect (`NetworkSyncObserver`), on Home load (`metricRepository.sync()`),
+  and on every diary read (`syncPending()` inside `getDay`).
+- **Read caches** — two shapes, both server-truth mirrors:
+  - `cached_day` (pre-existing) now stamps `cachedAtMs`; `LogRepository.getDayStale` surfaces it.
+  - `blob_cache` (key → JSON + `cachedAtMs`) behind `data/repository/Stale.kt`'s `BlobCache`
+    read-through helper, applied to: goal (`"goal"`), weight trend (`"weight_trend"`), the
+    **default-window** weekly summary (`"weekly_summary"`; parameterized ranges like calendar
+    months stay online-only), and recent foods (`"recent_foods"`).
+  A cache-served read returns `Stale(value, asOfMs)`; fresh reads carry `asOfMs = null`.
+- **Stale banner idiom** — Home and Diary render Pulse's `StaleBanner(asOfMs, channel)` (fat =
+  Plate's attention channel) when any feeding read was cache-served, showing the **oldest**
+  `asOfMs` among stale sources — the banner reports the least-fresh data on screen.
+- **Deliberately online-only** — food search, barcode lookup, photo/label/voice drafts, coach
+  chat, food-by-id + recipe logging (server-side portion scaling), calendar month pages, goal
+  writes. These need the server to mean anything; offline they fail fast with the uniform
+  "Can't reach the Plate server" copy (`util/ErrorMessages.kt::userMessage`) instead of raw
+  transport messages.
+- Room is at **schema v3** (`MIGRATION_2_3`, additive — the offline queues must survive
+  upgrades; `fallbackToDestructiveMigration` remains a backstop only).
 
 Suite plumbing (same as siblings): `SuiteAuthManager` (AppAuth, client id `plate`),
 `SuiteConfigReader` (hub config broker), suite-signed releases, manifest AppAuth theme override

@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -18,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.plate.data.local.TokenStore
 import com.plate.ui.about.AboutScreen
 import com.plate.ui.auth.AuthViewModel
 import com.plate.ui.auth.ForgotPasswordScreen
@@ -38,8 +40,16 @@ import com.plate.ui.recipe.RecipeListScreen
 import com.plate.ui.scan.BarcodeScanScreen
 import com.plate.ui.voice.VoiceLogScreen
 import com.plate.ui.calendar.CalendarScreen
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 object Routes {
+    /**
+     * The startup gate: resolves the cached-token state and routes to HOME (token present — even
+     * offline, so the app opens past login with the backend down) or LOGIN (no token).
+     */
+    const val GATE = "gate"
+
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val FORGOT = "forgot"
@@ -72,7 +82,7 @@ object Routes {
         if (id == null) RECIPE_EDIT else "$RECIPE_EDIT?recipeId=$id"
 
     /** The pre-authentication gate: no launcher shortcut is honored while on one of these. */
-    val authRoutes = setOf(LOGIN, REGISTER, FORGOT)
+    val authRoutes = setOf(GATE, LOGIN, REGISTER, FORGOT)
 
     /**
      * Maps a `plate://shortcut/<target>` segment (see res/xml/shortcuts.xml) to its in-app route,
@@ -85,6 +95,17 @@ object Routes {
         "photo" -> PHOTO
         else -> null
     }
+}
+
+/**
+ * Resolves the startup gate (the Cookbook GateViewModel pattern): a cached token — no network
+ * round-trip, so it resolves identically offline — means signed in.
+ */
+@HiltViewModel
+class GateViewModel @Inject constructor(
+    private val tokenStore: TokenStore,
+) : ViewModel() {
+    suspend fun isSignedIn(): Boolean = tokenStore.currentAccessToken() != null
 }
 
 @Composable
@@ -134,9 +155,18 @@ fun PlateNavHost(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.LOGIN,
+            startDestination = Routes.GATE,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
+            composable(Routes.GATE) {
+                val gateViewModel: GateViewModel = hiltViewModel()
+                LaunchedEffect(Unit) {
+                    val target = if (gateViewModel.isSignedIn()) Routes.HOME else Routes.LOGIN
+                    navController.navigate(target) {
+                        popUpTo(Routes.GATE) { inclusive = true }
+                    }
+                }
+            }
             composable(Routes.LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {

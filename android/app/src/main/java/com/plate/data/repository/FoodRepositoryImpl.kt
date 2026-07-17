@@ -6,6 +6,7 @@ import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.remote.RecentFoodOut
 import com.plate.data.remote.VoiceParseRequest
+import kotlinx.serialization.builtins.ListSerializer
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -15,10 +16,16 @@ import javax.inject.Singleton
 @Singleton
 class FoodRepositoryImpl @Inject constructor(
     private val api: ApiService,
+    private val blobCache: BlobCache,
 ) : FoodRepository {
     override suspend fun search(query: String): List<FoodOut> = api.searchFoods(query)
 
-    override suspend fun recentFoods(limit: Int): List<RecentFoodOut> = api.getRecentFoods(limit)
+    // Read-through cached (one blob, keyed ignoring [limit] — every caller uses the default), so
+    // the one-tap re-log chips survive the server being unreachable. Search stays online-only.
+    override suspend fun recentFoods(limit: Int): List<RecentFoodOut> =
+        blobCache.readThrough("recent_foods", ListSerializer(RecentFoodOut.serializer())) {
+            api.getRecentFoods(limit)
+        }.value
 
     override suspend fun lookupBarcode(code: String): FoodOut = api.lookupBarcode(code)
 

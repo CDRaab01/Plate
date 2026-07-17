@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.FoodOut
 import com.plate.data.repository.FoodRepository
 import com.plate.util.UiState
+import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +45,7 @@ class BarcodeScanViewModel @Inject constructor(
                     UiState.Error(e.message ?: "Lookup failed")
                 }
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Lookup failed")
+                UiState.Error(e.userMessage("Lookup failed"))
             }
         }
     }

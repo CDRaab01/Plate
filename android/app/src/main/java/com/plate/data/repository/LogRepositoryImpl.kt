@@ -16,6 +16,7 @@ import com.plate.data.remote.TotalsOut
 import com.plate.util.AppPreferences
 import com.plate.util.nudges.NudgeLogic
 import kotlinx.serialization.json.Json
+import java.io.IOException
 import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
@@ -48,18 +49,29 @@ class LogRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDay(date: String): DailyLog {
+    override suspend fun getDay(date: String): DailyLog = getDayStale(date).value
+
+    override suspend fun getDayStale(date: String): Stale<DailyLog> {
         // Flush anything queued offline first so a fresh fetch already reflects it on the server.
         runCatching { syncPending() }
+        var asOfMs: Long? = null
         val serverDay = try {
-            api.getDay(date).also { diaryDao.upsertDay(CachedDayEntity(date, json.encodeToString(DailyLog.serializer(), it))) }
-        } catch (e: Exception) {
+            api.getDay(date).also {
+                diaryDao.upsertDay(
+                    CachedDayEntity(date, json.encodeToString(DailyLog.serializer(), it), System.currentTimeMillis()),
+                )
+            }
+        } catch (e: IOException) {
+            // Only unreachability degrades to the cache; a reachable server's rejection
+            // (HttpException) surfaces as the error it is.
             val cached = diaryDao.getCachedDay(date)
                 ?: throw e // offline with no cache for this day — surface the error
+            asOfMs = cached.cachedAtMs
             json.decodeFromString(DailyLog.serializer(), cached.json)
         }
         val pending = diaryDao.pendingForDate(date)
-        return if (pending.isEmpty()) serverDay else mergePending(serverDay, pending)
+        val day = if (pending.isEmpty()) serverDay else mergePending(serverDay, pending)
+        return Stale(day, asOfMs)
     }
 
     override suspend fun addEntry(
@@ -101,9 +113,10 @@ class LogRepositoryImpl @Inject constructor(
         markLoggedToday()
         return try {
             api.quickAdd(request)
-        } catch (_: Exception) {
-            // Offline: queue it locally and surface it immediately as a synthetic entry. It syncs
-            // on reconnect (NetworkSyncObserver) or the next getDay.
+        } catch (_: IOException) {
+            // Server unreachable: queue it locally and surface it immediately as a synthetic
+            // entry. It syncs on reconnect (NetworkSyncObserver) or the next getDay. A rejection
+            // from a *reachable* server (HttpException) rethrows instead — never queue a reject.
             val pending = PendingQuickAddEntity(
                 localId = "pending-${UUID.randomUUID()}",
                 date = date,
