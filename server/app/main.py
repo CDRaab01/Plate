@@ -18,6 +18,7 @@ from app.routers import (
     log,
     metrics,
     recipes,
+    restaurants,
     suite_auth,
     users,
 )
@@ -97,6 +98,7 @@ app.include_router(checkin.router)
 app.include_router(log.router)
 app.include_router(metrics.router)
 app.include_router(recipes.router)
+app.include_router(restaurants.router)
 app.include_router(ai.router)
 app.include_router(cross_app.router)
 app.include_router(export.router)
