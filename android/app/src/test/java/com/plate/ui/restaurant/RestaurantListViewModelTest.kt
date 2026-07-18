@@ -19,11 +19,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
 
-private fun restaurant(id: String, name: String, isOwner: Boolean = true) =
+private fun row(id: String, name: String, isOwner: Boolean = true) =
     RestaurantOut(id = id, name = name, isOwner = isOwner)
 
-private class FakeRestaurantRepository(
-    var restaurants: MutableList<RestaurantOut> = mutableListOf(restaurant("r1", "Salsa Grille")),
+private class ListFakeRestaurantRepository(
+    var restaurants: MutableList<RestaurantOut> = mutableListOf(row("r1", "Salsa Grille")),
     private val failWith: Exception? = null,
 ) : RestaurantRepository {
     var deleted = 0
@@ -45,7 +45,7 @@ private class FakeRestaurantRepository(
     ): RestaurantOut {
         created = name to components
         createdShared = shared
-        return restaurant("new", name).also { restaurants.add(it) }
+        return row("new", name).also { restaurants.add(it) }
     }
 
     override suspend fun update(id: String, name: String?, menuUrl: String?, shared: Boolean?) =
@@ -82,7 +82,7 @@ class RestaurantListViewModelTest {
 
     @Test
     fun `load surfaces the restaurants`() = runTest {
-        val vm = RestaurantListViewModel(FakeRestaurantRepository(), context)
+        val vm = RestaurantListViewModel(ListFakeRestaurantRepository(), context)
         advanceUntilIdle()
         val state = vm.restaurants.value
         assertTrue(state is UiState.Success && state.data.single().name == "Salsa Grille")
@@ -92,7 +92,7 @@ class RestaurantListViewModelTest {
     @Test
     fun `load failure surfaces an error`() = runTest {
         val vm = RestaurantListViewModel(
-            FakeRestaurantRepository(failWith = RuntimeException("down")),
+            ListFakeRestaurantRepository(failWith = RuntimeException("down")),
             context,
         )
         advanceUntilIdle()
@@ -101,7 +101,7 @@ class RestaurantListViewModelTest {
 
     @Test
     fun `delete removes and reloads`() = runTest {
-        val repo = FakeRestaurantRepository()
+        val repo = ListFakeRestaurantRepository()
         val vm = RestaurantListViewModel(repo, context)
         advanceUntilIdle()
         vm.delete("r1")
@@ -113,7 +113,7 @@ class RestaurantListViewModelTest {
 
     @Test
     fun `importPreset creates a shared restaurant and confirms`() = runTest {
-        val repo = FakeRestaurantRepository()
+        val repo = ListFakeRestaurantRepository()
         val vm = RestaurantListViewModel(repo, context)
         advanceUntilIdle()
         vm.importPreset(

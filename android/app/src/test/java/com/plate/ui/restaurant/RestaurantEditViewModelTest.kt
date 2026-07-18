@@ -46,7 +46,7 @@ private fun parsedComponent(
 private fun parse(vararg components: MenuParseComponent, name: String? = "Salsa Grille") =
     MenuParseResponse(restaurantName = name, menuUrl = "https://x.example/menu", components = components.toList())
 
-private class FakeRestaurantRepository : RestaurantRepository {
+private class EditFakeRestaurantRepository : RestaurantRepository {
     var parseResponse: MenuParseResponse = parse()
     var createdComponents: List<RestaurantComponentIn>? = null
     var createdShared: Boolean? = null
@@ -78,7 +78,7 @@ private class FakeRestaurantRepository : RestaurantRepository {
     override suspend fun log(id: String, date: String, meal: String, selections: List<RestaurantLogSelection>) = 0
 }
 
-private class FakeFoodRepository : FoodRepository {
+private class EditFakeFoodRepository : FoodRepository {
     override suspend fun search(query: String): List<FoodOut> = emptyList()
     override suspend fun recentFoods(limit: Int): List<RecentFoodOut> = emptyList()
     override suspend fun lookupBarcode(code: String): FoodOut = throw IllegalStateException()
@@ -147,9 +147,9 @@ class RestaurantEditViewModelTest {
 
     @Test
     fun `parseMenu merges the draft and prefills a blank name`() = runTest {
-        val repo = FakeRestaurantRepository()
+        val repo = EditFakeRestaurantRepository()
         repo.parseResponse = parse(parsedComponent("Protein", "Chicken", official = true))
-        val vm = RestaurantEditViewModel(repo, FakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
         vm.setMenuUrl("https://x.example/menu")
         vm.parseMenu()
         advanceUntilIdle()
@@ -160,19 +160,19 @@ class RestaurantEditViewModelTest {
 
     @Test
     fun `parseMenu with no url errors without a server call`() = runTest {
-        val vm = RestaurantEditViewModel(FakeRestaurantRepository(), FakeFoodRepository())
+        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository())
         vm.parseMenu()
         assertTrue(vm.parseState.value is UiState.Error)
     }
 
     @Test
     fun `save builds the create payload with drafts and shared flag`() = runTest {
-        val repo = FakeRestaurantRepository()
+        val repo = EditFakeRestaurantRepository()
         repo.parseResponse = parse(
             parsedComponent("Protein", "Chicken", official = true),
             parsedComponent("Rice", "Cilantro Lime Rice"),
         )
-        val vm = RestaurantEditViewModel(repo, FakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
         vm.setName("Salsa Grille")
         vm.setMenuUrl("https://x.example/menu")
         vm.setShared(false)
@@ -191,7 +191,7 @@ class RestaurantEditViewModelTest {
 
     @Test
     fun `save without a name errors`() = runTest {
-        val vm = RestaurantEditViewModel(FakeRestaurantRepository(), FakeFoodRepository())
+        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository())
         vm.save()
         assertTrue(vm.saveState.value is UiState.Error)
     }

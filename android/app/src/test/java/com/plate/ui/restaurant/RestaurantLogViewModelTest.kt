@@ -39,14 +39,14 @@ private fun component(
     fatG = kcal?.let { it / 20 },
 )
 
-private fun restaurant(vararg components: RestaurantComponentOut) = RestaurantOut(
+private fun bowlOf(vararg components: RestaurantComponentOut) = RestaurantOut(
     id = "r1",
     name = "Salsa Grille",
     components = components.toList(),
 )
 
-private class FakeRestaurantRepository(
-    var restaurant: RestaurantOut = restaurant(),
+private class LogFakeRestaurantRepository(
+    var restaurant: RestaurantOut = bowlOf(),
     private val failWith: Exception? = null,
 ) : RestaurantRepository {
     var loggedSelections: List<RestaurantLogSelection>? = null
@@ -152,8 +152,8 @@ class RestaurantLogViewModelTest {
 
     @Test
     fun `load pre-ticks default_checked components`() = runTest {
-        val repo = FakeRestaurantRepository(
-            restaurant(component("a", defaultChecked = true), component("b")),
+        val repo = LogFakeRestaurantRepository(
+            bowlOf(component("a", defaultChecked = true), component("b")),
         )
         val vm = RestaurantLogViewModel(repo)
         vm.load("r1")
@@ -164,7 +164,7 @@ class RestaurantLogViewModelTest {
 
     @Test
     fun `toggle adds and removes a component`() = runTest {
-        val vm = RestaurantLogViewModel(FakeRestaurantRepository(restaurant(component("a"))))
+        val vm = RestaurantLogViewModel(LogFakeRestaurantRepository(bowlOf(component("a"))))
         vm.load("r1")
         advanceUntilIdle()
         vm.toggle("a")
@@ -175,8 +175,8 @@ class RestaurantLogViewModelTest {
 
     @Test
     fun `log sends ticked selections and reports the created count`() = runTest {
-        val repo = FakeRestaurantRepository(
-            restaurant(component("a", defaultChecked = true), component("b")),
+        val repo = LogFakeRestaurantRepository(
+            bowlOf(component("a", defaultChecked = true), component("b")),
         )
         val vm = RestaurantLogViewModel(repo)
         vm.load("r1")
@@ -192,7 +192,7 @@ class RestaurantLogViewModelTest {
 
     @Test
     fun `log with nothing ticked errors without calling the server`() = runTest {
-        val repo = FakeRestaurantRepository(restaurant(component("a")))
+        val repo = LogFakeRestaurantRepository(bowlOf(component("a")))
         val vm = RestaurantLogViewModel(repo)
         vm.load("r1")
         advanceUntilIdle()
@@ -205,7 +205,7 @@ class RestaurantLogViewModelTest {
     @Test
     fun `load failure surfaces an error state`() = runTest {
         val vm = RestaurantLogViewModel(
-            FakeRestaurantRepository(failWith = RuntimeException("boom")),
+            LogFakeRestaurantRepository(failWith = RuntimeException("boom")),
         )
         vm.load("r1")
         advanceUntilIdle()
