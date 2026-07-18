@@ -118,5 +118,15 @@ class Settings(BaseSettings):
     # nudge the user to refine or search manually (CLAUDE.md §6).
     photo_low_confidence_threshold: float = 0.4
 
+    # Restaurant menu-link parsing (POST /restaurants/parse-menu): fetch a menu URL (HTML or PDF)
+    # and have LM Studio structure it into checkbox components. The fetch is server-side, so it is
+    # SSRF-guarded by default — URLs resolving to private/loopback ranges are rejected. A homelab
+    # deploy whose menus live on the LAN can opt out.
+    menu_fetch_block_private_ips: bool = True
+    menu_fetch_timeout_seconds: float = 15.0
+    menu_fetch_max_bytes: int = 5 * 1024 * 1024
+    # Menu text is truncated to this many characters before it's embedded in the parse prompt.
+    menu_parse_max_chars: int = 15000
+
 
 settings = Settings()

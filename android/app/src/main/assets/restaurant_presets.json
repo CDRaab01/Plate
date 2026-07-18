@@ -1,0 +1,822 @@
+{
+  "presets": [
+    {
+      "name": "Chipotle",
+      "menu_url": "https://www.chipotle.com/nutrition-calculator",
+      "components": [
+        {
+          "category": "Protein",
+          "name": "Chicken",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 180,
+            "protein_g": 32,
+            "carbs_g": 0,
+            "fat_g": 7,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 125,
+            "sodium_mg": 310
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Steak",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 150,
+            "protein_g": 21,
+            "carbs_g": 1,
+            "fat_g": 6,
+            "sugar_g": 0,
+            "sat_fat_g": 2.5,
+            "cholesterol_mg": 80,
+            "sodium_mg": 330
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Barbacoa",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 170,
+            "protein_g": 24,
+            "carbs_g": 2,
+            "fat_g": 7,
+            "fiber_g": 1,
+            "sat_fat_g": 2.5,
+            "cholesterol_mg": 65,
+            "sodium_mg": 530
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Carnitas",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 210,
+            "protein_g": 23,
+            "carbs_g": 0,
+            "fat_g": 12,
+            "sat_fat_g": 7,
+            "cholesterol_mg": 65,
+            "sodium_mg": 450
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Sofritas",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 150,
+            "protein_g": 8,
+            "carbs_g": 9,
+            "fat_g": 10,
+            "fiber_g": 3,
+            "sugar_g": 5,
+            "sat_fat_g": 1.5,
+            "sodium_mg": 560
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Cilantro-Lime White Rice",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 210,
+            "protein_g": 4,
+            "carbs_g": 40,
+            "fat_g": 4,
+            "fiber_g": 1,
+            "sat_fat_g": 1,
+            "sodium_mg": 350
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Cilantro-Lime Brown Rice",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 210,
+            "protein_g": 4,
+            "carbs_g": 36,
+            "fat_g": 6,
+            "fiber_g": 2,
+            "sodium_mg": 190
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Black Beans",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 130,
+            "protein_g": 8,
+            "carbs_g": 22,
+            "fat_g": 1.5,
+            "fiber_g": 7,
+            "sugar_g": 2,
+            "sodium_mg": 210
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Pinto Beans",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 130,
+            "protein_g": 8,
+            "carbs_g": 21,
+            "fat_g": 1.5,
+            "fiber_g": 8,
+            "sugar_g": 1,
+            "sodium_mg": 210
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Fajita Veggies",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 20,
+            "protein_g": 1,
+            "carbs_g": 5,
+            "fat_g": 0,
+            "fiber_g": 1,
+            "sugar_g": 2,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Fresh Tomato Salsa",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 25,
+            "protein_g": 0,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sodium_mg": 550
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Roasted Chili-Corn Salsa",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 80,
+            "protein_g": 3,
+            "carbs_g": 16,
+            "fat_g": 1.5,
+            "fiber_g": 3,
+            "sugar_g": 4,
+            "sodium_mg": 330
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Tomatillo-Green Chili Salsa",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 15,
+            "protein_g": 0,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "sugar_g": 2,
+            "sodium_mg": 260
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Tomatillo-Red Chili Salsa",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 30,
+            "protein_g": 0,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "fiber_g": 1,
+            "sodium_mg": 500
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Cheese",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 110,
+            "protein_g": 6,
+            "carbs_g": 1,
+            "fat_g": 8,
+            "sat_fat_g": 5,
+            "cholesterol_mg": 30,
+            "sodium_mg": 190
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Sour Cream",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 110,
+            "protein_g": 2,
+            "carbs_g": 2,
+            "fat_g": 9,
+            "sugar_g": 2,
+            "sat_fat_g": 7,
+            "cholesterol_mg": 40,
+            "sodium_mg": 30
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Guacamole",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 230,
+            "protein_g": 2,
+            "carbs_g": 8,
+            "fat_g": 22,
+            "fiber_g": 6,
+            "sugar_g": 1,
+            "sat_fat_g": 3.5,
+            "sodium_mg": 370
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Queso Blanco",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 120,
+            "protein_g": 5,
+            "carbs_g": 4,
+            "fat_g": 9,
+            "sugar_g": 1,
+            "sat_fat_g": 6,
+            "cholesterol_mg": 30,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Romaine Lettuce",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 5,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 0,
+            "fiber_g": 1
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Supergreens Salad Mix",
+          "macros": {
+            "serving_desc": "3 oz",
+            "serving_grams": 85,
+            "kcal": 15,
+            "protein_g": 1,
+            "carbs_g": 3,
+            "fat_g": 0,
+            "fiber_g": 2,
+            "sugar_g": 1
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Flour Tortilla (burrito)",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "kcal": 320,
+            "protein_g": 8,
+            "carbs_g": 50,
+            "fat_g": 9,
+            "fiber_g": 3,
+            "sat_fat_g": 0.5,
+            "sodium_mg": 600
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Flour Tortilla (taco)",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "kcal": 80,
+            "protein_g": 2,
+            "carbs_g": 13,
+            "fat_g": 2.5,
+            "fiber_g": 0.5,
+            "sodium_mg": 160
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Crispy Corn Tortilla",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "kcal": 70,
+            "protein_g": 1,
+            "carbs_g": 10,
+            "fat_g": 3,
+            "fiber_g": 1
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Qdoba",
+      "menu_url": "https://www.qdoba.com/nutrition",
+      "components": [
+        {
+          "category": "Protein",
+          "name": "Grilled Adobo Chicken",
+          "macros": {
+            "serving_desc": "3.5 oz",
+            "serving_grams": 99,
+            "kcal": 170,
+            "protein_g": 23,
+            "carbs_g": 1,
+            "fat_g": 9,
+            "sugar_g": 1,
+            "sat_fat_g": 2.5,
+            "cholesterol_mg": 125,
+            "sodium_mg": 340
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Grilled Steak",
+          "macros": {
+            "serving_desc": "3.5 oz",
+            "serving_grams": 99,
+            "kcal": 260,
+            "protein_g": 15,
+            "carbs_g": 3,
+            "fat_g": 21,
+            "sugar_g": 1,
+            "sat_fat_g": 8,
+            "cholesterol_mg": 70,
+            "sodium_mg": 290
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Cholula Hot & Sweet Chicken",
+          "macros": {
+            "serving_desc": "3.5 oz",
+            "serving_grams": 99,
+            "kcal": 170,
+            "protein_g": 19,
+            "carbs_g": 8,
+            "fat_g": 7,
+            "sugar_g": 8,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 100,
+            "sodium_mg": 480
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Cilantro Lime Rice",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 190,
+            "protein_g": 3,
+            "carbs_g": 38,
+            "fat_g": 2.5,
+            "fiber_g": 1,
+            "sat_fat_g": 0.5,
+            "sodium_mg": 390
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Seasoned Brown Rice",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 170,
+            "protein_g": 4,
+            "carbs_g": 36,
+            "fat_g": 1.5,
+            "fiber_g": 2,
+            "sugar_g": 1,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Black Beans",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 140,
+            "protein_g": 9,
+            "carbs_g": 24,
+            "fat_g": 1,
+            "fiber_g": 14,
+            "sugar_g": 1,
+            "sodium_mg": 330
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Pinto Beans",
+          "macros": {
+            "serving_desc": "4 oz",
+            "serving_grams": 113,
+            "kcal": 130,
+            "protein_g": 8,
+            "carbs_g": 23,
+            "fat_g": 1,
+            "fiber_g": 14,
+            "sugar_g": 1,
+            "sodium_mg": 350
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Fajita Veggies",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 40,
+            "protein_g": 1,
+            "carbs_g": 3,
+            "fat_g": 3,
+            "fiber_g": 1,
+            "sugar_g": 2,
+            "sodium_mg": 115
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "3-Cheese Queso",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 80,
+            "protein_g": 3,
+            "carbs_g": 3,
+            "fat_g": 8,
+            "sugar_g": 1,
+            "sat_fat_g": 5,
+            "cholesterol_mg": 20,
+            "sodium_mg": 340
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Queso Diablo",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 90,
+            "protein_g": 2,
+            "carbs_g": 3,
+            "fat_g": 7,
+            "sugar_g": 1,
+            "sat_fat_g": 5,
+            "cholesterol_mg": 15,
+            "sodium_mg": 320
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Hand Crafted Guacamole",
+          "macros": {
+            "serving_desc": "2 oz",
+            "serving_grams": 57,
+            "kcal": 80,
+            "protein_g": 1,
+            "carbs_g": 5,
+            "fat_g": 8,
+            "fiber_g": 4,
+            "sat_fat_g": 1,
+            "sodium_mg": 160
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Shredded Cheese",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 110,
+            "protein_g": 7,
+            "carbs_g": 1,
+            "fat_g": 9,
+            "sat_fat_g": 5,
+            "cholesterol_mg": 30,
+            "sodium_mg": 180
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Sour Cream",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 50,
+            "protein_g": 1,
+            "carbs_g": 3,
+            "fat_g": 5,
+            "sugar_g": 1,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 15,
+            "sodium_mg": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Roasted Tomato Salsa",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 5,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 0,
+            "sugar_g": 1,
+            "sodium_mg": 190
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Salsa Verde",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 10,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 0,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sodium_mg": 240
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Chile Corn Salsa",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 30,
+            "protein_g": 1,
+            "carbs_g": 6,
+            "fat_g": 0,
+            "sugar_g": 1,
+            "sodium_mg": 70
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Habanero Salsa",
+          "macros": {
+            "serving_desc": "1 oz",
+            "serving_grams": 28,
+            "kcal": 10,
+            "protein_g": 0,
+            "carbs_g": 2,
+            "fat_g": 0,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sodium_mg": 110
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Romaine Lettuce",
+          "macros": {
+            "serving_desc": "0.25 oz",
+            "serving_grams": 7,
+            "kcal": 0,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Flour Tortilla (10\")",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "serving_grams": 71,
+            "kcal": 210,
+            "protein_g": 6,
+            "carbs_g": 36,
+            "fat_g": 5,
+            "fiber_g": 2,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "sodium_mg": 490
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Flour Tortilla (12.5\")",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "serving_grams": 102,
+            "kcal": 300,
+            "protein_g": 8,
+            "carbs_g": 52,
+            "fat_g": 7,
+            "fiber_g": 3,
+            "sugar_g": 2,
+            "sat_fat_g": 2.5,
+            "sodium_mg": 760
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Soft Corn Tortilla",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "serving_grams": 30,
+            "kcal": 60,
+            "protein_g": 1,
+            "carbs_g": 11,
+            "fat_g": 0.5,
+            "fiber_g": 1,
+            "sodium_mg": 100
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tortillas",
+          "name": "Crunchy Tortilla Shell",
+          "macros": {
+            "serving_desc": "1 shell",
+            "serving_grams": 73,
+            "kcal": 390,
+            "protein_g": 7,
+            "carbs_g": 41,
+            "fat_g": 22,
+            "sugar_g": 1,
+            "sat_fat_g": 4.5,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    }
+  ]
+}

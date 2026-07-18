@@ -86,6 +86,28 @@ existing rows on boot. What's left is the **1.0 gate**, not new features:
   (#5 / loop-closer #1) — both nice-to-have, not gate-blocking.
 - **`versionName` 0.1.0 → 1.0.0** (#6) as the round's **last** commit. *Still 0.1.0 today.*
 
+## Restaurant / chain meal logging — SHIPPED 2026-07-18 (owner request)
+
+✓ The "Salsa Grille bowls" feature (requested by the household's second user): a **Restaurant**
+is a checkbox template of categorized build-your-own components — tap the restaurant, tick what
+was in the bowl, adjust portions, one diary entry per component (`log_recipe` semantics).
+Restaurants default **shared** across the server's accounts (build a chain once, everyone logs
+from it; owner-only edits). Three ways to build one: **paste a menu link** (server fetch → LM
+Studio structured parse → editable draft; page-stated nutrition carried verbatim as minted
+official foods, else USDA-generic estimates via trusted search — the voice-pipeline pattern),
+**manual build** (embedded food search), or **bundled chain presets** (Chipotle + Qdoba,
+transcribed from their official nutrition publications). Migration 0006; `/restaurants` API;
+`ui/restaurant/`; 46 new server tests + VM/parser unit tests.
+
+*Still open from this round:*
+- **Image-only menu PDFs** (Salsa Grille's own menu is a designed PDF that may carry no
+  extractable text — the parse 422s toward the manual builder): render PDF pages to images
+  through the existing vision pipeline so even rasterized menus parse.
+- **More presets** as the household visits more chains — `assets/restaurant_presets.json` is the
+  only file to touch (PresetParserTest gates its shape).
+- **Restaurant-labeled diary entries** ("Salsa Grille: Cilantro Lime Rice" instead of the linked
+  food's name) — needs a decision on widening `FoodLogEntry.name` beyond quick-add.
+
 ## The one next-level feature worth building
 
 ✓ **Adaptive TDEE correction — SHIPPED 2026-07-04** (ROADMAP2 T3 #1): pure

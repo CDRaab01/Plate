@@ -134,6 +134,40 @@ interface ApiService {
     @POST("recipes/{id}/log")
     suspend fun logRecipe(@Path("id") id: String, @Body body: RecipeLogRequest): List<LogEntryOut>
 
+    // ── Restaurants: chain checkbox templates ("I ate a Salsa Grille bowl") ──
+
+    @GET("restaurants")
+    suspend fun getRestaurants(): List<RestaurantOut>
+
+    @GET("restaurants/{id}")
+    suspend fun getRestaurant(@Path("id") id: String): RestaurantOut
+
+    @POST("restaurants")
+    suspend fun createRestaurant(@Body body: RestaurantCreate): RestaurantOut
+
+    @PATCH("restaurants/{id}")
+    suspend fun updateRestaurant(@Path("id") id: String, @Body body: RestaurantUpdate): RestaurantOut
+
+    @PUT("restaurants/{id}/components")
+    suspend fun replaceRestaurantComponents(
+        @Path("id") id: String,
+        @Body body: RestaurantComponentsReplace,
+    ): RestaurantOut
+
+    @DELETE("restaurants/{id}")
+    suspend fun deleteRestaurant(@Path("id") id: String)
+
+    /** Fetch + LM-parse a menu URL into an editable component draft (503 = LM Studio down). */
+    @POST("restaurants/parse-menu")
+    suspend fun parseMenu(@Body body: MenuParseRequest): MenuParseResponse
+
+    /** Log the ticked components into a day's meal (one entry per selection). */
+    @POST("restaurants/{id}/log")
+    suspend fun logRestaurant(
+        @Path("id") id: String,
+        @Body body: RestaurantLogRequest,
+    ): List<LogEntryOut>
+
 
     // ── Phase 3: goals + computed targets ────────────────────────────────────
 

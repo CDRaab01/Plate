@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +68,7 @@ fun FoodSearchScreen(
     onPhoto: () -> Unit,
     onLabel: () -> Unit = {},
     onVoice: () -> Unit = {},
+    onRestaurants: () -> Unit = {},
     searchViewModel: FoodSearchViewModel = hiltViewModel(),
     diaryViewModel: DiaryViewModel = hiltViewModel(),
 ) {
@@ -100,6 +102,7 @@ fun FoodSearchScreen(
         onPhoto = onPhoto,
         onLabel = onLabel,
         onVoice = onVoice,
+        onRestaurants = onRestaurants,
         onPick = { selected = Selection(it) },
         onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
     )
@@ -128,6 +131,7 @@ fun FoodSearchContent(
     onPickRecent: (RecentFoodOut) -> Unit = {},
     onLabel: () -> Unit = {},
     onVoice: () -> Unit = {},
+    onRestaurants: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -139,6 +143,12 @@ fun FoodSearchContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onRestaurants) {
+                        Icon(
+                            Icons.Outlined.Storefront,
+                            contentDescription = "Restaurants",
+                        )
+                    }
                     IconButton(onClick = onVoice) {
                         Icon(
                             Icons.Outlined.Mic,
