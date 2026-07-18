@@ -155,6 +155,25 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 
 ## Build log
 
+- **2026-07-18 — Restaurant / chain meal logging ("Salsa Grille bowls", owner request).** A
+  **Restaurant** is a per-chain checkbox template: categorized build-your-own components
+  ("Barbacoa" under "Protein"), each linked to a food — a trusted-search USDA generic (estimate)
+  or an **official food minted from the chain's published numbers** (inline `macros` block ⇒
+  `Food(source="user", brand=<restaurant>)`). Logging ticks components into snapshotted
+  `food_log_entries` (the `log_recipe` pattern); restaurants default **shared** across accounts
+  (visible/loggable by all, entries land under the caller, owner-only edits) — migration `0006`.
+  Three build paths: **menu-link parse** (`POST /restaurants/parse-menu`: hardened fetch —
+  SSRF-guarded, 5 MB/15 s caps, HTML strip + **pypdf** (new dep) for PDF menus, image-only PDFs
+  422 toward manual — then an LM Studio structured parse, the voice-pipeline precedent; page-stated
+  nutrition carried verbatim, else generic search terms resolved against trusted search; always an
+  editable draft, never persisted server-side), **manual build** (editor with embedded food
+  search), and **bundled presets** (`assets/restaurant_presets.json`: Chipotle + Qdoba transcribed
+  from their official nutrition PDFs; `PresetParser` tested against the real asset). Client:
+  `ui/restaurant/` (list + presets sheet, editor with parse-merge that never clobbers manual
+  edits, and the category-checkbox **log sheet** with portion overrides + running totals), entry
+  points on the food-search top bar and Recipes. Server tests 440 (3 new modules); alembic 0006
+  up/down smoke-checked. On-device pass pending (with the round's gate item).
+
 - **2026-07-15/16 — Road-to-1.0 feature round.** Nearly the whole "Road to 1.0" slate landed:
   the **metabolism dashboard** (`ui/metabolism/`, opened from the Home card) presenting adaptive
   TDEE the MacroFactor way; **voice logging** (`POST /foods/voice`, on-device speech→text) and

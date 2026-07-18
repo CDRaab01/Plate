@@ -52,6 +52,7 @@ keep the two in sync only when the shared seam changes.
 | Goals/targets | `goals.py` (`/targets`, `/adaptive`) | `goal_service`, `adaptive_service` (+ `nutrition/targets`, `nutrition/adaptive`) | `UserGoal`, `DailyTarget` |
 | Bodyweight | `metrics.py` | `metric_service` (+ `nutrition/trend`) | `BodyMetric` |
 | Recipes/saved meals | `recipes.py` | `recipe_service`, `recipe_discovery_service` | `Recipe`, `RecipeItem` |
+| Restaurants (chain templates) | `restaurants.py` | `restaurant_service`, `menu_fetch`, `services/ai/menu` | `Restaurant`, `RestaurantComponent` |
 | AI coach + photo | `ai.py` | `services/ai/` | writes via log/recipe services only |
 | Cross-app provider | `cross_app.py` (+ `/recipes/export` in `recipes.py`) | `cross_app_food_service` | — |
 | Spotter consumer | — | `workout_source.py` | — |
@@ -76,6 +77,17 @@ validated structured output, no tool access). Two surfaces:
   (`voice_prompts` → `{food, quantity, unit}`, Pydantic-shaped, forgiving parser), resolves each
   spoken food against the **trusted food search** for real macros, and returns the same editable
   `PhotoEstimateResponse` draft (unresolved foods kept as low-confidence stubs). Never auto-logged.
+- **Menu-link parsing** (`POST /restaurants/parse-menu`) — the voice pattern applied to a fetched
+  restaurant menu: `services/menu_fetch.py` (plain IO, deliberately outside `ai/`) fetches the
+  URL, then `menu_prompts`/`menu.py` structure it into categorized components. Nutrition stated on
+  the page is carried **verbatim** (`official` block, minted into a `Food(brand=<restaurant>)` on
+  save); otherwise a generic `search_term` resolves against trusted search (estimate). The parse
+  is a draft response only — nothing persists until the client POSTs `/restaurants`. **Fetch
+  policy:** http(s) only, SSRF guard rejecting private/loopback/link-local hosts re-run per
+  redirect hop (`MENU_FETCH_BLOCK_PRIVATE_IPS=false` opts a homelab out; DNS-rebinding between
+  check and fetch is accepted residual risk for a personal deploy), 5 MB streaming cap, 15 s
+  timeout, HTML via a stdlib tag-stripper, PDFs via pypdf (an image-only PDF 422s toward the
+  manual builder). Rate limit 5/min — each call is an outbound fetch plus an LM completion.
 
 ### Cross-app auth (both directions)
 
@@ -87,8 +99,13 @@ then legacy HS256; `services/cross_app_token.fetch_cross_app_token` mints RS256 
 
 ### Migrations & tests
 
-Alembic (5 revisions, `0001`–`0005`; `0005` back-fills the goal-rate sign invariant onto existing
-rows), migrate-on-boot. 32 pytest files; CI also runs
+Alembic (6 revisions, `0001`–`0006`; `0005` back-fills the goal-rate sign invariant onto existing
+rows, `0006` adds `restaurants`/`restaurant_components` — components keep their own display
+`name` and a `food_id` SET NULL link, the `recipe_items` semantics, plus a `shared` flag:
+shared restaurants are readable/loggable by **every account on the server** (log entries land
+under the caller), while edit/replace/delete stay owner-only — a chain's menu is shared data,
+the household exception to the otherwise strict per-user isolation). Migrate-on-boot. 35 pytest
+files; CI also runs
 `ruff format --check` (run it locally before pushing). Local recipe (CLAUDE.md "Testing"):
 throwaway Postgres container, `DATABASE_URL` on **127.0.0.1**, `DB_NULLPOOL` — the live
 `server/.env` DB password is deliberately stale for pytest purposes. One env-dependent local-only
@@ -108,6 +125,14 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 - `ui/voice/` — voice logging: on-device `RecognizerIntent` speech→text (offline preferred) →
   `PhotoLogViewModel.analyzeVoice` → `/foods/voice` → the shared draft editor. Entry points for
   photo / label / voice all live on the food-search top bar.
+- `ui/restaurant/` — chain checkbox templates ("I ate a Salsa Grille bowl"): list (own + shared,
+  one-tap import of the bundled `assets/restaurant_presets.json` chain presets — official
+  nutrition transcribed at authoring time, `PresetParser` pure + tested against the real asset),
+  editor (menu-link parse merged as an editable draft + embedded food search; nothing hits the
+  server until Save), and the **log sheet** — category-grouped checkboxes pre-ticked from
+  per-component defaults, portion overrides, running totals (display-only; the server recomputes)
+  → `POST /restaurants/{id}/log`. Entry points: the food-search top bar and the Recipes screen
+  (no sixth bottom tab).
 - `ui/coach/` — AI coach chat.
 - `ui/metabolism/` — the adaptive-TDEE "metabolism dashboard" (`MetabolismScreen`/
   `MetabolismViewModel`), opened by tapping the Home metabolism card: presents observed
