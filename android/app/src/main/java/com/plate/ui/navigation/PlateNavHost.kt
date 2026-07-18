@@ -37,6 +37,8 @@ import com.plate.ui.photo.PhotoLogScreen
 import com.plate.ui.recipe.DiscoverRecipesScreen
 import com.plate.ui.recipe.RecipeEditScreen
 import com.plate.ui.recipe.RecipeListScreen
+import com.plate.ui.restaurant.RestaurantEditScreen
+import com.plate.ui.restaurant.RestaurantListScreen
 import com.plate.ui.scan.BarcodeScanScreen
 import com.plate.ui.voice.VoiceLogScreen
 import com.plate.ui.calendar.CalendarScreen
@@ -78,8 +80,16 @@ object Routes {
     const val RECIPE_DISCOVER = "recipe_discover"
     const val SUMMARY = "summary"
 
+    // Restaurant checkbox templates ("I ate a Salsa Grille bowl") — rides along with Recipes
+    // rather than adding a sixth bottom-bar tab.
+    const val RESTAURANTS = "restaurants"
+    const val RESTAURANT_EDIT = "restaurant_edit"
+
     fun recipeEdit(id: String? = null) =
         if (id == null) RECIPE_EDIT else "$RECIPE_EDIT?recipeId=$id"
+
+    fun restaurantEdit(id: String? = null) =
+        if (id == null) RESTAURANT_EDIT else "$RESTAURANT_EDIT?restaurantId=$id"
 
     /** The pre-authentication gate: no launcher shortcut is honored while on one of these. */
     val authRoutes = setOf(GATE, LOGIN, REGISTER, FORGOT)
@@ -213,6 +223,7 @@ fun PlateNavHost(
                         onPhoto = { navController.navigate(Routes.PHOTO) },
                         onLabel = { navController.navigate(Routes.LABEL) },
                         onVoice = { navController.navigate(Routes.VOICE) },
+                        onRestaurants = { navController.navigate(Routes.RESTAURANTS) },
                         diaryViewModel = diaryViewModel,
                     )
                 }
@@ -293,6 +304,30 @@ fun PlateNavHost(
                     onCreate = { navController.navigate(Routes.recipeEdit()) },
                     onEdit = { id -> navController.navigate(Routes.recipeEdit(id)) },
                     onDiscover = { navController.navigate(Routes.RECIPE_DISCOVER) },
+                    onRestaurants = { navController.navigate(Routes.RESTAURANTS) },
+                )
+            }
+            composable(Routes.RESTAURANTS) {
+                RestaurantListScreen(
+                    onCreate = { navController.navigate(Routes.restaurantEdit()) },
+                    onEdit = { id -> navController.navigate(Routes.restaurantEdit(id)) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = "${Routes.RESTAURANT_EDIT}?restaurantId={restaurantId}",
+                arguments = listOf(
+                    navArgument("restaurantId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                RestaurantEditScreen(
+                    restaurantId = entry.arguments?.getString("restaurantId"),
+                    onDone = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(Routes.RECIPE_DISCOVER) {

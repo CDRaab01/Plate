@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.TravelExplore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -62,6 +63,7 @@ fun RecipeListScreen(
     onCreate: () -> Unit,
     onEdit: (String) -> Unit,
     onDiscover: () -> Unit,
+    onRestaurants: () -> Unit = {},
     viewModel: RecipeListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.recipes.collectAsState()
@@ -80,6 +82,9 @@ fun RecipeListScreen(
             TopAppBar(
                 title = { Text("Recipes") },
                 actions = {
+                    IconButton(onClick = onRestaurants) {
+                        Icon(Icons.Outlined.Storefront, contentDescription = "Restaurants")
+                    }
                     IconButton(onClick = onDiscover) {
                         Icon(Icons.Outlined.TravelExplore, contentDescription = "Discover recipes")
                     }
