@@ -17,4 +17,12 @@ interface BodyMetricDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(metric: BodyMetricEntity)
+
+    /** Offline-queued weigh-ins still awaiting a successful POST, oldest first. */
+    @Query("SELECT * FROM body_metrics WHERE syncPending = 1 ORDER BY date ASC")
+    suspend fun getUnsynced(): List<BodyMetricEntity>
+
+    /** Removes a row by id — used to promote a local offline row to its acknowledged server row. */
+    @Query("DELETE FROM body_metrics WHERE id = :id")
+    suspend fun deleteById(id: String)
 }

@@ -11,6 +11,7 @@ import com.plate.data.repository.MetricRepository
 import com.plate.util.Greetings
 import com.plate.util.UiState
 import com.plate.util.UnitSystem
+import com.plate.util.userMessage
 import com.plate.widget.WidgetSnapshotWriter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,11 @@ data class HomeData(
     val weightSeriesKg: List<Float>,
     /** Adaptive-TDEE state (ROADMAP2 T3 #1); null when no goal / endpoint unavailable. */
     val adaptive: AdaptiveTdeeOut? = null,
+    /**
+     * Oldest capture time among the reads that were served from the offline cache (the honest
+     * "as of" for the whole dashboard); null when everything came fresh — drives the stale banner.
+     */
+    val staleAsOfMs: Long? = null,
 )
 
 /**
@@ -91,23 +97,36 @@ class HomeViewModel @Inject constructor(
             // food); only show the spinner on the very first load.
             if (_state.value !is UiState.Success) _state.value = UiState.Loading
             _state.value = try {
-                metricRepository.sync() // best-effort; cache backs the sparkline regardless
-                val day = logRepository.getDay(LocalDate.now().toString())
-                val trend = runCatching { metricRepository.getTrend() }.getOrNull()
+                // Best-effort: drains queued weigh-ins + refreshes the cache; offline it must not
+                // block the cached dashboard render below.
+                runCatching { metricRepository.sync() }
+                val day = logRepository.getDayStale(LocalDate.now().toString())
+                val trend = runCatching { metricRepository.getTrendStale() }.getOrNull()
                 val adaptive = runCatching { api.getAdaptiveTdee() }.getOrNull()
                 val series = weightSeriesKg.value
                 // Keep the home-screen widget in step with today's remaining macros.
-                runCatching { widgetSnapshotWriter?.write(day) }
+                runCatching { widgetSnapshotWriter?.write(day.value) }
                 UiState.Success(
-                    HomeData(day = day, trend = trend, weightSeriesKg = series, adaptive = adaptive)
+                    HomeData(
+                        day = day.value,
+                        trend = trend?.value,
+                        weightSeriesKg = series,
+                        adaptive = adaptive,
+                        // The banner reports the OLDEST cached source, never the freshest.
+                        staleAsOfMs = listOfNotNull(day.asOfMs, trend?.asOfMs).minOrNull(),
+                    )
                 )
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Couldn't load your day")
+                UiState.Error(e.userMessage("Couldn't load your day"))
             }
         }
     }
 
-    /** Log a weigh-in entered in the user's current unit, then refresh the dashboard. */
+    /**
+     * Log a weigh-in entered in the user's current unit, then refresh the dashboard. Offline this
+     * *succeeds silently* — the repository queues it (write-through) and it syncs on reconnect;
+     * only a reachable server's rejection (e.g. an out-of-bounds value) errors.
+     */
     fun logBodyweight(value: Double) {
         viewModelScope.launch {
             try {
@@ -118,7 +137,7 @@ class HomeViewModel @Inject constructor(
                 )
                 load()
             } catch (e: Exception) {
-                _state.value = UiState.Error(e.message ?: "Couldn't log your weight")
+                _state.value = UiState.Error(e.userMessage("Couldn't log your weight"))
             }
         }
     }

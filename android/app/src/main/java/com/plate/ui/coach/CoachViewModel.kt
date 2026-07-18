@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.ChatMessageDto
 import com.plate.data.repository.CoachRepository
+import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,7 +62,7 @@ class CoachViewModel @Inject constructor(
             } catch (e: Exception) {
                 // Keep the user's message in the transcript so they can retry without retyping.
                 _state.update {
-                    it.copy(sending = false, error = e.message ?: "The coach is unavailable right now")
+                    it.copy(sending = false, error = e.userMessage("The coach is unavailable right now"))
                 }
             }
         }

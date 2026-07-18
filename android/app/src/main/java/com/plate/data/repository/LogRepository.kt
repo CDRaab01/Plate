@@ -7,6 +7,12 @@ import com.plate.data.remote.LogEntryOut
 interface LogRepository {
     suspend fun getDay(date: String): DailyLog
 
+    /**
+     * [getDay] with the cache provenance surfaced: `asOfMs` is non-null when the day was served
+     * from the offline cache (its fetch time), letting Home/Diary show a stale banner.
+     */
+    suspend fun getDayStale(date: String): Stale<DailyLog> = Stale(getDay(date), null)
+
     suspend fun addEntry(
         foodId: String,
         date: String,

@@ -56,6 +56,7 @@ import design.pulse.ui.components.CelebrationPulse
 import design.pulse.ui.components.ProgressRing
 import design.pulse.ui.components.SectionHeader
 import design.pulse.ui.components.Sparkline
+import design.pulse.ui.components.StaleBanner
 import design.pulse.ui.components.StatTile
 import design.pulse.ui.components.TickerNumber
 import com.plate.ui.theme.PlateTheme
@@ -114,6 +115,7 @@ fun HomeScreen(
                     trend = s.data.trend,
                     weightSeriesKg = series,
                     adaptive = s.data.adaptive,
+                    staleAsOfMs = s.data.staleAsOfMs,
                     unitSystem = unit,
                     onLogWeight = viewModel::logBodyweight,
                     onAddFood = onAddFood,
@@ -132,6 +134,7 @@ internal fun HomeContent(
     trend: WeightTrendOut?,
     weightSeriesKg: List<Float>,
     adaptive: AdaptiveTdeeOut? = null,
+    staleAsOfMs: Long? = null,
     unitSystem: UnitSystem,
     onLogWeight: (Double) -> Unit,
     onAddFood: () -> Unit,
@@ -145,6 +148,9 @@ internal fun HomeContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // Some of the dashboard was served from the offline cache — say so, with its capture time.
+        // The fat/attention channel is Plate's warning voice (see paceLabel's "behind" state).
+        staleAsOfMs?.let { StaleBanner(asOfMs = it, channel = pulse.fat) }
         // Greeting + nudge — on the green-led brand gradient so the header carries the app theme.
         Column(
             modifier = Modifier

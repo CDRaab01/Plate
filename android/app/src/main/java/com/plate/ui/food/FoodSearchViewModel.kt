@@ -6,6 +6,7 @@ import com.plate.data.remote.FoodOut
 import com.plate.data.remote.RecentFoodOut
 import com.plate.data.repository.FoodRepository
 import com.plate.util.UiState
+import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -59,7 +60,7 @@ class FoodSearchViewModel @Inject constructor(
             _results.value = try {
                 UiState.Success(foodRepository.search(value.trim()))
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Search failed")
+                UiState.Error(e.userMessage("Search failed"))
             }
         }
     }

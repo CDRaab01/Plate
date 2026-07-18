@@ -12,4 +12,9 @@ import androidx.room.PrimaryKey
 data class CachedDayEntity(
     @PrimaryKey val date: String,
     val json: String,
+    /**
+     * Epoch millis when this day was fetched — the "as of" time shown by the diary's stale banner
+     * when the row is served offline. 0 on rows cached before the v3 schema (age unknown).
+     */
+    val cachedAtMs: Long = 0,
 )

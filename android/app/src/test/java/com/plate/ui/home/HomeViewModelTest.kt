@@ -2,13 +2,13 @@ package com.plate.ui.home
 
 import com.plate.data.local.db.BodyMetricEntity
 import com.plate.data.remote.ApiService
-import com.plate.data.remote.BodyMetricOut
 import com.plate.data.remote.DailyLog
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
 import com.plate.data.remote.WeightTrendOut
 import com.plate.data.repository.LogRepository
 import com.plate.data.repository.MetricRepository
+import com.plate.data.repository.Stale
 import com.plate.util.AppPreferences
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
@@ -38,24 +38,28 @@ private fun dailyLog(trained: Boolean = false) = DailyLog(
 private class FakeMetricRepository(
     override val metrics: Flow<List<BodyMetricEntity>> = flowOf(emptyList()),
     private val trend: WeightTrendOut? = null,
+    /** Non-null = the trend read was served from the offline cache at this time. */
+    private val trendAsOfMs: Long? = null,
 ) : MetricRepository {
     var synced = 0
     var lastAdd: Triple<String, Double, UnitSystem>? = null
 
     override suspend fun sync() { synced++ }
 
-    override suspend fun addMetric(date: String, weight: Double, unit: UnitSystem, bodyfat: Double?): BodyMetricOut {
+    override suspend fun addMetric(date: String, weight: Double, unit: UnitSystem, bodyfat: Double?) {
         lastAdd = Triple(date, weight, unit)
-        return BodyMetricOut("m", "u", date, weight * 0.45359237, weight, unit.weightUnit, bodyfat)
     }
 
     override suspend fun getTrend(): WeightTrendOut =
         trend ?: WeightTrendOut(emptyList(), null, null, 0.0, "lb", "insufficient_data")
+
+    override suspend fun getTrendStale(): Stale<WeightTrendOut> = Stale(getTrend(), trendAsOfMs)
 }
 
-// Minimal LogRepository fake returning a fixed day.
-private class FakeLog(private val day: DailyLog) : LogRepository {
+// Minimal LogRepository fake returning a fixed day (optionally flagged as cache-served).
+private class FakeLog(private val day: DailyLog, private val dayAsOfMs: Long? = null) : LogRepository {
     override suspend fun getDay(date: String) = day
+    override suspend fun getDayStale(date: String) = Stale(day, dayAsOfMs)
     override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String) = error("unused")
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?) = error("unused")
     override suspend fun deleteEntry(id: String) {}
@@ -78,7 +82,8 @@ class HomeViewModelTest {
         day: DailyLog = dailyLog(),
         metric: FakeMetricRepository = FakeMetricRepository(),
         unit: UnitSystem = UnitSystem.IMPERIAL,
-    ) = HomeViewModel(FakeLog(day), metric, prefs(unit), mock<ApiService>())
+        dayAsOfMs: Long? = null,
+    ) = HomeViewModel(FakeLog(day, dayAsOfMs), metric, prefs(unit), mock<ApiService>())
 
     @Test
     fun `init loads today into Success`() = runTest {
@@ -115,6 +120,26 @@ class HomeViewModelTest {
         assertTrue(metric.synced >= 1)
         // keep a reference so the unused-var lint stays quiet
         assertTrue(home.state.value is UiState.Success)
+    }
+
+    @Test
+    fun `fresh reads leave the stale banner off`() = runTest {
+        val home = vm()
+        advanceUntilIdle()
+        val s = home.state.value as UiState.Success
+        assertEquals(null, s.data.staleAsOfMs)
+    }
+
+    @Test
+    fun `stale reads surface the OLDEST cached asOf`() = runTest {
+        val trend = WeightTrendOut(emptyList(), 180.0, -0.5, -0.5, "lb", "on_pace")
+        val home = vm(
+            metric = FakeMetricRepository(trend = trend, trendAsOfMs = 1_000L),
+            dayAsOfMs = 2_000L,
+        )
+        advanceUntilIdle()
+        val s = home.state.value as UiState.Success
+        assertEquals(1_000L, s.data.staleAsOfMs)
     }
 
     @Test

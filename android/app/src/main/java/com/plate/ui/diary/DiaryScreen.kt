@@ -70,6 +70,7 @@ import design.pulse.ui.components.DataText
 import design.pulse.ui.components.ErrorState
 import design.pulse.ui.components.PanelCard
 import design.pulse.ui.components.SectionHeader
+import design.pulse.ui.components.StaleBanner
 import design.pulse.ui.components.TickerNumber
 import com.plate.ui.theme.PlateTheme
 import com.plate.util.UiState
@@ -94,6 +95,7 @@ fun DiaryScreen(
     viewModel: DiaryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.day.collectAsState()
+    val staleAsOfMs by viewModel.staleAsOfMs.collectAsState()
     val greeting by viewModel.greeting.collectAsState()
     val mealNudge by viewModel.mealNudge.collectAsState()
     var showQuickAdd by remember { mutableStateOf(false) }
@@ -138,6 +140,7 @@ fun DiaryScreen(
                     day = s.data,
                     greeting = greeting,
                     mealNudge = mealNudge,
+                    staleAsOfMs = staleAsOfMs,
                     onPrevDay = viewModel::prevDay,
                     onNextDay = viewModel::nextDay,
                     onToday = viewModel::goToToday,
@@ -183,6 +186,7 @@ fun DiaryContent(
     day: DailyLog,
     greeting: String,
     mealNudge: String,
+    staleAsOfMs: Long? = null,
     onPrevDay: () -> Unit,
     onNextDay: () -> Unit,
     onToday: () -> Unit,
@@ -195,6 +199,17 @@ fun DiaryContent(
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
     ) {
+        // This day came from the offline cache — banner it with its capture time (fat = Plate's
+        // attention channel). Queued offline quick-adds are merged in, so the log itself is current.
+        staleAsOfMs?.let {
+            item {
+                StaleBanner(
+                    asOfMs = it,
+                    channel = PlateTheme.pulse.fat,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+        }
         item {
             DateBar(
                 date = day.date,

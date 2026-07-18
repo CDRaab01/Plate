@@ -6,6 +6,7 @@ import com.plate.data.remote.FoodCreateRequest
 import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.repository.FoodRepository
 import com.plate.data.repository.LogRepository
+import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -109,7 +110,7 @@ class PhotoLogViewModel @Inject constructor(
                     note = result.note,
                 )
             } catch (e: Exception) {
-                PhotoUiState(error = e.message ?: errorFallback)
+                PhotoUiState(error = e.userMessage(errorFallback))
             }
         }
     }
@@ -142,7 +143,7 @@ class PhotoLogViewModel @Inject constructor(
                 onLogged()
             } catch (e: Exception) {
                 updateDraft(edited.id) { it.copy(logging = false) }
-                _state.update { it.copy(error = e.message ?: "Couldn't log that food") }
+                _state.update { it.copy(error = e.userMessage("Couldn't log that food")) }
             }
         }
     }
