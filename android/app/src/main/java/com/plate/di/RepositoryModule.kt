@@ -14,6 +14,8 @@ import com.plate.data.repository.MetricRepository
 import com.plate.data.repository.MetricRepositoryImpl
 import com.plate.data.repository.RecipeRepository
 import com.plate.data.repository.RecipeRepositoryImpl
+import com.plate.data.repository.RestaurantRepository
+import com.plate.data.repository.RestaurantRepositoryImpl
 import com.plate.data.repository.SummaryRepository
 import com.plate.data.repository.SummaryRepositoryImpl
 import dagger.Binds
@@ -49,6 +51,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRecipeRepository(impl: RecipeRepositoryImpl): RecipeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRestaurantRepository(impl: RestaurantRepositoryImpl): RestaurantRepository
 
     @Binds
     @Singleton
