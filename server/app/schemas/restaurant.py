@@ -193,3 +193,49 @@ class RestaurantLogRequest(BaseModel):
         if not v:
             raise ValueError("selections must not be empty")
         return v
+
+
+class MenuParseRequest(BaseModel):
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def url_http(cls, v: str) -> str:
+        v = v.strip()
+        if not v.lower().startswith(("http://", "https://")):
+            raise ValueError("url must be http(s)")
+        return v
+
+
+class MenuParseComponent(BaseModel):
+    """One draft component from a parsed menu — the categorized cousin of PhotoEstimateItem.
+
+    ``source`` says where the numbers came from: ``official`` rows carry the menu's published
+    nutrition in ``macros`` (the client saves it as an inline macros block, minting a food);
+    ``estimate`` rows resolved a generic ``search_term`` against trusted search into ``food_id``
+    (or nothing, at low confidence). Per-portion kcal/macros are display-only previews.
+    """
+
+    category: str
+    name: str
+    source: str  # "official" | "estimate"
+    food_id: uuid.UUID | None = None
+    food_name: str | None = None
+    macros: ComponentMacrosIn | None = None
+    quantity: float
+    unit: str
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    confidence: float
+
+
+class MenuParseResponse(BaseModel):
+    """An editable draft, never persisted server-side — the client edits and POSTs /restaurants."""
+
+    restaurant_name: str | None = None
+    menu_url: str
+    components: list[MenuParseComponent]
+    low_confidence: bool
+    note: str | None = None

@@ -1,12 +1,15 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.limiter import limiter
 from app.schemas.log import LogEntryOut
 from app.schemas.restaurant import (
+    MenuParseRequest,
+    MenuParseResponse,
     RestaurantComponentsReplace,
     RestaurantCreate,
     RestaurantLogRequest,
@@ -14,6 +17,7 @@ from app.schemas.restaurant import (
     RestaurantUpdate,
 )
 from app.security import CurrentUser
+from app.services.ai.menu import parse_menu
 from app.services.restaurant_service import (
     create_restaurant,
     delete_restaurant,
@@ -27,6 +31,21 @@ from app.services.restaurant_service import (
 router = APIRouter(prefix="/restaurants", tags=["restaurants"])
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+@router.post("/parse-menu", response_model=MenuParseResponse)
+@limiter.limit("5/minute")
+async def parse_menu_url(
+    request: Request, req: MenuParseRequest, current_user: CurrentUser, db: DbSession
+):
+    """Fetch a menu URL (HTML/PDF) and parse it into an editable component draft.
+
+    Never persisted server-side — the client reviews/edits and saves via POST /restaurants.
+    Tighter rate limit than the other AI routes: each call does an outbound fetch *and* an LM
+    completion. Declared before the ``/{restaurant_id}`` routes so "parse-menu" never parses as
+    an id (the recipes ``/export`` trap).
+    """
+    return await parse_menu(req.url, db, current_user.id)
 
 
 @router.post("", response_model=RestaurantOut, status_code=status.HTTP_201_CREATED)
