@@ -98,15 +98,19 @@ official foods, else USDA-generic estimates via trusted search — the voice-pip
 **manual build** (embedded food search), or **bundled chain presets** (transcribed from official
 nutrition publications). Migration 0006; `/restaurants` API; `ui/restaurant/`; 46 new server
 tests + VM/parser unit tests. **Presets shipped: Chipotle, Qdoba, Moe's Southwest Grill, CAVA,
-Subway** (5 chains, 131 components; the Moe's/CAVA/Subway three added 2026-07-18).
+Subway, Panda Express, Culver's** (7 chains, 159 components). Menu parsing also accepts **pasted
+text** (not just a URL), so any chain whose nutrition is on a JS page can be added by pasting.
 
 *Still open from this round:*
 - **Image-only menu PDFs** (Salsa Grille's own menu is a designed PDF that may carry no
   extractable text — the parse 422s toward the manual builder): render PDF pages to images
   through the existing vision pipeline so even rasterized menus parse.
 - **More presets** as the household visits more chains — `assets/restaurant_presets.json` is the
-  only file to touch (PresetParserTest gates its shape). Added Moe's / CAVA / Subway 2026-07-18;
-  next candidates: Panda Express, Sweetgreen, Panera.
+  only file to touch (PresetParserTest gates its shape). Added Moe's / CAVA / Subway 2026-07-18,
+  Panda Express / Culver's 2026-07-19 (macros from FatSecret's server-rendered tables — the
+  chains' own nutrition pages are JS-walled). Next candidates the owner asked for: Taco Bell,
+  McDonald's, Wendy's, Dairy Queen, Steak 'n Shake, Blaze Pizza, McAlister's (paste-text or
+  per-item sourcing).
 - **Restaurant-labeled diary entries** ("Salsa Grille: Cilantro Lime Rice" instead of the linked
   food's name) — needs a decision on widening `FoodLogEntry.name` beyond quick-add.
 
