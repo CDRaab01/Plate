@@ -1862,7 +1862,7 @@
         },
         {
           "category": "Bread",
-          "name": "Jalape\u00f1o Cheddar (6\")",
+          "name": "Jalapeño Cheddar (6\")",
           "macros": {
             "serving_desc": "6\" bread",
             "serving_grams": 82,
@@ -4359,6 +4359,502 @@
             "protein_g": 36,
             "carbs_g": 58,
             "fat_g": 42
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Starbucks",
+      "menu_url": "https://www.starbucks.com/menu",
+      "components": [
+        {
+          "category": "Hot Espresso",
+          "name": "Caffè Latte",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 190,
+            "protein_g": 13,
+            "carbs_g": 19,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "Cappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 140,
+            "protein_g": 9,
+            "carbs_g": 14,
+            "fat_g": 5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "Caffè Americano",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 15,
+            "protein_g": 1,
+            "carbs_g": 3,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "Caramel Macchiato",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 250,
+            "protein_g": 10,
+            "carbs_g": 35,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "Caffè Mocha (w/ whip)",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 360,
+            "protein_g": 13,
+            "carbs_g": 44,
+            "fat_g": 15
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "White Chocolate Mocha (w/ whip)",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 430,
+            "protein_g": 14,
+            "carbs_g": 55,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Hot Espresso",
+          "name": "Flat White",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 220,
+            "protein_g": 12,
+            "carbs_g": 18,
+            "fat_g": 11
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cold Coffee",
+          "name": "Cold Brew (unsweetened)",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 5,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cold Coffee",
+          "name": "Vanilla Sweet Cream Cold Brew",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 110,
+            "protein_g": 1,
+            "carbs_g": 14,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cold Coffee",
+          "name": "Nitro Cold Brew",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 5,
+            "protein_g": 1,
+            "carbs_g": 0,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cold Coffee",
+          "name": "Iced Brown Sugar Oatmilk Shaken Espresso",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 120,
+            "protein_g": 1,
+            "carbs_g": 21,
+            "fat_g": 3.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cold Coffee",
+          "name": "Iced Caffè Latte",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 130,
+            "protein_g": 8,
+            "carbs_g": 13,
+            "fat_g": 4.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Frappuccino",
+          "name": "Caramel Frappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 380,
+            "protein_g": 4,
+            "carbs_g": 55,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Frappuccino",
+          "name": "Mocha Frappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 370,
+            "protein_g": 5,
+            "carbs_g": 54,
+            "fat_g": 15
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Frappuccino",
+          "name": "Coffee Frappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 230,
+            "protein_g": 3,
+            "carbs_g": 48,
+            "fat_g": 3.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Frappuccino",
+          "name": "Java Chip Frappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 440,
+            "protein_g": 6,
+            "carbs_g": 63,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Frappuccino",
+          "name": "Vanilla Bean Crème Frappuccino",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 340,
+            "protein_g": 5,
+            "carbs_g": 60,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Chai Tea Latte",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 240,
+            "protein_g": 8,
+            "carbs_g": 45,
+            "fat_g": 4.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Matcha Green Tea Latte",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 240,
+            "protein_g": 12,
+            "carbs_g": 34,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Pink Drink",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 140,
+            "protein_g": 1,
+            "carbs_g": 27,
+            "fat_g": 2.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Strawberry Açaí Refresher",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 90,
+            "protein_g": 0,
+            "carbs_g": 21,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Hot Chocolate (w/ whip)",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 370,
+            "protein_g": 14,
+            "carbs_g": 43,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tea & Refreshers",
+          "name": "Pumpkin Spice Latte (w/ whip)",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 390,
+            "protein_g": 14,
+            "carbs_g": 52,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Brewed Coffee",
+          "name": "Pike Place Brewed Coffee",
+          "macros": {
+            "serving_desc": "Grande (16 fl oz)",
+            "kcal": 5,
+            "protein_g": 1,
+            "carbs_g": 0,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Bacon, Gouda & Egg Sandwich",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 360,
+            "protein_g": 18,
+            "carbs_g": 33,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Sausage, Cheddar & Egg Sandwich",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 480,
+            "protein_g": 20,
+            "carbs_g": 41,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Spinach, Feta & Egg White Wrap",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 290,
+            "protein_g": 20,
+            "carbs_g": 34,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Impossible Breakfast Sandwich",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 420,
+            "protein_g": 22,
+            "carbs_g": 36,
+            "fat_g": 22
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Butter Croissant",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 260,
+            "protein_g": 5,
+            "carbs_g": 30,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Chocolate Croissant",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 300,
+            "protein_g": 6,
+            "carbs_g": 34,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Blueberry Muffin",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 350,
+            "protein_g": 6,
+            "carbs_g": 53,
+            "fat_g": 12
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Petite Vanilla Bean Scone",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 120,
+            "protein_g": 1,
+            "carbs_g": 21,
+            "fat_g": 4
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Chocolate Chip Cookie",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 360,
+            "protein_g": 4,
+            "carbs_g": 46,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Everything Bagel",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 290,
+            "protein_g": 12,
+            "carbs_g": 56,
+            "fat_g": 2.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Food",
+          "name": "Banana Walnut & Pecan Bread",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 420,
+            "protein_g": 6,
+            "carbs_g": 57,
+            "fat_g": 22
           },
           "quantity": 1.0,
           "unit": "serving",

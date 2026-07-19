@@ -9,6 +9,7 @@ import com.plate.data.remote.RestaurantComponentIn
 import com.plate.data.repository.FoodRepository
 import com.plate.data.repository.RestaurantRepository
 import com.plate.util.UiState
+import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -142,7 +143,7 @@ class RestaurantEditViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                _saveState.value = UiState.Error(e.message ?: "Couldn't load that restaurant")
+                _saveState.value = UiState.Error(e.userMessage("Couldn't load that restaurant"))
             }
         }
     }
@@ -189,8 +190,9 @@ class RestaurantEditViewModel @Inject constructor(
                         ?: "Found ${parsed.components.size} components — review before saving",
                 )
             } catch (e: Exception) {
-                _parseState.value =
-                    UiState.Error(e.message ?: "Couldn't read that menu — add components manually")
+                _parseState.value = UiState.Error(
+                    e.userMessage("Couldn't read that menu — add components manually"),
+                )
             }
         }
     }
@@ -203,7 +205,7 @@ class RestaurantEditViewModel @Inject constructor(
             _results.value = try {
                 UiState.Success(foodRepository.search(q))
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Search failed")
+                UiState.Error(e.userMessage("Search failed"))
             }
         }
     }
@@ -258,7 +260,7 @@ class RestaurantEditViewModel @Inject constructor(
                 }
                 UiState.Success(Unit)
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Couldn't save the restaurant")
+                UiState.Error(e.userMessage("Couldn't save the restaurant"))
             }
         }
     }
