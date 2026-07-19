@@ -96,6 +96,9 @@ class RestaurantEditViewModel @Inject constructor(
     private val _menuUrl = MutableStateFlow("")
     val menuUrl: StateFlow<String> = _menuUrl
 
+    private val _menuText = MutableStateFlow("")
+    val menuText: StateFlow<String> = _menuText
+
     private val _shared = MutableStateFlow(true)
     val shared: StateFlow<Boolean> = _shared
 
@@ -146,6 +149,7 @@ class RestaurantEditViewModel @Inject constructor(
 
     fun setName(value: String) { _name.value = value }
     fun setMenuUrl(value: String) { _menuUrl.value = value }
+    fun setMenuText(value: String) { _menuText.value = value }
     fun setShared(value: Boolean) { _shared.value = value }
     fun setNewCategory(value: String) { _newCategory.value = value }
     fun setQuery(value: String) { _query.value = value }
@@ -157,10 +161,25 @@ class RestaurantEditViewModel @Inject constructor(
             _parseState.value = UiState.Error("Paste the menu's web address first")
             return
         }
+        runParse { repository.parseMenu(url = url) }
+    }
+
+    /** Parse pasted menu/nutrition text (no fetch) — the robust path when a URL won't load. */
+    fun parseText() {
+        val text = _menuText.value.trim()
+        if (text.isEmpty()) {
+            _parseState.value = UiState.Error("Paste the menu or nutrition text first")
+            return
+        }
+        runParse { repository.parseMenu(text = text) }
+    }
+
+    /** Shared parse→merge handling for both the URL and paste-text paths. */
+    private fun runParse(call: suspend () -> com.plate.data.remote.MenuParseResponse) {
         viewModelScope.launch {
             _parseState.value = UiState.Loading
             try {
-                val parsed = repository.parseMenu(url)
+                val parsed = call()
                 if (_name.value.isBlank() && parsed.restaurantName != null) {
                     _name.value = parsed.restaurantName
                 }

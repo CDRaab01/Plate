@@ -38,14 +38,14 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 async def parse_menu_url(
     request: Request, req: MenuParseRequest, current_user: CurrentUser, db: DbSession
 ):
-    """Fetch a menu URL (HTML/PDF) and parse it into an editable component draft.
+    """Parse a menu into an editable component draft — from a URL (fetched HTML/PDF) or pasted text.
 
     Never persisted server-side — the client reviews/edits and saves via POST /restaurants.
-    Tighter rate limit than the other AI routes: each call does an outbound fetch *and* an LM
+    Tighter rate limit than the other AI routes: each call may do an outbound fetch *and* an LM
     completion. Declared before the ``/{restaurant_id}`` routes so "parse-menu" never parses as
     an id (the recipes ``/export`` trap).
     """
-    return await parse_menu(req.url, db, current_user.id)
+    return await parse_menu(db, current_user.id, url=req.url, text=req.text)
 
 
 @router.post("", response_model=RestaurantOut, status_code=status.HTTP_201_CREATED)

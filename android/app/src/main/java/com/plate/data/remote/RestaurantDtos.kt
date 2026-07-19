@@ -104,10 +104,11 @@ data class RestaurantLogRequest(
     val selections: List<RestaurantLogSelection>,
 )
 
-/** POST /restaurants/parse-menu request. */
+/** POST /restaurants/parse-menu request — exactly one of [url] (fetched) or [text] (pasted). */
 @Serializable
 data class MenuParseRequest(
-    val url: String,
+    val url: String? = null,
+    val text: String? = null,
 )
 
 /**
@@ -136,7 +137,7 @@ data class MenuParseComponent(
 @Serializable
 data class MenuParseResponse(
     @SerialName("restaurant_name") val restaurantName: String? = null,
-    @SerialName("menu_url") val menuUrl: String,
+    @SerialName("menu_url") val menuUrl: String? = null,
     val components: List<MenuParseComponent> = emptyList(),
     @SerialName("low_confidence") val lowConfidence: Boolean = false,
     val note: String? = null,

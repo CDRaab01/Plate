@@ -77,9 +77,11 @@ validated structured output, no tool access). Two surfaces:
   (`voice_prompts` → `{food, quantity, unit}`, Pydantic-shaped, forgiving parser), resolves each
   spoken food against the **trusted food search** for real macros, and returns the same editable
   `PhotoEstimateResponse` draft (unresolved foods kept as low-confidence stubs). Never auto-logged.
-- **Menu-link parsing** (`POST /restaurants/parse-menu`) — the voice pattern applied to a fetched
-  restaurant menu: `services/menu_fetch.py` (plain IO, deliberately outside `ai/`) fetches the
-  URL, then `menu_prompts`/`menu.py` structure it into categorized components. Nutrition stated on
+- **Menu parsing** (`POST /restaurants/parse-menu`) — the voice pattern applied to a restaurant
+  menu from **exactly one of** `url` (fetched) or `text` (pasted menu/nutrition text, no fetch —
+  the robust path when a chain's nutrition lives on a JS page the server can't fetch). For a URL,
+  `services/menu_fetch.py` (plain IO, deliberately outside `ai/`) fetches it; then
+  `menu_prompts`/`menu.py` structure the text into categorized components. Nutrition stated on
   the page is carried **verbatim** (`official` block, minted into a `Food(brand=<restaurant>)` on
   save); otherwise a generic `search_term` resolves against trusted search (estimate). The parse
   is a draft response only — nothing persists until the client POSTs `/restaurants`. **Fetch

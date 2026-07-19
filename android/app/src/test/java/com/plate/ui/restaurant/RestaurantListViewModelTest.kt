@@ -59,7 +59,7 @@ private class ListFakeRestaurantRepository(
         restaurants.removeAll { it.id == id }
     }
 
-    override suspend fun parseMenu(url: String): MenuParseResponse =
+    override suspend fun parseMenu(url: String?, text: String?): MenuParseResponse =
         MenuParseResponse(menuUrl = url)
 
     override suspend fun log(

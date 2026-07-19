@@ -51,8 +51,8 @@ class RestaurantRepositoryImpl @Inject constructor(
 
     override suspend fun delete(id: String) = api.deleteRestaurant(id)
 
-    override suspend fun parseMenu(url: String): MenuParseResponse =
-        api.parseMenu(MenuParseRequest(url = url))
+    override suspend fun parseMenu(url: String?, text: String?): MenuParseResponse =
+        api.parseMenu(MenuParseRequest(url = url, text = text))
 
     override suspend fun log(
         id: String,

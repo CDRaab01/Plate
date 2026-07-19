@@ -81,7 +81,7 @@ private class LogFakeRestaurantRepository(
 
     override suspend fun delete(id: String) {}
 
-    override suspend fun parseMenu(url: String): MenuParseResponse =
+    override suspend fun parseMenu(url: String?, text: String?): MenuParseResponse =
         MenuParseResponse(menuUrl = url)
 
     override suspend fun log(

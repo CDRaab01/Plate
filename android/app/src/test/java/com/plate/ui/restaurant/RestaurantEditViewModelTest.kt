@@ -74,7 +74,13 @@ private class EditFakeRestaurantRepository : RestaurantRepository {
     }
 
     override suspend fun delete(id: String) {}
-    override suspend fun parseMenu(url: String): MenuParseResponse = parseResponse
+    var parsedUrl: String? = null
+    var parsedText: String? = null
+    override suspend fun parseMenu(url: String?, text: String?): MenuParseResponse {
+        parsedUrl = url
+        parsedText = text
+        return parseResponse
+    }
     override suspend fun log(id: String, date: String, meal: String, selections: List<RestaurantLogSelection>) = 0
 }
 
@@ -163,6 +169,29 @@ class RestaurantEditViewModelTest {
         val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository())
         vm.parseMenu()
         assertTrue(vm.parseState.value is UiState.Error)
+    }
+
+    @Test
+    fun `parseText sends pasted text (not a url) and merges the draft`() = runTest {
+        val repo = EditFakeRestaurantRepository()
+        repo.parseResponse = parse(parsedComponent("Protein", "Chicken", official = true))
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        vm.setMenuText("Chicken 180 cal 32g protein ...")
+        vm.parseText()
+        advanceUntilIdle()
+        assertEquals("Chicken 180 cal 32g protein ...", repo.parsedText)
+        assertNull(repo.parsedUrl)
+        assertEquals(1, vm.components.value.size)
+        assertTrue(vm.parseState.value is UiState.Success)
+    }
+
+    @Test
+    fun `parseText with no text errors without a server call`() = runTest {
+        val repo = EditFakeRestaurantRepository()
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        vm.parseText()
+        assertTrue(vm.parseState.value is UiState.Error)
+        assertNull(repo.parsedText)
     }
 
     @Test

@@ -38,18 +38,23 @@ _LOW_CONF_NOTE = "Some components couldn't be matched — review them before sav
 
 
 async def parse_menu(
-    url: str,
     db: AsyncSession,
     user_id: uuid.UUID,
     *,
+    url: str | None = None,
+    text: str | None = None,
     client: httpx.AsyncClient | None = None,
     fetch: FetchFn | None = None,
     search: SearchFn | None = None,
 ) -> MenuParseResponse:
-    """Fetch + parse a menu URL into an editable component draft (never persisted here)."""
-    text = await (fetch or fetch_menu_text)(url)
+    """Parse a menu into an editable component draft (never persisted here).
 
-    messages = build_menu_messages(text)
+    Source is exactly one of ``url`` (fetched HTML/PDF) or ``text`` (pasted menu/nutrition text —
+    the robust path when a chain's nutrition is on a page the server can't fetch).
+    """
+    menu_text = text if text is not None else await (fetch or fetch_menu_text)(url)
+
+    messages = build_menu_messages(menu_text)
     async with contextlib.AsyncExitStack() as stack:
         if client is None:
             client = await stack.enter_async_context(
@@ -62,7 +67,7 @@ async def parse_menu(
         return MenuParseResponse(
             restaurant_name=restaurant_name,
             menu_url=url,
-            components=[],
+            components=[],  # url is None for a text parse — that's fine (menu_url is optional)
             low_confidence=True,
             note=_NOTHING_NOTE,
         )
