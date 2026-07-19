@@ -173,3 +173,43 @@ async def test_log_and_unlog_by_client_ref(client, food):
 async def test_cross_app_rejects_normal_tokens(auth_client):
     resp = await auth_client.post("/cross-app/resolve-foods", json={"items": []})
     assert resp.status_code == 401
+
+
+async def test_resolve_falls_back_to_live_search_on_cache_miss():
+    """Regression for the "0 of N ingredients matched" bug: an ingredient not in the local cache
+    still resolves by falling back to live search (which caches). The fallback is injected here so
+    the test stays offline; production uses the real search_foods."""
+    import uuid as _uuid
+
+    from app.database import AsyncSessionLocal
+    from app.models.food import Food
+    from app.schemas.cross_app import CrossAppFoodItem, ResolveFoodsRequest
+    from app.services.cross_app_food_service import resolve_foods
+
+    name = f"Olive oil zz{_uuid.uuid4().hex[:6]}"  # not in the cache
+
+    async def fake_live_search(db, query):
+        # Simulate a live USDA hit that caches the food (as search_foods would).
+        db.add(
+            Food(
+                source="usda",
+                name=name,
+                kcal_per_100g=884.0,
+                protein_g_per_100g=0.0,
+                carbs_g_per_100g=0.0,
+                fat_g_per_100g=100.0,
+                serving_size=15.0,
+                serving_unit="g",
+            )
+        )
+        await db.flush()
+        return []
+
+    async with AsyncSessionLocal() as session:
+        req = ResolveFoodsRequest(items=[CrossAppFoodItem(name=name, quantity=30, unit="g")])
+        resp = await resolve_foods(session, req, search=fake_live_search)
+
+    item = resp.items[0]
+    assert item.matched is True
+    assert item.food_name == name
+    assert item.kcal == pytest.approx(884.0 * 0.30)  # 30 g of an 884 kcal/100g oil
