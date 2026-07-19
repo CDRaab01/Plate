@@ -155,6 +155,18 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 
 ## Build log
 
+- **2026-07-19 — Restaurant parse error surfacing + Starbucks preset (owner report).** A menu-link
+  parse of `starbucks.com/menu` showed a bare "HTTP 422": the client dropped the server's helpful
+  `detail`. `util/ErrorMessages.userMessage` now extracts the FastAPI `{"detail": "..."}` from a
+  `retrofit2.HttpException` (via kotlinx.serialization so it works in plain JVM unit tests; a
+  validation-error `detail` *list* falls back to the caller's message), and the restaurant editor's
+  error handlers use it. The 422 copy in `services/menu_fetch.py` now names the real cause — big
+  chains (Starbucks) load their menu with JavaScript, so the fetched HTML has no menu text — and
+  points at paste-text / presets / manual. Added a **Starbucks preset** (35 components: espresso,
+  cold coffee, Frappuccino, tea/refreshers, brewed, food — official Grande/2% numbers) so the
+  JS-walled chain is one-tap importable. Now 17 bundled presets. Server 444 green; client
+  ErrorMessages + PresetParser tests cover it.
+
 - **2026-07-18 — Restaurant / chain meal logging ("Salsa Grille bowls", owner request).** A
   **Restaurant** is a per-chain checkbox template: categorized build-your-own components
   ("Barbacoa" under "Protein"), each linked to a food — a trusted-search USDA generic (estimate)

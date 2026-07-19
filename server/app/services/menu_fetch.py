@@ -44,8 +44,9 @@ _UNREACHABLE = HTTPException(
 _NO_TEXT = HTTPException(
     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
     detail=(
-        "Couldn't read any text from that menu (it may be an image-only PDF) — "
-        "build the restaurant manually instead."
+        "Couldn't read a menu from that link — the page may load its menu with JavaScript "
+        "(many big chains like Starbucks do) or be an image-only PDF. Paste the nutrition text "
+        "instead, use a bundled chain preset, or build the restaurant by hand."
     ),
 )
 
