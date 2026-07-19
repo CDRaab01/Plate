@@ -2325,6 +2325,2046 @@
           "default_checked": false
         }
       ]
+    },
+    {
+      "name": "Panda Express",
+      "menu_url": "https://www.pandaexpress.com/nutritioninformation",
+      "components": [
+        {
+          "category": "Entree",
+          "name": "The Original Orange Chicken",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 510,
+            "protein_g": 16,
+            "carbs_g": 53,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Grilled Teriyaki Chicken",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 275,
+            "protein_g": 33,
+            "carbs_g": 14,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Kung Pao Chicken",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 320,
+            "protein_g": 17,
+            "carbs_g": 15,
+            "fat_g": 21
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Black Pepper Chicken",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 280,
+            "protein_g": 13,
+            "carbs_g": 15,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Mushroom Chicken",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 220,
+            "protein_g": 13,
+            "carbs_g": 10,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "String Bean Chicken Breast",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 210,
+            "protein_g": 12,
+            "carbs_g": 13,
+            "fat_g": 12
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Broccoli Beef",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 150,
+            "protein_g": 15,
+            "carbs_g": 12,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Beijing Beef",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 470,
+            "protein_g": 14,
+            "carbs_g": 46,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Black Pepper Angus Steak",
+          "macros": {
+            "serving_desc": "1 entree (5.7 oz)",
+            "kcal": 210,
+            "protein_g": 19,
+            "carbs_g": 13,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Entree",
+          "name": "Honey Walnut Shrimp",
+          "macros": {
+            "serving_desc": "1 entree (3.7 oz)",
+            "kcal": 430,
+            "protein_g": 13,
+            "carbs_g": 32,
+            "fat_g": 28
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Side",
+          "name": "Chow Mein",
+          "macros": {
+            "serving_desc": "1 side (9.4 oz)",
+            "kcal": 600,
+            "protein_g": 15,
+            "carbs_g": 94,
+            "fat_g": 23
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Side",
+          "name": "Fried Rice",
+          "macros": {
+            "serving_desc": "1 side (9.3 oz)",
+            "kcal": 620,
+            "protein_g": 13,
+            "carbs_g": 101,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Side",
+          "name": "White Steamed Rice",
+          "macros": {
+            "serving_desc": "1 side (9.3 oz)",
+            "kcal": 520,
+            "protein_g": 10,
+            "carbs_g": 118,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Side",
+          "name": "Brown Steamed Rice",
+          "macros": {
+            "serving_desc": "1 side (9.3 oz)",
+            "kcal": 420,
+            "protein_g": 9,
+            "carbs_g": 86,
+            "fat_g": 4
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Side",
+          "name": "Super Greens",
+          "macros": {
+            "serving_desc": "1 side (9.2 oz)",
+            "kcal": 130,
+            "protein_g": 9,
+            "carbs_g": 14,
+            "fat_g": 4
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Culver's",
+      "menu_url": "https://www.culvers.com/nutrition-and-allergen-guide",
+      "components": [
+        {
+          "category": "Burgers",
+          "name": "ButterBurger (Single)",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 390,
+            "protein_g": 20,
+            "carbs_g": 38,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "ButterBurger Cheese (Single)",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 460,
+            "protein_g": 23,
+            "carbs_g": 40,
+            "fat_g": 25
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "The Culver's Bacon Deluxe (Single)",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 610,
+            "protein_g": 27,
+            "carbs_g": 42,
+            "fat_g": 39
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Sourdough Melt (Single)",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 460,
+            "protein_g": 25,
+            "carbs_g": 36,
+            "fat_g": 26
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Wisconsin Swiss Melt (Single)",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 480,
+            "protein_g": 26,
+            "carbs_g": 38,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Crispy Chicken Sandwich",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 460,
+            "protein_g": 25,
+            "carbs_g": 57,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Grilled Chicken Sandwich",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 390,
+            "protein_g": 41,
+            "carbs_g": 39,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Crinkle Cut Fries (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 240,
+            "protein_g": 4,
+            "carbs_g": 35,
+            "fat_g": 9
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Wisconsin Cheese Curds (Medium)",
+          "macros": {
+            "serving_desc": "medium",
+            "kcal": 490,
+            "protein_g": 17,
+            "carbs_g": 46,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Onion Rings (Medium)",
+          "macros": {
+            "serving_desc": "medium",
+            "kcal": 420,
+            "protein_g": 5,
+            "carbs_g": 49,
+            "fat_g": 23
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Side Salad",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 55,
+            "protein_g": 3,
+            "carbs_g": 5,
+            "fat_g": 3
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Custard",
+          "name": "Vanilla Fresh Frozen Custard",
+          "macros": {
+            "serving_desc": "1 scoop / dish",
+            "kcal": 310,
+            "protein_g": 6,
+            "carbs_g": 31,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Custard",
+          "name": "Chocolate Fresh Frozen Custard",
+          "macros": {
+            "serving_desc": "1 scoop / dish",
+            "kcal": 280,
+            "protein_g": 6,
+            "carbs_g": 35,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Taco Bell",
+      "menu_url": "https://www.tacobell.com/nutrition-information",
+      "components": [
+        {
+          "category": "Tacos",
+          "name": "Crunchy Taco",
+          "macros": {
+            "serving_desc": "1 taco",
+            "kcal": 170,
+            "protein_g": 7,
+            "carbs_g": 13,
+            "fat_g": 9
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tacos",
+          "name": "Soft Taco (Beef)",
+          "macros": {
+            "serving_desc": "1 taco",
+            "kcal": 180,
+            "protein_g": 9,
+            "carbs_g": 18,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tacos",
+          "name": "Crunchy Taco Supreme",
+          "macros": {
+            "serving_desc": "1 taco",
+            "kcal": 190,
+            "protein_g": 8,
+            "carbs_g": 16,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Tacos",
+          "name": "Nacho Cheese Doritos Locos Taco",
+          "macros": {
+            "serving_desc": "1 taco",
+            "kcal": 170,
+            "protein_g": 7,
+            "carbs_g": 13,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burritos",
+          "name": "Bean Burrito",
+          "macros": {
+            "serving_desc": "1 burrito",
+            "kcal": 360,
+            "protein_g": 13,
+            "carbs_g": 54,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burritos",
+          "name": "Burrito Supreme (Beef)",
+          "macros": {
+            "serving_desc": "1 burrito",
+            "kcal": 390,
+            "protein_g": 16,
+            "carbs_g": 52,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burritos",
+          "name": "Beefy 5-Layer Burrito",
+          "macros": {
+            "serving_desc": "1 burrito",
+            "kcal": 490,
+            "protein_g": 17,
+            "carbs_g": 65,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Specialties",
+          "name": "Crunchwrap Supreme",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 530,
+            "protein_g": 15,
+            "carbs_g": 74,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Specialties",
+          "name": "Cheesy Gordita Crunch",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 480,
+            "protein_g": 20,
+            "carbs_g": 44,
+            "fat_g": 26
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Specialties",
+          "name": "Chalupa Supreme (Beef)",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 350,
+            "protein_g": 12,
+            "carbs_g": 32,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Specialties",
+          "name": "Chicken Quesadilla",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 490,
+            "protein_g": 26,
+            "carbs_g": 44,
+            "fat_g": 23
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Cinnamon Twists",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 170,
+            "protein_g": 2,
+            "carbs_g": 27,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Chips & Nacho Cheese Sauce",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 220,
+            "protein_g": 3,
+            "carbs_g": 24,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Black Beans & Rice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 160,
+            "protein_g": 4,
+            "carbs_g": 25,
+            "fat_g": 4.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Jersey Mike's",
+      "menu_url": "https://subs.jerseymikes.com/nutrition",
+      "components": [
+        {
+          "category": "Subs",
+          "name": "#2 Jersey Shore's Favorite",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 800,
+            "protein_g": 36,
+            "carbs_g": 58,
+            "fat_g": 49
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#3 Ham and Provolone",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 820,
+            "protein_g": 38,
+            "carbs_g": 68,
+            "fat_g": 44
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#7 Turkey and Provolone",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 820,
+            "protein_g": 45,
+            "carbs_g": 66,
+            "fat_g": 41
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#8 Club Sub",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 1160,
+            "protein_g": 50,
+            "carbs_g": 68,
+            "fat_g": 78
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#9 Club Supreme",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 1190,
+            "protein_g": 59,
+            "carbs_g": 67,
+            "fat_g": 77
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#13 The Original Italian",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 960,
+            "protein_g": 47,
+            "carbs_g": 71,
+            "fat_g": 55
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#16 Mike's Chicken Philly",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 680,
+            "protein_g": 48,
+            "carbs_g": 73,
+            "fat_g": 22
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#17 Mike's Famous Philly",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 750,
+            "protein_g": 46,
+            "carbs_g": 74,
+            "fat_g": 30
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Subs",
+          "name": "#56 Big Kahuna Cheese Steak",
+          "macros": {
+            "serving_desc": "regular sub",
+            "kcal": 800,
+            "protein_g": 49,
+            "carbs_g": 76,
+            "fat_g": 35
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Blaze Pizza",
+      "menu_url": "https://www.blazepizza.com/menu",
+      "components": [
+        {
+          "category": "Pizzas",
+          "name": "Simple Pie",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 110,
+            "protein_g": 5,
+            "carbs_g": 15,
+            "fat_g": 3
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Meat Eater",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 150,
+            "protein_g": 7,
+            "carbs_g": 16,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "BBQ Chicken",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 130,
+            "protein_g": 6,
+            "carbs_g": 15,
+            "fat_g": 4.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Vegetarian",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 160,
+            "protein_g": 7,
+            "carbs_g": 18,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Herbivore",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 150,
+            "protein_g": 5,
+            "carbs_g": 18,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Spicy Hot Chicken Pickle",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 140,
+            "protein_g": 7,
+            "carbs_g": 15,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Blazed BBQ",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 140,
+            "protein_g": 7,
+            "carbs_g": 17,
+            "fat_g": 5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Pizzas",
+          "name": "Spicy Double Pepperoni",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 180,
+            "protein_g": 7,
+            "carbs_g": 20,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Crusts",
+          "name": "Classic Dough",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 70,
+            "protein_g": 2,
+            "carbs_g": 14,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Crusts",
+          "name": "High Rise Dough",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 100,
+            "protein_g": 3,
+            "carbs_g": 20,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Crusts",
+          "name": "Keto Crust",
+          "macros": {
+            "serving_desc": "1 slice (of 6)",
+            "kcal": 70,
+            "protein_g": 9,
+            "carbs_g": 2,
+            "fat_g": 2.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "McAlister's Deli",
+      "menu_url": "https://www.mcalistersdeli.com/nutrition",
+      "components": [
+        {
+          "category": "Sandwiches",
+          "name": "McAlister's Club",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 910,
+            "protein_g": 45,
+            "carbs_g": 91,
+            "fat_g": 44
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sandwiches",
+          "name": "French Dip",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 640,
+            "protein_g": 53,
+            "carbs_g": 45,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sandwiches",
+          "name": "French Dip (Half)",
+          "macros": {
+            "serving_desc": "half",
+            "kcal": 430,
+            "protein_g": 36,
+            "carbs_g": 30,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sandwiches",
+          "name": "Ham & Cheese Melt",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 670,
+            "protein_g": 35,
+            "carbs_g": 71,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sandwiches",
+          "name": "Turkey Ranch BLT",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 670,
+            "protein_g": 37,
+            "carbs_g": 49,
+            "fat_g": 39
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Spuds",
+          "name": "Spud Max",
+          "macros": {
+            "serving_desc": "1 spud",
+            "kcal": 1090,
+            "protein_g": 45,
+            "carbs_g": 135,
+            "fat_g": 42
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Spuds",
+          "name": "Chicken Bacon Ranch Spud",
+          "macros": {
+            "serving_desc": "1 spud",
+            "kcal": 1160,
+            "protein_g": 61,
+            "carbs_g": 135,
+            "fat_g": 45
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Spuds",
+          "name": "Veggie Spud",
+          "macros": {
+            "serving_desc": "1 spud",
+            "kcal": 910,
+            "protein_g": 28,
+            "carbs_g": 148,
+            "fat_g": 25
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Salads",
+          "name": "Garden Salad",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 310,
+            "protein_g": 18,
+            "carbs_g": 19,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Salads",
+          "name": "Grilled Chicken Caesar",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 1100,
+            "protein_g": 50,
+            "carbs_g": 21,
+            "fat_g": 92
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Salads",
+          "name": "Grilled Chicken Salad",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 490,
+            "protein_g": 47,
+            "carbs_g": 20,
+            "fat_g": 26
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Soups",
+          "name": "Chicken Tortilla Soup (Bowl)",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 350,
+            "protein_g": 11,
+            "carbs_g": 44,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Soups",
+          "name": "Broccoli Cheddar Soup (Bowl)",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 420,
+            "protein_g": 16,
+            "carbs_g": 30,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Drinks",
+          "name": "Sweet Tea",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 150,
+            "protein_g": 0,
+            "carbs_g": 39,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "McDonald's",
+      "menu_url": "https://www.mcdonalds.com/us/en-us/about-our-food/nutrition-calculator.html",
+      "components": [
+        {
+          "category": "Burgers",
+          "name": "Hamburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 250,
+            "protein_g": 12,
+            "carbs_g": 30,
+            "fat_g": 9
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Cheeseburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 300,
+            "protein_g": 15,
+            "carbs_g": 31,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Double Cheeseburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 440,
+            "protein_g": 25,
+            "carbs_g": 34,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "McDouble",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 390,
+            "protein_g": 22,
+            "carbs_g": 32,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Quarter Pounder with Cheese",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 520,
+            "protein_g": 30,
+            "carbs_g": 42,
+            "fat_g": 26
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Big Mac",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 580,
+            "protein_g": 25,
+            "carbs_g": 45,
+            "fat_g": 34
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken & Fish",
+          "name": "McChicken",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 390,
+            "protein_g": 14,
+            "carbs_g": 38,
+            "fat_g": 21
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken & Fish",
+          "name": "McCrispy",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 470,
+            "protein_g": 26,
+            "carbs_g": 46,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken & Fish",
+          "name": "Filet-O-Fish",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 380,
+            "protein_g": 16,
+            "carbs_g": 38,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken & Fish",
+          "name": "Chicken McNuggets (10 pc)",
+          "macros": {
+            "serving_desc": "10 pieces",
+            "kcal": 410,
+            "protein_g": 23,
+            "carbs_g": 26,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Egg McMuffin",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 310,
+            "protein_g": 17,
+            "carbs_g": 30,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Sausage McMuffin with Egg",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 480,
+            "protein_g": 20,
+            "carbs_g": 30,
+            "fat_g": 31
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Hash Browns",
+          "macros": {
+            "serving_desc": "1 piece",
+            "kcal": 140,
+            "protein_g": 2,
+            "carbs_g": 18,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Wendy's",
+      "menu_url": "https://www.wendys.com/nutrition",
+      "components": [
+        {
+          "category": "Burgers",
+          "name": "Jr. Hamburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 230,
+            "protein_g": 12,
+            "carbs_g": 24,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Jr. Cheeseburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 270,
+            "protein_g": 14,
+            "carbs_g": 25,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Dave's Single",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 570,
+            "protein_g": 29,
+            "carbs_g": 36,
+            "fat_g": 34
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Dave's Double",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 810,
+            "protein_g": 49,
+            "carbs_g": 36,
+            "fat_g": 53
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Burgers",
+          "name": "Baconator",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 900,
+            "protein_g": 57,
+            "carbs_g": 34,
+            "fat_g": 59
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Spicy Chicken Sandwich",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 470,
+            "protein_g": 28,
+            "carbs_g": 45,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Classic Chicken Sandwich",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 480,
+            "protein_g": 29,
+            "carbs_g": 44,
+            "fat_g": 21
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Crispy Chicken Sandwich",
+          "macros": {
+            "serving_desc": "1 sandwich",
+            "kcal": 340,
+            "protein_g": 15,
+            "carbs_g": 32,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Chicken",
+          "name": "Chicken Nuggets (10 pc)",
+          "macros": {
+            "serving_desc": "10 pieces",
+            "kcal": 430,
+            "protein_g": 23,
+            "carbs_g": 22,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Natural-Cut Fries (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 260,
+            "protein_g": 4,
+            "carbs_g": 35,
+            "fat_g": 12
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Natural-Cut Fries (Medium)",
+          "macros": {
+            "serving_desc": "medium",
+            "kcal": 350,
+            "protein_g": 5,
+            "carbs_g": 47,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Chili (Large)",
+          "macros": {
+            "serving_desc": "large",
+            "kcal": 370,
+            "protein_g": 25,
+            "carbs_g": 29,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Plain Baked Potato",
+          "macros": {
+            "serving_desc": "1 potato",
+            "kcal": 270,
+            "protein_g": 7,
+            "carbs_g": 61,
+            "fat_g": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Desserts",
+          "name": "Chocolate Frosty (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 190,
+            "protein_g": 6,
+            "carbs_g": 31,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Dairy Queen",
+      "menu_url": "https://www.dairyqueen.com/en-us/menu/",
+      "components": [
+        {
+          "category": "Cones",
+          "name": "Vanilla Cone (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 160,
+            "protein_g": 4,
+            "carbs_g": 25,
+            "fat_g": 4.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cones",
+          "name": "Chocolate Cone (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 240,
+            "protein_g": 6,
+            "carbs_g": 36,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cones",
+          "name": "Chocolate Dipped Cone (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 320,
+            "protein_g": 6,
+            "carbs_g": 40,
+            "fat_g": 15
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Blizzards",
+          "name": "OREO Cookie Blizzard (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 600,
+            "protein_g": 13,
+            "carbs_g": 89,
+            "fat_g": 22
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Blizzards",
+          "name": "Choc Chip Cookie Dough Blizzard (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 710,
+            "protein_g": 13,
+            "carbs_g": 104,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Blizzards",
+          "name": "Reese's PB Cups Blizzard (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 610,
+            "protein_g": 16,
+            "carbs_g": 84,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Blizzards",
+          "name": "Butterfinger Blizzard (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 590,
+            "protein_g": 15,
+            "carbs_g": 87,
+            "fat_g": 21
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Other",
+          "name": "Banana Split",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 520,
+            "protein_g": 9,
+            "carbs_g": 94,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Other",
+          "name": "Hot Fudge Sundae (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 300,
+            "protein_g": 6,
+            "carbs_g": 46,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Other",
+          "name": "Chocolate Shake (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 530,
+            "protein_g": 13,
+            "carbs_g": 77,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Steak 'n Shake",
+      "menu_url": "https://www.steaknshake.com/nutrition",
+      "components": [
+        {
+          "category": "Steakburgers",
+          "name": "Single Steakburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 350,
+            "protein_g": 16,
+            "carbs_g": 34,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Steakburger with Cheese",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 420,
+            "protein_g": 21,
+            "carbs_g": 31,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Double Steakburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 560,
+            "protein_g": 29,
+            "carbs_g": 34,
+            "fat_g": 34
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Triple Steakburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 760,
+            "protein_g": 41,
+            "carbs_g": 34,
+            "fat_g": 51
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Bacon 'n Cheese Single Steakburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 490,
+            "protein_g": 24,
+            "carbs_g": 35,
+            "fat_g": 28
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Bacon 'n Cheese Double Steakburger",
+          "macros": {
+            "serving_desc": "1 burger",
+            "kcal": 680,
+            "protein_g": 36,
+            "carbs_g": 35,
+            "fat_g": 44
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Steakburgers",
+          "name": "Frisco Melt",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 960,
+            "protein_g": 38,
+            "carbs_g": 56,
+            "fat_g": 63
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "French Fries (Regular)",
+          "macros": {
+            "serving_desc": "regular",
+            "kcal": 580,
+            "protein_g": 6,
+            "carbs_g": 64,
+            "fat_g": 35
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Chicken Fingers",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 310,
+            "protein_g": 15,
+            "carbs_g": 21,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Chili Cup",
+          "macros": {
+            "serving_desc": "cup",
+            "kcal": 280,
+            "protein_g": 10,
+            "carbs_g": 20,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sides",
+          "name": "Chili Mac",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 470,
+            "protein_g": 16,
+            "carbs_g": 56,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Milkshakes",
+          "name": "Vanilla Milkshake (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 400,
+            "protein_g": 16,
+            "carbs_g": 72,
+            "fat_g": 9
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Milkshakes",
+          "name": "Chocolate Milkshake (Small)",
+          "macros": {
+            "serving_desc": "small",
+            "kcal": 380,
+            "protein_g": 16,
+            "carbs_g": 66,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Sweetgreen",
+      "menu_url": "https://www.sweetgreen.com/menu",
+      "components": [
+        {
+          "category": "Protein",
+          "name": "Roasted Chicken",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 110,
+            "protein_g": 23,
+            "carbs_g": 0,
+            "fat_g": 3
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Blackened Chicken",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 150,
+            "protein_g": 20,
+            "carbs_g": 1,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Miso Glazed Salmon",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 240,
+            "protein_g": 23,
+            "carbs_g": 2,
+            "fat_g": 15
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Miso Glazed Steelhead",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 200,
+            "protein_g": 24,
+            "carbs_g": 9,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Caramelized Garlic Steak",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 220,
+            "protein_g": 25,
+            "carbs_g": 2,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Pesto Vinaigrette",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 110,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 9
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Green Goddess Ranch",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 180,
+            "protein_g": 1,
+            "carbs_g": 1,
+            "fat_g": 19
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Caesar Dressing",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 160,
+            "protein_g": 1,
+            "carbs_g": 1,
+            "fat_g": 17
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Harvest Bowl",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 760,
+            "protein_g": 40,
+            "carbs_g": 60,
+            "fat_g": 42
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Kale Caesar",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 510,
+            "protein_g": 41,
+            "carbs_g": 14,
+            "fat_g": 33
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Chicken Pesto Parm",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 530,
+            "protein_g": 39,
+            "carbs_g": 35,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Guacamole Greens",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 575,
+            "protein_g": 29,
+            "carbs_g": 35,
+            "fat_g": 34
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Shroomami",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 665,
+            "protein_g": 20,
+            "carbs_g": 51,
+            "fat_g": 45
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Buffalo Chicken",
+          "macros": {
+            "serving_desc": "1 salad",
+            "kcal": 580,
+            "protein_g": 34,
+            "carbs_g": 29,
+            "fat_g": 36
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Signature Bowls",
+          "name": "Fish Taco Bowl",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 745,
+            "protein_g": 36,
+            "carbs_g": 58,
+            "fat_g": 42
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
     }
   ]
 }

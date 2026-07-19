@@ -97,16 +97,20 @@ Studio structured parse → editable draft; page-stated nutrition carried verbat
 official foods, else USDA-generic estimates via trusted search — the voice-pipeline pattern),
 **manual build** (embedded food search), or **bundled chain presets** (transcribed from official
 nutrition publications). Migration 0006; `/restaurants` API; `ui/restaurant/`; 46 new server
-tests + VM/parser unit tests. **Presets shipped: Chipotle, Qdoba, Moe's Southwest Grill, CAVA,
-Subway** (5 chains, 131 components; the Moe's/CAVA/Subway three added 2026-07-18).
+tests + VM/parser unit tests. **16 chain presets shipped** (272 components): Chipotle, Qdoba,
+Moe's, CAVA, Subway, Panda Express, Culver's, Taco Bell, Jersey Mike's, Blaze Pizza, McAlister's
+Deli, McDonald's, Wendy's, Dairy Queen, Steak 'n Shake, Sweetgreen. Menu parsing also accepts
+**pasted text** (not just a URL), so any other chain can be added by pasting its nutrition.
 
 *Still open from this round:*
 - **Image-only menu PDFs** (Salsa Grille's own menu is a designed PDF that may carry no
   extractable text — the parse 422s toward the manual builder): render PDF pages to images
   through the existing vision pipeline so even rasterized menus parse.
 - **More presets** as the household visits more chains — `assets/restaurant_presets.json` is the
-  only file to touch (PresetParserTest gates its shape). Added Moe's / CAVA / Subway 2026-07-18;
-  next candidates: Panda Express, Sweetgreen, Panera.
+  only file to touch (PresetParserTest gates its shape). Macros for the non-Tex-Mex chains come
+  from **FatSecret's server-rendered nutrition tables** (WebFetch) since the chains' own pages are
+  JS-walled — no API key needed. 16 chains shipped as of 2026-07-19. "Yummy Bowl" (a local spot)
+  has no published nutrition — that's a paste-text / manual-build case, which the parser now supports.
 - **Restaurant-labeled diary entries** ("Salsa Grille: Cilantro Lime Rice" instead of the linked
   food's name) — needs a decision on widening `FoodLogEntry.name` beyond quick-add.
 

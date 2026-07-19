@@ -77,9 +77,11 @@ validated structured output, no tool access). Two surfaces:
   (`voice_prompts` → `{food, quantity, unit}`, Pydantic-shaped, forgiving parser), resolves each
   spoken food against the **trusted food search** for real macros, and returns the same editable
   `PhotoEstimateResponse` draft (unresolved foods kept as low-confidence stubs). Never auto-logged.
-- **Menu-link parsing** (`POST /restaurants/parse-menu`) — the voice pattern applied to a fetched
-  restaurant menu: `services/menu_fetch.py` (plain IO, deliberately outside `ai/`) fetches the
-  URL, then `menu_prompts`/`menu.py` structure it into categorized components. Nutrition stated on
+- **Menu parsing** (`POST /restaurants/parse-menu`) — the voice pattern applied to a restaurant
+  menu from **exactly one of** `url` (fetched) or `text` (pasted menu/nutrition text, no fetch —
+  the robust path when a chain's nutrition lives on a JS page the server can't fetch). For a URL,
+  `services/menu_fetch.py` (plain IO, deliberately outside `ai/`) fetches it; then
+  `menu_prompts`/`menu.py` structure the text into categorized components. Nutrition stated on
   the page is carried **verbatim** (`official` block, minted into a `Food(brand=<restaurant>)` on
   save); otherwise a generic `search_term` resolves against trusted search (estimate). The parse
   is a draft response only — nothing persists until the client POSTs `/restaurants`. **Fetch
@@ -104,8 +106,10 @@ rows, `0006` adds `restaurants`/`restaurant_components` — components keep thei
 `name` and a `food_id` SET NULL link, the `recipe_items` semantics, plus a `shared` flag:
 shared restaurants are readable/loggable by **every account on the server** (log entries land
 under the caller), while edit/replace/delete stay owner-only — a chain's menu is shared data,
-the household exception to the otherwise strict per-user isolation). Migrate-on-boot. 35 pytest
-files; CI also runs
+the household exception to the otherwise strict per-user isolation). **`default_checked` is the
+owner's private "usual order" pre-tick config, not shared menu structure: `_to_out` surfaces it
+only to the owner (`False` for other viewers), so one account's pre-ticks never show up
+pre-checked on another's log sheet.** Migrate-on-boot. 35 pytest files; CI also runs
 `ruff format --check` (run it locally before pushing). Local recipe (CLAUDE.md "Testing"):
 throwaway Postgres container, `DATABASE_URL` on **127.0.0.1**, `DB_NULLPOOL` — the live
 `server/.env` DB password is deliberately stale for pytest purposes. One env-dependent local-only

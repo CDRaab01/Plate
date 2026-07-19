@@ -196,15 +196,40 @@ class RestaurantLogRequest(BaseModel):
 
 
 class MenuParseRequest(BaseModel):
-    url: str
+    """Parse a menu into a component draft from **exactly one** source:
+
+    * ``url`` — the server fetches it (HTML/PDF), or
+    * ``text`` — pasted menu/nutrition text, parsed directly (no fetch). This is the robust path
+      for chains whose nutrition lives on JavaScript pages the server can't fetch.
+    """
+
+    url: str | None = None
+    text: str | None = None
 
     @field_validator("url")
     @classmethod
-    def url_http(cls, v: str) -> str:
+    def url_http(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         v = v.strip()
+        if not v:
+            return None
         if not v.lower().startswith(("http://", "https://")):
             raise ValueError("url must be http(s)")
         return v
+
+    @field_validator("text")
+    @classmethod
+    def text_nonempty(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return v.strip() or None
+
+    @model_validator(mode="after")
+    def one_source(self) -> "MenuParseRequest":
+        if bool(self.url) == bool(self.text):
+            raise ValueError("provide exactly one of url or text")
+        return self
 
 
 class MenuParseComponent(BaseModel):
@@ -235,7 +260,7 @@ class MenuParseResponse(BaseModel):
     """An editable draft, never persisted server-side — the client edits and POSTs /restaurants."""
 
     restaurant_name: str | None = None
-    menu_url: str
+    menu_url: str | None = None  # None when parsed from pasted text
     components: list[MenuParseComponent]
     low_confidence: bool
     note: str | None = None

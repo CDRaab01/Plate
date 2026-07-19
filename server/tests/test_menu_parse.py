@@ -230,8 +230,14 @@ GOOD_REPLY = json.dumps(
 )
 
 
-async def _call_parse(auth_client, monkeypatch, *, reply=None, lm_handler=None, food=None):
-    """Drive POST /restaurants/parse-menu with injected fetch/search/LM (no network)."""
+async def _call_parse(
+    auth_client, monkeypatch, *, reply=None, lm_handler=None, food=None, body=None
+):
+    """Drive POST /restaurants/parse-menu with injected fetch/search/LM (no network).
+
+    ``body`` defaults to a URL request; pass ``{"text": "..."}`` to exercise the paste-text path.
+    ``fake_fetch`` raises if a text request ever reaches the fetch path (it must not).
+    """
     import app.routers.restaurants as restaurants_router
     from app.services.ai import menu as menu_service
 
@@ -248,13 +254,15 @@ async def _call_parse(auth_client, monkeypatch, *, reply=None, lm_handler=None, 
 
     client = _mock_client(lm_handler or default_handler)
 
-    async def patched(url, db, user_id):
+    async def patched(db, user_id, *, url=None, text=None):
         return await menu_service.parse_menu(
-            url, db, user_id, client=client, fetch=fake_fetch, search=fake_search
+            db, user_id, url=url, text=text, client=client, fetch=fake_fetch, search=fake_search
         )
 
     monkeypatch.setattr(restaurants_router, "parse_menu", patched)
-    return await auth_client.post("/restaurants/parse-menu", json={"url": "https://x.example/m"})
+    return await auth_client.post(
+        "/restaurants/parse-menu", json=body or {"url": "https://x.example/m"}
+    )
 
 
 async def test_parse_menu_endpoint_official_and_estimate(auth_client, recipe_food, monkeypatch):
@@ -335,3 +343,26 @@ async def test_parse_menu_requires_auth(client):
 async def test_parse_menu_rejects_non_http_url(auth_client):
     resp = await auth_client.post("/restaurants/parse-menu", json={"url": "notaurl"})
     assert resp.status_code == 422
+
+
+async def test_parse_menu_from_pasted_text(auth_client, recipe_food, monkeypatch):
+    """The paste-text path parses directly with no fetch; menu_url comes back null."""
+    resp = await _call_parse(
+        auth_client, monkeypatch, reply=GOOD_REPLY, food=recipe_food,
+        body={"text": "Cilantro Lime Rice ... Chicken 180 cal ..."},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["menu_url"] is None
+    assert body["restaurant_name"] == "Salsa Grille"
+    assert len(body["components"]) == 3
+
+
+async def test_parse_menu_requires_exactly_one_source(auth_client):
+    # Neither url nor text.
+    assert (await auth_client.post("/restaurants/parse-menu", json={})).status_code == 422
+    # Both at once.
+    both = await auth_client.post(
+        "/restaurants/parse-menu", json={"url": "https://x.example/m", "text": "menu"}
+    )
+    assert both.status_code == 422

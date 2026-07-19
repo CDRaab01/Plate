@@ -65,6 +65,7 @@ fun RestaurantEditScreen(
 
     val name by viewModel.name.collectAsState()
     val menuUrl by viewModel.menuUrl.collectAsState()
+    val menuText by viewModel.menuText.collectAsState()
     val shared by viewModel.shared.collectAsState()
     val components by viewModel.components.collectAsState()
     val newCategory by viewModel.newCategory.collectAsState()
@@ -126,6 +127,23 @@ fun RestaurantEditScreen(
                     enabled = parseState !is UiState.Loading,
                 ) { Text("Parse") }
             }
+
+            SectionHeader("Or paste the menu / nutrition", channel = PlateTheme.pulse.carbs)
+            Caption("Copy a chain's nutrition table (or menu) and paste it here — works when a link won't load.")
+            OutlinedTextField(
+                value = menuText,
+                onValueChange = viewModel::setMenuText,
+                label = { Text("Paste menu or nutrition text") },
+                minLines = 3,
+                maxLines = 8,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = viewModel::parseText,
+                enabled = parseState !is UiState.Loading && menuText.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Parse pasted text") }
+
             when (val p = parseState) {
                 is UiState.Loading -> Caption("Reading the menu…")
                 is UiState.Success -> p.data?.let { Caption(it) }

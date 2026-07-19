@@ -22,8 +22,9 @@ interface RestaurantRepository {
     suspend fun replaceComponents(id: String, components: List<RestaurantComponentIn>): RestaurantOut
     suspend fun delete(id: String)
 
-    /** Fetch + parse a menu URL into an editable component draft (never persisted server-side). */
-    suspend fun parseMenu(url: String): MenuParseResponse
+    /** Parse a menu into an editable component draft — from a URL (fetched) or pasted text.
+     *  Exactly one of [url]/[text] should be non-null. Never persisted server-side. */
+    suspend fun parseMenu(url: String? = null, text: String? = null): MenuParseResponse
 
     /** Log the ticked components for [date]/[meal]; returns how many entries were created. */
     suspend fun log(id: String, date: String, meal: String, selections: List<RestaurantLogSelection>): Int
