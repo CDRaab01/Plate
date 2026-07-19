@@ -93,7 +93,9 @@ fun RestaurantListScreen(
             Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
                 Text("Add a chain", style = MaterialTheme.typography.titleLarge)
                 Caption("Curated from each chain's published nutrition — editable after adding.")
-                presets.forEach { preset ->
+                // Defensive: a malformed bundle entry with a blank name would render as an empty,
+                // tappable card — skip those rather than show a nameless row.
+                presets.filter { it.name.isNotBlank() && it.components.isNotEmpty() }.forEach { preset ->
                     PanelCard(
                         modifier = Modifier
                             .fillMaxWidth()
