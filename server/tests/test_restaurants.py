@@ -69,6 +69,26 @@ async def test_create_computes_component_macros_and_order(auth_client, recipe_fo
     assert rice["kcal"] == 133.5
 
 
+async def test_default_checked_does_not_leak_to_other_accounts(auth_client, client, recipe_food):
+    """Regression: `default_checked` is the owner's private "usual order" pre-tick config. On a
+    shared restaurant it must NOT show up pre-checked on another account's log sheet."""
+    created = await _make_restaurant(auth_client, recipe_food, shared=True)
+    assert created["components"][0]["default_checked"] is True  # owner sees their own default
+
+    other = await _register(client)
+    client.headers["Authorization"] = f"Bearer {other}"
+
+    one = await client.get(f"/restaurants/{created['id']}")
+    assert one.status_code == 200
+    assert one.json()["is_owner"] is False
+    # The non-owner gets a clean sheet — no pre-ticks leaked from the owner.
+    assert all(c["default_checked"] is False for c in one.json()["components"])
+
+    listed = await client.get("/restaurants")
+    row = next(r for r in listed.json() if r["id"] == created["id"])
+    assert all(c["default_checked"] is False for c in row["components"])
+
+
 async def test_list_and_get(auth_client, recipe_food):
     created = await _make_restaurant(auth_client, recipe_food)
     lst = await auth_client.get("/restaurants")

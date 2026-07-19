@@ -75,6 +75,11 @@ def _component_snapshot(
 
 
 def _to_out(restaurant: Restaurant, user_id: uuid.UUID) -> RestaurantOut:
+    # `default_checked` is the owner's "my usual order" pre-tick config. On a *shared* restaurant it
+    # must stay private to the owner — otherwise one account's pre-ticks show up pre-checked on
+    # everyone else's log sheet (the components table is shared, so the flag is inherently global).
+    # Non-owners always get a clean sheet (all False) and tick their own.
+    is_owner = restaurant.user_id == user_id
     component_outs: list[RestaurantComponentOut] = []
     for comp in restaurant.components:
         snap = _component_snapshot(comp)
@@ -88,7 +93,7 @@ def _to_out(restaurant: Restaurant, user_id: uuid.UUID) -> RestaurantOut:
                 quantity=comp.quantity,
                 unit=comp.unit,
                 order=comp.order,
-                default_checked=comp.default_checked,
+                default_checked=comp.default_checked if is_owner else False,
                 kcal=None if snap is None else snap.kcal,
                 protein_g=None if snap is None else snap.protein_g,
                 carbs_g=None if snap is None else snap.carbs_g,
@@ -101,7 +106,7 @@ def _to_out(restaurant: Restaurant, user_id: uuid.UUID) -> RestaurantOut:
         menu_url=restaurant.menu_url,
         notes=restaurant.notes,
         shared=restaurant.shared,
-        is_owner=restaurant.user_id == user_id,
+        is_owner=is_owner,
         components=component_outs,
     )
 

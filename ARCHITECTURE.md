@@ -104,8 +104,10 @@ rows, `0006` adds `restaurants`/`restaurant_components` — components keep thei
 `name` and a `food_id` SET NULL link, the `recipe_items` semantics, plus a `shared` flag:
 shared restaurants are readable/loggable by **every account on the server** (log entries land
 under the caller), while edit/replace/delete stay owner-only — a chain's menu is shared data,
-the household exception to the otherwise strict per-user isolation). Migrate-on-boot. 35 pytest
-files; CI also runs
+the household exception to the otherwise strict per-user isolation). **`default_checked` is the
+owner's private "usual order" pre-tick config, not shared menu structure: `_to_out` surfaces it
+only to the owner (`False` for other viewers), so one account's pre-ticks never show up
+pre-checked on another's log sheet.** Migrate-on-boot. 35 pytest files; CI also runs
 `ruff format --check` (run it locally before pushing). Local recipe (CLAUDE.md "Testing"):
 throwaway Postgres container, `DATABASE_URL` on **127.0.0.1**, `DB_NULLPOOL` — the live
 `server/.env` DB password is deliberately stale for pytest purposes. One env-dependent local-only
