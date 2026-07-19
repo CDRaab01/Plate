@@ -4707,7 +4707,7 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Breakfast",
           "name": "Bacon, Gouda & Egg Sandwich",
           "macros": {
             "serving_desc": "1 item",
@@ -4721,7 +4721,21 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Breakfast",
+          "name": "Double-Smoked Bacon, Cheddar & Egg Sandwich",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 500,
+            "protein_g": 23,
+            "carbs_g": 40,
+            "fat_g": 27
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
           "name": "Sausage, Cheddar & Egg Sandwich",
           "macros": {
             "serving_desc": "1 item",
@@ -4735,21 +4749,21 @@
           "default_checked": false
         },
         {
-          "category": "Food",
-          "name": "Spinach, Feta & Egg White Wrap",
+          "category": "Breakfast",
+          "name": "Turkey Bacon, Cheddar & Egg White Sandwich",
           "macros": {
             "serving_desc": "1 item",
-            "kcal": 290,
-            "protein_g": 20,
-            "carbs_g": 34,
-            "fat_g": 8
+            "kcal": 230,
+            "protein_g": 17,
+            "carbs_g": 28,
+            "fat_g": 5
           },
           "quantity": 1.0,
           "unit": "serving",
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Breakfast",
           "name": "Impossible Breakfast Sandwich",
           "macros": {
             "serving_desc": "1 item",
@@ -4763,7 +4777,91 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Breakfast",
+          "name": "Chicken, Maple Butter & Egg Sandwich",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 440,
+            "protein_g": 19,
+            "carbs_g": 43,
+            "fat_g": 22
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Spinach, Feta & Egg White Wrap",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 290,
+            "protein_g": 20,
+            "carbs_g": 34,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Bacon & Gruyère Egg Bites",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 300,
+            "protein_g": 19,
+            "carbs_g": 13,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Egg White & Roasted Red Pepper Egg Bites",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 170,
+            "protein_g": 13,
+            "carbs_g": 11,
+            "fat_g": 8
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Kale & Portabella Mushroom Egg Bites",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 230,
+            "protein_g": 15,
+            "carbs_g": 11,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Breakfast",
+          "name": "Rolled & Steel-Cut Oatmeal (plain)",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 160,
+            "protein_g": 5,
+            "carbs_g": 28,
+            "fat_g": 2.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
           "name": "Butter Croissant",
           "macros": {
             "serving_desc": "1 item",
@@ -4777,7 +4875,7 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Bakery",
           "name": "Chocolate Croissant",
           "macros": {
             "serving_desc": "1 item",
@@ -4791,7 +4889,49 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Bakery",
+          "name": "Almond Croissant",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 340,
+            "protein_g": 8,
+            "carbs_g": 34,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Ham & Swiss Croissant",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 320,
+            "protein_g": 14,
+            "carbs_g": 30,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Cheese Danish",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 290,
+            "protein_g": 6,
+            "carbs_g": 32,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
           "name": "Blueberry Muffin",
           "macros": {
             "serving_desc": "1 item",
@@ -4805,7 +4945,63 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Bakery",
+          "name": "Pumpkin Cream Cheese Muffin",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 420,
+            "protein_g": 8,
+            "carbs_g": 53,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Banana Walnut & Pecan Bread",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 420,
+            "protein_g": 6,
+            "carbs_g": 57,
+            "fat_g": 22
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Iced Lemon Loaf",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 470,
+            "protein_g": 6,
+            "carbs_g": 68,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Pumpkin Bread",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 390,
+            "protein_g": 6,
+            "carbs_g": 61,
+            "fat_g": 14
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
           "name": "Petite Vanilla Bean Scone",
           "macros": {
             "serving_desc": "1 item",
@@ -4819,7 +5015,21 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Bakery",
+          "name": "Blueberry Scone",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 320,
+            "protein_g": 6,
+            "carbs_g": 45,
+            "fat_g": 13
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
           "name": "Chocolate Chip Cookie",
           "macros": {
             "serving_desc": "1 item",
@@ -4833,7 +5043,35 @@
           "default_checked": false
         },
         {
-          "category": "Food",
+          "category": "Bakery",
+          "name": "Birthday Cake Pop",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 160,
+            "protein_g": 2,
+            "carbs_g": 23,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Chocolate Cake Pop",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 150,
+            "protein_g": 1,
+            "carbs_g": 22,
+            "fat_g": 7
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
           "name": "Everything Bagel",
           "macros": {
             "serving_desc": "1 item",
@@ -4847,14 +5085,168 @@
           "default_checked": false
         },
         {
-          "category": "Food",
-          "name": "Banana Walnut & Pecan Bread",
+          "category": "Bakery",
+          "name": "Plain Bagel",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 280,
+            "protein_g": 11,
+            "carbs_g": 55,
+            "fat_g": 1.5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bakery",
+          "name": "Marshmallow Dream Bar",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 240,
+            "protein_g": 2,
+            "carbs_g": 43,
+            "fat_g": 6
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Crispy Grilled Cheese on Sourdough",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 520,
+            "protein_g": 20,
+            "carbs_g": 44,
+            "fat_g": 30
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Tomato & Mozzarella on Focaccia",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 400,
+            "protein_g": 15,
+            "carbs_g": 45,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Turkey, Provolone & Pesto on Ciabatta",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 520,
+            "protein_g": 28,
+            "carbs_g": 46,
+            "fat_g": 24
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Chicken & Bacon on Brioche",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 400,
+            "protein_g": 24,
+            "carbs_g": 35,
+            "fat_g": 18
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Grilled Chicken & Hummus Protein Box",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 300,
+            "protein_g": 20,
+            "carbs_g": 33,
+            "fat_g": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Cheese & Fruit Protein Box",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 470,
+            "protein_g": 21,
+            "carbs_g": 40,
+            "fat_g": 26
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Eggs & Cheese Protein Box",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 470,
+            "protein_g": 23,
+            "carbs_g": 39,
+            "fat_g": 25
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "PB&J Protein Box",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 520,
+            "protein_g": 15,
+            "carbs_g": 72,
+            "fat_g": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "Chicken & Quinoa Protein Bowl",
           "macros": {
             "serving_desc": "1 item",
             "kcal": 420,
+            "protein_g": 27,
+            "carbs_g": 42,
+            "fat_g": 16
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Lunch & Snacks",
+          "name": "String Cheese",
+          "macros": {
+            "serving_desc": "1 item",
+            "kcal": 80,
             "protein_g": 6,
-            "carbs_g": 57,
-            "fat_g": 22
+            "carbs_g": 1,
+            "fat_g": 6
           },
           "quantity": 1.0,
           "unit": "serving",
