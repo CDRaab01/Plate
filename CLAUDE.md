@@ -155,6 +155,15 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 
 ## Build log
 
+- **2026-07-19 — Restaurant add-flow guards (owner: "prevent this happening again").** Two guards
+  so a chain that won't parse can't leave a dead-end: (1) **no empty restaurant** —
+  `create_restaurant`/`replace_components` 422 on zero components (ownership checked first), and the
+  editor VM blocks save client-side; mirrors recipes' ≥1-ingredient rule. (2) **preset-first
+  suggestion** — the editor loads the bundled presets and, via a pure `matchPreset` (case-insensitive
+  prefix, ≥2 chars), offers "Use the <chain> preset" while the draft is empty; `applyPreset` fills the
+  draft (self-hides once components exist). Server 446 green; new `matchPreset`/`applyPreset`/empty-save
+  unit tests + server empty-guard tests.
+
 - **2026-07-19 — Restaurant parse error surfacing + Starbucks preset (owner report).** A menu-link
   parse of `starbucks.com/menu` showed a bare "HTTP 422": the client dropped the server's helpful
   `detail`. `util/ErrorMessages.userMessage` now extracts the FastAPI `{"detail": "..."}` from a

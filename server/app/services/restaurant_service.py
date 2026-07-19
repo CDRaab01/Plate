@@ -36,6 +36,10 @@ from app.schemas.restaurant import (
 )
 
 _NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurant not found")
+_NO_COMPONENTS = HTTPException(
+    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    detail="Add at least one item before saving the restaurant.",
+)
 
 
 def _scaled(value: float | None, factor: float) -> float | None:
@@ -196,6 +200,10 @@ def _build_components(
 async def create_restaurant(
     db: AsyncSession, user_id: uuid.UUID, req: RestaurantCreate
 ) -> RestaurantOut:
+    # A componentless restaurant is a dead-end card (nothing to log). Require one item, mirroring
+    # the recipe editor's "add at least one ingredient" rule.
+    if not req.components:
+        raise _NO_COMPONENTS
     restaurant = Restaurant(
         user_id=user_id,
         name=req.name,
@@ -250,7 +258,9 @@ async def replace_components(
     restaurant_id: uuid.UUID,
     components: list[RestaurantComponentIn],
 ) -> RestaurantOut:
-    restaurant = await _load_owned_restaurant(db, user_id, restaurant_id)
+    restaurant = await _load_owned_restaurant(db, user_id, restaurant_id)  # ownership before shape
+    if not components:
+        raise _NO_COMPONENTS  # editing down to zero would strand an unloggable restaurant
     restaurant.components = _build_components(restaurant.name, components)  # delete-orphan clears
     await db.commit()
     return _to_out(await _reload(db, restaurant.id), user_id)

@@ -73,6 +73,7 @@ fun RestaurantEditScreen(
     val results by viewModel.results.collectAsState()
     val parseState by viewModel.parseState.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val presetSuggestion by viewModel.presetSuggestion.collectAsState()
 
     LaunchedEffect(saveState) { if (saveState is UiState.Success) onDone() }
 
@@ -104,6 +105,15 @@ fun RestaurantEditScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            presetSuggestion?.let { preset ->
+                Button(
+                    onClick = { viewModel.applyPreset(preset) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Use the ${preset.name} preset (${preset.components.size} items)")
+                }
+                Caption("Prefilled from ${preset.name}'s official menu — edit anything before saving.")
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Shared", style = MaterialTheme.typography.bodyLarge)
