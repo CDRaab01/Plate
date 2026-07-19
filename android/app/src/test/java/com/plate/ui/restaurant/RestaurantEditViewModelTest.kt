@@ -12,16 +12,19 @@ import com.plate.data.remote.RestaurantLogSelection
 import com.plate.data.remote.RestaurantOut
 import com.plate.data.repository.FoodRepository
 import com.plate.data.repository.RestaurantRepository
+import android.content.Context
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 private fun parsedComponent(
     category: String,
@@ -102,7 +105,58 @@ class RestaurantEditViewModelTest {
     @get:Rule
     val dispatcherRule = MainDispatcherRule()
 
+    // A bare mock Context has no assets — preset loading degrades to an empty list, which the
+    // init block swallows. `presetSuggestion` needs no assets in these tests; the pure matcher and
+    // applyPreset are exercised directly.
+    private val context: Context = mock()
+
+    private fun preset(name: String, vararg components: RestaurantComponentIn) =
+        RestaurantPreset(name = name, menuUrl = "https://x/menu", components = components.toList())
+
     // ── Pure helpers ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `matchPreset does a case-insensitive prefix match once 2+ chars are typed`() {
+        val presets = listOf(preset("Starbucks"), preset("Subway"), preset("Chipotle"))
+        assertEquals("Starbucks", matchPreset("star", presets)?.name)
+        assertEquals("Starbucks", matchPreset("  STARBUCKS ", presets)?.name)
+        assertEquals("Subway", matchPreset("Sub", presets)?.name)
+        assertNull("single char is too little to match", matchPreset("s", presets))
+        assertNull(matchPreset("wendys", presets))
+    }
+
+    @Test
+    fun `applyPreset fills the name, link, and component drafts`() {
+        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository(), context)
+        vm.applyPreset(
+            preset(
+                "Starbucks",
+                RestaurantComponentIn(
+                    category = "Food",
+                    name = "Butter Croissant",
+                    macros = ComponentMacrosIn(kcal = 260.0, proteinG = 5.0, carbsG = 30.0, fatG = 14.0),
+                ),
+            ),
+        )
+        assertEquals("Starbucks", vm.name.value)
+        assertEquals(1, vm.components.value.size)
+        val c = vm.components.value.single()
+        assertEquals("Butter Croissant", c.name)
+        assertNull(c.foodId)
+        assertNotNull(c.macros)
+        assertEquals(260.0, c.macros!!.kcal, 0.001)
+    }
+
+    @Test
+    fun `save refuses a restaurant with no components`() = runTest {
+        val repo = EditFakeRestaurantRepository()
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository(), context)
+        vm.setName("Starbucks")
+        vm.save()
+        advanceUntilIdle()
+        assertTrue(vm.saveState.value is UiState.Error)
+        assertNull("no server call for an empty restaurant", repo.createdComponents)
+    }
 
     @Test
     fun `groupByCategory preserves first-appearance order`() {
@@ -155,7 +209,7 @@ class RestaurantEditViewModelTest {
     fun `parseMenu merges the draft and prefills a blank name`() = runTest {
         val repo = EditFakeRestaurantRepository()
         repo.parseResponse = parse(parsedComponent("Protein", "Chicken", official = true))
-        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository(), context)
         vm.setMenuUrl("https://x.example/menu")
         vm.parseMenu()
         advanceUntilIdle()
@@ -166,7 +220,7 @@ class RestaurantEditViewModelTest {
 
     @Test
     fun `parseMenu with no url errors without a server call`() = runTest {
-        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository(), context)
         vm.parseMenu()
         assertTrue(vm.parseState.value is UiState.Error)
     }
@@ -175,7 +229,7 @@ class RestaurantEditViewModelTest {
     fun `parseText sends pasted text (not a url) and merges the draft`() = runTest {
         val repo = EditFakeRestaurantRepository()
         repo.parseResponse = parse(parsedComponent("Protein", "Chicken", official = true))
-        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository(), context)
         vm.setMenuText("Chicken 180 cal 32g protein ...")
         vm.parseText()
         advanceUntilIdle()
@@ -188,7 +242,7 @@ class RestaurantEditViewModelTest {
     @Test
     fun `parseText with no text errors without a server call`() = runTest {
         val repo = EditFakeRestaurantRepository()
-        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository(), context)
         vm.parseText()
         assertTrue(vm.parseState.value is UiState.Error)
         assertNull(repo.parsedText)
@@ -201,7 +255,7 @@ class RestaurantEditViewModelTest {
             parsedComponent("Protein", "Chicken", official = true),
             parsedComponent("Rice", "Cilantro Lime Rice"),
         )
-        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(repo, EditFakeFoodRepository(), context)
         vm.setName("Salsa Grille")
         vm.setMenuUrl("https://x.example/menu")
         vm.setShared(false)
@@ -220,7 +274,7 @@ class RestaurantEditViewModelTest {
 
     @Test
     fun `save without a name errors`() = runTest {
-        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository())
+        val vm = RestaurantEditViewModel(EditFakeRestaurantRepository(), EditFakeFoodRepository(), context)
         vm.save()
         assertTrue(vm.saveState.value is UiState.Error)
     }

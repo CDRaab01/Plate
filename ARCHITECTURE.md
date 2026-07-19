@@ -88,8 +88,16 @@ validated structured output, no tool access). Two surfaces:
   policy:** http(s) only, SSRF guard rejecting private/loopback/link-local hosts re-run per
   redirect hop (`MENU_FETCH_BLOCK_PRIVATE_IPS=false` opts a homelab out; DNS-rebinding between
   check and fetch is accepted residual risk for a personal deploy), 5 MB streaming cap, 15 s
-  timeout, HTML via a stdlib tag-stripper, PDFs via pypdf (an image-only PDF 422s toward the
-  manual builder). Rate limit 5/min — each call is an outbound fetch plus an LM completion.
+  timeout, HTML via a stdlib tag-stripper, PDFs via pypdf (an image-only PDF, or a JS-rendered
+  page with no server-side menu text, 422s toward a preset / paste-text / manual build — the
+  client surfaces that `detail`, not a bare status). Rate limit 5/min — each call is an outbound
+  fetch plus an LM completion.
+- **Empty-restaurant guard** — `create_restaurant` and `replace_components` reject a componentless
+  restaurant (422), mirroring the recipe editor's "≥1 ingredient" rule; the editor VM blocks it
+  client-side first. Prevents the unloggable dead-end card.
+- **Preset-first suggestion** — the editor matches a typed name against the bundled presets
+  (`matchPreset`, pure) and offers "Use the <chain> preset" while the draft is still empty, so a
+  JS-walled chain is one tap away instead of a doomed parse.
 
 ### Cross-app auth (both directions)
 

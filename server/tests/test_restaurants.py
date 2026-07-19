@@ -5,6 +5,7 @@ Sharing model under test: restaurants default ``shared`` — another account can
 hides them entirely. A component's inline ``macros`` block mints an official food branded with
 the restaurant's name.
 """
+
 import uuid
 
 DAY = "2026-07-18"
@@ -130,6 +131,22 @@ async def test_replace_components(auth_client, recipe_food):
     assert len(body["components"]) == 1
     assert body["components"][0]["name"] == "Queso"
     assert body["components"][0]["order"] == 0
+
+
+async def test_create_rejects_empty_components(auth_client):
+    """A componentless restaurant is an unloggable dead-end — 422, mirroring the client guard."""
+    resp = await auth_client.post("/restaurants", json={"name": "Starbucks", "components": []})
+    assert resp.status_code == 422
+    assert "at least one" in resp.json()["detail"].lower()
+
+
+async def test_replace_components_rejects_empty(auth_client, recipe_food):
+    """Editing an existing restaurant down to zero components is refused too."""
+    created = await _make_restaurant(auth_client, recipe_food)
+    resp = await auth_client.put(
+        f"/restaurants/{created['id']}/components", json={"components": []}
+    )
+    assert resp.status_code == 422
 
 
 async def test_delete(auth_client, recipe_food):

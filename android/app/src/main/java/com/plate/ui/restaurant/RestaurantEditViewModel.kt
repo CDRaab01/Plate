@@ -1,5 +1,6 @@
 package com.plate.ui.restaurant
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.ComponentMacrosIn
@@ -11,8 +12,12 @@ import com.plate.data.repository.RestaurantRepository
 import com.plate.util.UiState
 import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -78,6 +83,18 @@ fun mergeParsedComponents(
 }
 
 /**
+ * The bundled preset a typed name points at, or null. Case-insensitive prefix match (so "star" or
+ * "starbucks" both suggest Starbucks) once the user has typed ≥2 chars; the first match wins.
+ * Steers people at the working path (import the chain) before they fight the JS-walled parser.
+ * Pure — unit-tested.
+ */
+fun matchPreset(input: String, presets: List<RestaurantPreset>): RestaurantPreset? {
+    val q = input.trim().lowercase()
+    if (q.length < 2) return null
+    return presets.firstOrNull { it.name.lowercase().startsWith(q) }
+}
+
+/**
  * Create or edit a restaurant template: name/link/shared + categorized component drafts, built by
  * hand (embedded food search, the recipe-editor pattern) or merged in from a parsed menu link.
  * Nothing touches the server until Save — the parse draft lives only in this VM (never
@@ -87,9 +104,12 @@ fun mergeParsedComponents(
 class RestaurantEditViewModel @Inject constructor(
     private val repository: RestaurantRepository,
     private val foodRepository: FoodRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private var editingId: String? = null
+
+    private val _presets = MutableStateFlow<List<RestaurantPreset>>(emptyList())
 
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name
@@ -106,6 +126,16 @@ class RestaurantEditViewModel @Inject constructor(
     private val _components = MutableStateFlow<List<ComponentDraft>>(emptyList())
     val components: StateFlow<List<ComponentDraft>> = _components
 
+    /**
+     * A bundled preset the typed name matches, surfaced only when creating a fresh restaurant that
+     * has no components yet — so applying it can't clobber a build already in progress, and we
+     * never nag while editing an existing one.
+     */
+    val presetSuggestion: StateFlow<RestaurantPreset?> =
+        combine(_name, _components, _presets) { name, components, presets ->
+            if (editingId != null || components.isNotEmpty()) null else matchPreset(name, presets)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     private val _newCategory = MutableStateFlow("")
     val newCategory: StateFlow<String> = _newCategory
 
@@ -120,6 +150,36 @@ class RestaurantEditViewModel @Inject constructor(
 
     private val _saveState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
     val saveState: StateFlow<UiState<Unit>> = _saveState
+
+    init {
+        viewModelScope.launch {
+            _presets.value = try {
+                PresetParser.parse(
+                    context.assets.open("restaurant_presets.json").bufferedReader().readText(),
+                )
+            } catch (e: Exception) {
+                emptyList() // a broken bundle just means no suggestions, never a crash
+            }
+        }
+    }
+
+    /** Fill the draft from a matched preset — the one-tap escape from a chain that won't parse. */
+    fun applyPreset(preset: RestaurantPreset) {
+        if (_name.value.isBlank()) _name.value = preset.name
+        if (_menuUrl.value.isBlank()) preset.menuUrl?.let { _menuUrl.value = it }
+        _components.value = preset.components.map {
+            ComponentDraft(
+                category = it.category,
+                name = it.name,
+                foodId = it.foodId,
+                macros = it.macros,
+                quantity = it.quantity,
+                unit = it.unit,
+                defaultChecked = it.defaultChecked,
+                kcal = it.macros?.kcal,
+            )
+        }
+    }
 
     /** Populate the editor from an existing restaurant (skip for a new one). */
     fun loadExisting(id: String) {
@@ -244,6 +304,10 @@ class RestaurantEditViewModel @Inject constructor(
         val name = _name.value.trim()
         if (name.isEmpty()) {
             _saveState.value = UiState.Error("Give the restaurant a name")
+            return
+        }
+        if (_components.value.isEmpty()) {
+            _saveState.value = UiState.Error("Add at least one item before saving")
             return
         }
         val componentsIn = _components.value.map { it.toIn() }
