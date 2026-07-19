@@ -4,7 +4,9 @@ Cookbook sends ``{name, quantity, unit}`` rows. Resolution is deliberately conse
 
 - Match: case-insensitive substring against the local ``foods`` cache (recipe-import foods
   excluded, like normal search), tightest name first — searching "chicken breast" prefers
-  "Chicken Breast" over "Chicken Breast, Rotisserie Seasoned".
+  "Chicken Breast" over "Chicken Breast, Rotisserie Seasoned". **On a cache miss we fall back to
+  the same live USDA/OFF search the app uses** (:func:`~app.services.food_service.search_foods`),
+  which caches new foods — otherwise a sparse cache resolves *nothing* (the "0 of N matched" bug).
 - Portion: :func:`~app.nutrition.portions.scale_food` does the math. Cooking units it can't
   ground (cups, tbsp — density depends on the food) mark the item unmatched rather than guess;
   lb/kg are canonicalized to oz/g first since recipes use them constantly. No quantity at all
@@ -16,6 +18,7 @@ estimates the user can judge — never silently wrong numbers (the Plate photo-l
 
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,11 +35,15 @@ from app.schemas.cross_app import (
     ResolveFoodsRequest,
     ResolveFoodsResponse,
 )
+from app.services.food_service import search_foods
 
 log = logging.getLogger(__name__)
 
 _POUND_UNITS = {"lb", "lbs", "pound", "pounds"}
 _KILO_UNITS = {"kg", "kgs", "kilogram", "kilograms"}
+
+# Injectable so tests drive resolution without the network (mirrors voice/menu resolution).
+SearchFn = Callable[[AsyncSession, str], Awaitable[object]]
 
 
 def _canonical_portion(item: CrossAppFoodItem) -> tuple[float, str]:
@@ -54,7 +61,8 @@ def _canonical_portion(item: CrossAppFoodItem) -> tuple[float, str]:
     return quantity, unit
 
 
-async def _best_match(db: AsyncSession, name: str) -> Food | None:
+async def _local_best_match(db: AsyncSession, name: str) -> Food | None:
+    """Tightest-name substring match against the cached ``foods`` table (recipe rows excluded)."""
     result = await db.execute(
         select(Food)
         .where(Food.name.ilike(f"%{name}%"), Food.source != "spoonacular")
@@ -64,10 +72,32 @@ async def _best_match(db: AsyncSession, name: str) -> Food | None:
     return result.scalar_one_or_none()
 
 
+async def _best_match(db: AsyncSession, name: str, search: SearchFn | None = None) -> Food | None:
+    """Best cached match; on a miss, enrich from live search (which caches) and retry.
+
+    Without the fallback a sparse ``foods`` cache resolves nothing — every ingredient comes back
+    unmatched even though the app could have found it. ``search`` is injectable for tests; in
+    production it's :func:`~app.services.food_service.search_foods` (a no-op when live search is
+    disabled, so CI stays offline).
+    """
+    match = await _local_best_match(db, name)
+    if match is not None:
+        return match
+    try:
+        if search is not None:
+            await search(db, name)
+        else:
+            await search_foods(db, name)
+    except Exception as exc:  # noqa: BLE001 — a flaky external source shouldn't sink resolution
+        log.warning("cross-app live resolve failed for %r: %s", name, exc)
+        return None
+    return await _local_best_match(db, name)
+
+
 async def _resolve_one(
-    db: AsyncSession, item: CrossAppFoodItem
+    db: AsyncSession, item: CrossAppFoodItem, search: SearchFn | None = None
 ) -> tuple[ResolvedFoodOut, Food | None, MacroSnapshot | None]:
-    food = await _best_match(db, item.name)
+    food = await _best_match(db, item.name, search)
     if food is None:
         return ResolvedFoodOut(name=item.name, matched=False), None, None
     quantity, unit = _canonical_portion(item)
@@ -91,19 +121,21 @@ async def _resolve_one(
     )
 
 
-async def resolve_foods(db: AsyncSession, req: ResolveFoodsRequest) -> ResolveFoodsResponse:
-    items = [(await _resolve_one(db, item))[0] for item in req.items]
+async def resolve_foods(
+    db: AsyncSession, req: ResolveFoodsRequest, search: SearchFn | None = None
+) -> ResolveFoodsResponse:
+    items = [(await _resolve_one(db, item, search))[0] for item in req.items]
     return ResolveFoodsResponse(items=items)
 
 
 async def log_cross_app_recipe(
-    db: AsyncSession, user_id: uuid.UUID, req: CrossAppLogRequest
+    db: AsyncSession, user_id: uuid.UUID, req: CrossAppLogRequest, search: SearchFn | None = None
 ) -> CrossAppLogResponse:
     """One snapshotted diary entry per resolvable item (the recipe-log history rule)."""
     logged = 0
     skipped = 0
     for item in req.items:
-        resolved, food, snap = await _resolve_one(db, item)
+        resolved, food, snap = await _resolve_one(db, item, search)
         if food is None or snap is None:
             skipped += 1
             continue
