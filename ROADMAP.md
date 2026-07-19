@@ -95,16 +95,18 @@ Restaurants default **shared** across the server's accounts (build a chain once,
 from it; owner-only edits). Three ways to build one: **paste a menu link** (server fetch → LM
 Studio structured parse → editable draft; page-stated nutrition carried verbatim as minted
 official foods, else USDA-generic estimates via trusted search — the voice-pipeline pattern),
-**manual build** (embedded food search), or **bundled chain presets** (Chipotle + Qdoba,
-transcribed from their official nutrition publications). Migration 0006; `/restaurants` API;
-`ui/restaurant/`; 46 new server tests + VM/parser unit tests.
+**manual build** (embedded food search), or **bundled chain presets** (transcribed from official
+nutrition publications). Migration 0006; `/restaurants` API; `ui/restaurant/`; 46 new server
+tests + VM/parser unit tests. **Presets shipped: Chipotle, Qdoba, Moe's Southwest Grill, CAVA,
+Subway** (5 chains, 131 components; the Moe's/CAVA/Subway three added 2026-07-18).
 
 *Still open from this round:*
 - **Image-only menu PDFs** (Salsa Grille's own menu is a designed PDF that may carry no
   extractable text — the parse 422s toward the manual builder): render PDF pages to images
   through the existing vision pipeline so even rasterized menus parse.
 - **More presets** as the household visits more chains — `assets/restaurant_presets.json` is the
-  only file to touch (PresetParserTest gates its shape).
+  only file to touch (PresetParserTest gates its shape). Added Moe's / CAVA / Subway 2026-07-18;
+  next candidates: Panda Express, Sweetgreen, Panera.
 - **Restaurant-labeled diary entries** ("Salsa Grille: Cilantro Lime Rice" instead of the linked
   food's name) — needs a decision on widening `FoodLogEntry.name` beyond quick-add.
 

@@ -817,6 +817,1514 @@
           "default_checked": false
         }
       ]
+    },
+    {
+      "name": "Moe's Southwest Grill",
+      "menu_url": "https://www.moes.com/nutrition",
+      "components": [
+        {
+          "category": "Base",
+          "name": "Burrito (12\" Flour Tortilla)",
+          "macros": {
+            "serving_desc": "1 tortilla",
+            "kcal": 300,
+            "protein_g": 8,
+            "carbs_g": 49,
+            "fat_g": 8,
+            "sodium_mg": 700
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Bowl (no tortilla)",
+          "macros": {
+            "serving_desc": "1 bowl",
+            "kcal": 0,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 0,
+            "sodium_mg": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Soft Taco (Flour Tortilla)",
+          "macros": {
+            "serving_desc": "1 shell",
+            "kcal": 90,
+            "protein_g": 2,
+            "carbs_g": 14,
+            "fat_g": 3,
+            "sodium_mg": 190
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Crispy Taco (Corn Tortilla)",
+          "macros": {
+            "serving_desc": "1 shell",
+            "kcal": 60,
+            "protein_g": 1,
+            "carbs_g": 7,
+            "fat_g": 3,
+            "sodium_mg": 5
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Adobo Chicken",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 120,
+            "protein_g": 19,
+            "carbs_g": 2,
+            "fat_g": 4,
+            "sodium_mg": 430
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Steak",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 130,
+            "protein_g": 16,
+            "carbs_g": 2,
+            "fat_g": 7,
+            "sodium_mg": 360
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Pork Carnitas",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 120,
+            "protein_g": 13,
+            "carbs_g": 1,
+            "fat_g": 7,
+            "sodium_mg": 400
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Ground Beef",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 130,
+            "protein_g": 12,
+            "carbs_g": 2,
+            "fat_g": 8,
+            "sodium_mg": 300
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Organic Tofu",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 90,
+            "protein_g": 8,
+            "carbs_g": 3,
+            "fat_g": 5,
+            "sodium_mg": 360
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Seasoned Rice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 150,
+            "protein_g": 3,
+            "carbs_g": 33,
+            "fat_g": 0,
+            "sodium_mg": 350
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Rice",
+          "name": "Cilantro Lime Rice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 150,
+            "protein_g": 3,
+            "carbs_g": 31,
+            "fat_g": 2,
+            "sodium_mg": 330
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Black Beans",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 70,
+            "protein_g": 4,
+            "carbs_g": 13,
+            "fat_g": 0,
+            "sodium_mg": 180
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Beans",
+          "name": "Pinto Beans",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 60,
+            "protein_g": 4,
+            "carbs_g": 11,
+            "fat_g": 0,
+            "sodium_mg": 200
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Shredded Cheese",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 110,
+            "protein_g": 7,
+            "carbs_g": 1,
+            "fat_g": 9,
+            "sodium_mg": 180
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Pico de Gallo",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 20,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "sodium_mg": 240
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Shredded Lettuce",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 5,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 0,
+            "sodium_mg": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Diced Onions",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 15,
+            "protein_g": 0,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "sodium_mg": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Black Olives",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 35,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 3.5,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Pickled Jalapenos",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 5,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 0,
+            "sodium_mg": 220
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Sour Cream",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 50,
+            "protein_g": 1,
+            "carbs_g": 1,
+            "fat_g": 5,
+            "sodium_mg": 20
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Guacamole",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 90,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 8,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Moe's Famous Queso",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 120,
+            "protein_g": 5,
+            "carbs_g": 5,
+            "fat_g": 9,
+            "sodium_mg": 430
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "El Guapo Salsa",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 15,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "sodium_mg": 210
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Tomatillo Salsa",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 20,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 0,
+            "sodium_mg": 240
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Habanero Salsa",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 40,
+            "protein_g": 1,
+            "carbs_g": 7,
+            "fat_g": 1,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "CAVA",
+      "menu_url": "https://cava.com/nutrition",
+      "components": [
+        {
+          "category": "Base",
+          "name": "Saffron Basmati Rice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 290,
+            "protein_g": 6,
+            "carbs_g": 54,
+            "fat_g": 6,
+            "fiber_g": 2,
+            "sugar_g": 0,
+            "sat_fat_g": 1,
+            "sodium_mg": 770
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Brown Rice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 310,
+            "protein_g": 8,
+            "carbs_g": 48,
+            "fat_g": 10,
+            "fiber_g": 5,
+            "sugar_g": 2,
+            "sat_fat_g": 1.5,
+            "sodium_mg": 770
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "RightRice",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 370,
+            "protein_g": 18,
+            "carbs_g": 53,
+            "fat_g": 10,
+            "fiber_g": 9,
+            "sugar_g": 0,
+            "sat_fat_g": 1,
+            "sodium_mg": 510
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Black Lentils",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 260,
+            "protein_g": 17,
+            "carbs_g": 37,
+            "fat_g": 7,
+            "fiber_g": 15,
+            "sugar_g": 3,
+            "sat_fat_g": 1,
+            "sodium_mg": 520
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "SuperGreens",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 40,
+            "protein_g": 3,
+            "carbs_g": 8,
+            "fat_g": 0,
+            "fiber_g": 4,
+            "sugar_g": 3,
+            "sat_fat_g": 0,
+            "sodium_mg": 30
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Base",
+          "name": "Baby Spinach",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 20,
+            "protein_g": 3,
+            "carbs_g": 3,
+            "fat_g": 0,
+            "fiber_g": 2,
+            "sugar_g": 0,
+            "sat_fat_g": 0,
+            "sodium_mg": 70
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Grilled Chicken",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 250,
+            "protein_g": 28,
+            "carbs_g": 3,
+            "fat_g": 13,
+            "fiber_g": 1,
+            "sugar_g": 0,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 150,
+            "sodium_mg": 670
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Harissa Honey Chicken",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 260,
+            "protein_g": 26,
+            "carbs_g": 7,
+            "fat_g": 14,
+            "fiber_g": 2,
+            "sugar_g": 3,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 135,
+            "sodium_mg": 670
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Grilled Steak",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 160,
+            "protein_g": 23,
+            "carbs_g": 1,
+            "fat_g": 8,
+            "fiber_g": 0,
+            "sugar_g": 0,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 85,
+            "sodium_mg": 260
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Braised Lamb",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 210,
+            "protein_g": 24,
+            "carbs_g": 2,
+            "fat_g": 12,
+            "fiber_g": 1,
+            "sugar_g": 0,
+            "sat_fat_g": 6,
+            "cholesterol_mg": 65,
+            "sodium_mg": 240
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Falafel",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 350,
+            "protein_g": 6,
+            "carbs_g": 24,
+            "fat_g": 26,
+            "fiber_g": 5,
+            "sugar_g": 3,
+            "sat_fat_g": 1.5,
+            "sodium_mg": 810
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Spicy Lamb Meatballs",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 300,
+            "protein_g": 24,
+            "carbs_g": 3,
+            "fat_g": 22,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sat_fat_g": 8,
+            "cholesterol_mg": 90,
+            "sodium_mg": 680
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Roasted Vegetables",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 100,
+            "protein_g": 3,
+            "carbs_g": 14,
+            "fat_g": 4.5,
+            "fiber_g": 5,
+            "sugar_g": 5,
+            "sat_fat_g": 0.5,
+            "sodium_mg": 600
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Hummus",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 45,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 2.5,
+            "fiber_g": 1,
+            "sugar_g": 0,
+            "sat_fat_g": 0,
+            "sodium_mg": 115
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Red Pepper Hummus",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 30,
+            "protein_g": 1,
+            "carbs_g": 4,
+            "fat_g": 1,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sat_fat_g": 0,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Tzatziki",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 35,
+            "protein_g": 2,
+            "carbs_g": 1,
+            "fat_g": 2.5,
+            "fiber_g": 0,
+            "sugar_g": 1,
+            "sat_fat_g": 1.5,
+            "cholesterol_mg": 10,
+            "sodium_mg": 60
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Crazy Feta",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 70,
+            "protein_g": 3,
+            "carbs_g": 1,
+            "fat_g": 6,
+            "sugar_g": 0,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 10,
+            "sodium_mg": 220
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Harissa",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 70,
+            "protein_g": 1,
+            "carbs_g": 5,
+            "fat_g": 6,
+            "fiber_g": 1,
+            "sugar_g": 2,
+            "sat_fat_g": 1,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dips & Spreads",
+          "name": "Roasted Eggplant",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 50,
+            "protein_g": 0,
+            "carbs_g": 2,
+            "fat_g": 4.5,
+            "fiber_g": 1,
+            "sugar_g": 0,
+            "sat_fat_g": 0.5,
+            "sodium_mg": 170
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Tomato + Onion",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 20,
+            "protein_g": 0,
+            "carbs_g": 2,
+            "fat_g": 2,
+            "sugar_g": 1,
+            "sat_fat_g": 0,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Persian Cucumber",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 15,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 1,
+            "sugar_g": 1,
+            "sat_fat_g": 0,
+            "sodium_mg": 110
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Kalamata Olives",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 50,
+            "protein_g": 0,
+            "carbs_g": 2,
+            "fat_g": 4.5,
+            "sugar_g": 0,
+            "sat_fat_g": 0,
+            "sodium_mg": 260
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Crumbled Feta",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 35,
+            "protein_g": 3,
+            "carbs_g": 0,
+            "fat_g": 2.5,
+            "sugar_g": 1,
+            "sat_fat_g": 2.3,
+            "cholesterol_mg": 10,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Fire-Roasted Corn",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 45,
+            "protein_g": 1,
+            "carbs_g": 5,
+            "fat_g": 3,
+            "fiber_g": 1,
+            "sugar_g": 2,
+            "sat_fat_g": 0,
+            "sodium_mg": 105
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Avocado",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 160,
+            "protein_g": 2,
+            "carbs_g": 9,
+            "fat_g": 15,
+            "fiber_g": 7,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "sodium_mg": 10
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Pickled Onions",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 20,
+            "protein_g": 0,
+            "carbs_g": 5,
+            "fat_g": 0,
+            "sugar_g": 4,
+            "sat_fat_g": 0,
+            "sodium_mg": 0
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Toppings",
+          "name": "Fiery Broccoli",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 35,
+            "protein_g": 1,
+            "carbs_g": 2,
+            "fat_g": 2.5,
+            "fiber_g": 1,
+            "sugar_g": 1,
+            "sat_fat_g": 0,
+            "sodium_mg": 170
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Greek Vinaigrette",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 130,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 14,
+            "sugar_g": 0,
+            "sat_fat_g": 2,
+            "sodium_mg": 230
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Lemon-Herb Tahini",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 70,
+            "protein_g": 2,
+            "carbs_g": 4,
+            "fat_g": 6,
+            "fiber_g": 2,
+            "sugar_g": 0,
+            "sat_fat_g": 1,
+            "sodium_mg": 140
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Tahini Caesar",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 90,
+            "protein_g": 2,
+            "carbs_g": 3,
+            "fat_g": 8,
+            "fiber_g": 1,
+            "sugar_g": 0,
+            "sat_fat_g": 1,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Balsamic Date Vinaigrette",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 60,
+            "protein_g": 0,
+            "carbs_g": 7,
+            "fat_g": 4,
+            "fiber_g": 1,
+            "sugar_g": 5,
+            "sat_fat_g": 0.5,
+            "sodium_mg": 250
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Skhug",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 80,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 9,
+            "sugar_g": 0,
+            "sat_fat_g": 1,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Dressings",
+          "name": "Garlic Dressing",
+          "macros": {
+            "serving_desc": "1 serving",
+            "kcal": 180,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 20,
+            "sugar_g": 0,
+            "sat_fat_g": 2,
+            "sodium_mg": 90
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
+    },
+    {
+      "name": "Subway",
+      "menu_url": "https://www.subway.com/en-us/menunutrition/nutrition",
+      "components": [
+        {
+          "category": "Bread",
+          "name": "Artisan Italian Bread (6\")",
+          "macros": {
+            "serving_desc": "6\" bread",
+            "serving_grams": 71,
+            "kcal": 200,
+            "protein_g": 7,
+            "carbs_g": 37,
+            "fat_g": 2,
+            "fiber_g": 1,
+            "sugar_g": 3,
+            "sat_fat_g": 1,
+            "sodium_mg": 370
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bread",
+          "name": "Hearty Multigrain (6\")",
+          "macros": {
+            "serving_desc": "6\" bread",
+            "serving_grams": 71,
+            "kcal": 200,
+            "protein_g": 9,
+            "carbs_g": 36,
+            "fat_g": 2,
+            "fiber_g": 3,
+            "sugar_g": 4,
+            "sat_fat_g": 0,
+            "sodium_mg": 360
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bread",
+          "name": "Italian Herbs & Cheese (6\")",
+          "macros": {
+            "serving_desc": "6\" bread",
+            "serving_grams": 82,
+            "kcal": 240,
+            "protein_g": 9,
+            "carbs_g": 40,
+            "fat_g": 5,
+            "fiber_g": 2,
+            "sugar_g": 3,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 10,
+            "sodium_mg": 560
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bread",
+          "name": "Jalape\u00f1o Cheddar (6\")",
+          "macros": {
+            "serving_desc": "6\" bread",
+            "serving_grams": 82,
+            "kcal": 230,
+            "protein_g": 9,
+            "carbs_g": 37,
+            "fat_g": 5,
+            "fiber_g": 2,
+            "sugar_g": 3,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 5,
+            "sodium_mg": 490
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bread",
+          "name": "Artisan Flatbread (6\")",
+          "macros": {
+            "serving_desc": "6\" flatbread",
+            "serving_grams": 78,
+            "kcal": 220,
+            "protein_g": 7,
+            "carbs_g": 40,
+            "fat_g": 4,
+            "fiber_g": 1,
+            "sugar_g": 2,
+            "sat_fat_g": 1,
+            "sodium_mg": 360
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Bread",
+          "name": "Wrap",
+          "macros": {
+            "serving_desc": "1 wrap",
+            "serving_grams": 102,
+            "kcal": 300,
+            "protein_g": 8,
+            "carbs_g": 50,
+            "fat_g": 8,
+            "fiber_g": 2,
+            "sugar_g": 2,
+            "sat_fat_g": 1,
+            "sodium_mg": 580
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Oven Roasted Turkey",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 57,
+            "kcal": 60,
+            "protein_g": 11,
+            "carbs_g": 0,
+            "fat_g": 2,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 25,
+            "sodium_mg": 450
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Black Forest Ham",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 57,
+            "kcal": 70,
+            "protein_g": 10,
+            "carbs_g": 2,
+            "fat_g": 2,
+            "sugar_g": 1,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 30,
+            "sodium_mg": 490
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Grilled Chicken",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 71,
+            "kcal": 80,
+            "protein_g": 16,
+            "carbs_g": 1,
+            "fat_g": 2,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 50,
+            "sodium_mg": 210
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Rotisserie-Style Chicken",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 71,
+            "kcal": 90,
+            "protein_g": 15,
+            "carbs_g": 0,
+            "fat_g": 4,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 50,
+            "sodium_mg": 400
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Roast Beef",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 71,
+            "kcal": 90,
+            "protein_g": 14,
+            "carbs_g": 2,
+            "fat_g": 3,
+            "sugar_g": 2,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 40,
+            "sodium_mg": 420
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Steak (no cheese)",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 71,
+            "kcal": 110,
+            "protein_g": 17,
+            "carbs_g": 2,
+            "fat_g": 5,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 55,
+            "sodium_mg": 450
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Tuna",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 74,
+            "kcal": 250,
+            "protein_g": 12,
+            "carbs_g": 0,
+            "fat_g": 23,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 40,
+            "sodium_mg": 310
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Meatballs",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 139,
+            "kcal": 250,
+            "protein_g": 12,
+            "carbs_g": 13,
+            "fat_g": 18,
+            "fiber_g": 2,
+            "sugar_g": 5,
+            "sat_fat_g": 7,
+            "cholesterol_mg": 35,
+            "sodium_mg": 720
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Cold Cut Combo Meats",
+          "macros": {
+            "serving_desc": "6\" portion",
+            "serving_grams": 64,
+            "kcal": 110,
+            "protein_g": 9,
+            "carbs_g": 1,
+            "fat_g": 8,
+            "sugar_g": 1,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 45,
+            "sodium_mg": 620
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Bacon (2 strips)",
+          "macros": {
+            "serving_desc": "2 strips",
+            "serving_grams": 15,
+            "kcal": 80,
+            "protein_g": 5,
+            "carbs_g": 1,
+            "fat_g": 6,
+            "sugar_g": 1,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 15,
+            "sodium_mg": 170
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Protein",
+          "name": "Veggie Patty",
+          "macros": {
+            "serving_desc": "1 patty",
+            "serving_grams": 85,
+            "kcal": 170,
+            "protein_g": 6,
+            "carbs_g": 17,
+            "fat_g": 9,
+            "fiber_g": 8,
+            "sugar_g": 2,
+            "sat_fat_g": 1,
+            "sodium_mg": 320
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cheese",
+          "name": "Provolone",
+          "macros": {
+            "serving_desc": "2 triangles",
+            "serving_grams": 14,
+            "kcal": 50,
+            "protein_g": 4,
+            "carbs_g": 0,
+            "fat_g": 4,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 10,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cheese",
+          "name": "Pepper Jack",
+          "macros": {
+            "serving_desc": "2 triangles",
+            "serving_grams": 14,
+            "kcal": 50,
+            "protein_g": 3,
+            "carbs_g": 0,
+            "fat_g": 4,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 15,
+            "sodium_mg": 140
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cheese",
+          "name": "Monterey Cheddar (shredded)",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 50,
+            "protein_g": 3,
+            "carbs_g": 1,
+            "fat_g": 5,
+            "sat_fat_g": 3,
+            "cholesterol_mg": 15,
+            "sodium_mg": 85
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Cheese",
+          "name": "Mozzarella (shredded)",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 45,
+            "protein_g": 3,
+            "carbs_g": 1,
+            "fat_g": 4,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 10,
+            "sodium_mg": 85
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Mayonnaise",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 100,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 11,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 10,
+            "sodium_mg": 65
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Yellow Mustard",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 10,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 1,
+            "sodium_mg": 170
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Baja Chipotle",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 70,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 7,
+            "sugar_g": 1,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 5,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Sweet Onion Teriyaki",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 30,
+            "protein_g": 0,
+            "carbs_g": 7,
+            "fat_g": 0,
+            "sugar_g": 6,
+            "sodium_mg": 130
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Peppercorn Ranch",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 80,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 8,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 5,
+            "sodium_mg": 100
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Roasted Garlic Aioli",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 80,
+            "protein_g": 0,
+            "carbs_g": 1,
+            "fat_g": 9,
+            "sugar_g": 1,
+            "sat_fat_g": 2,
+            "cholesterol_mg": 5,
+            "sodium_mg": 150
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        },
+        {
+          "category": "Sauces",
+          "name": "Honey Mustard",
+          "macros": {
+            "serving_desc": "1 serving",
+            "serving_grams": 14,
+            "kcal": 60,
+            "protein_g": 0,
+            "carbs_g": 3,
+            "fat_g": 5,
+            "sugar_g": 3,
+            "sat_fat_g": 1,
+            "cholesterol_mg": 5,
+            "sodium_mg": 125
+          },
+          "quantity": 1.0,
+          "unit": "serving",
+          "default_checked": false
+        }
+      ]
     }
   ]
 }
