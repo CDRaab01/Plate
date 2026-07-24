@@ -1,8 +1,8 @@
 import datetime
 import uuid
 
-from sqlalchemy import DateTime, Float, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -27,6 +27,19 @@ class Food(Base):
     barcode: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     serving_size: Mapped[float | None] = mapped_column(Float, nullable=True)
     serving_unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Human-readable serving text from the source ("2 cookies (30 g)") for result rows.
+    serving_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # True when the source record was missing some primary macros and zeros were imputed —
+    # the client badges these and ranking demotes them below complete foods.
+    macros_incomplete: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Owner of a user-created food ("My foods"). NULL = legacy/shared, visible to everyone.
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Lazy USDA portion enrichment marker: NULL = FDC detail never checked for this food.
+    portions_fetched_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Nutrition per 100g (primary basis; always populated)
     kcal_per_100g: Mapped[float] = mapped_column(Float)
@@ -52,4 +65,14 @@ class Food(Base):
 
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    # lazy="raise" keeps search queries from paying a per-row portions round-trip; the detail
+    # path (`get_food_detail`) eager-loads explicitly with selectinload.
+    portions = relationship(
+        "FoodPortion",
+        back_populates="food",
+        order_by="FoodPortion.sort_order",
+        cascade="all, delete-orphan",
+        lazy="raise",
     )

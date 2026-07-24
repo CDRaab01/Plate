@@ -36,14 +36,37 @@ boundary) plus **two pure domain packages** that are the heart of the app:
   number is wrong on the phone, the bug is here or in what feeds it, not in Kotlin.
 - **`app/foods/`** — external food data: `base.py` (provider seam), `usda.py`, `off.py`
   (Open Food Facts), `normalize.py`, `ranking.py`. Resolution order is **local `foods` cache →
-  USDA → OFF**; barcodes go straight to OFF then cache. Rows are cached forever on first fetch
-  (staleness TTL is a known roadmap item). Never live-hit providers per keystroke; never ship API
-  keys in the APK. **Results are relevance-ranked** (`ranking.py`, pure): external sources return
-  their own order, so on a first-time query the raw source order is what the user sees — a branded
-  item that only *mentions* the query in a long name would otherwise outrank the literal food.
-  `rank_foods` orders by name match (exact → prefix → all-words → substring), with the user's
-  recently-logged foods kept on top. Local matching is **token-AND** (each query word must appear,
-  any order) so "ground turkey" finds "Turkey, ground".
+  USDA → OFF**; barcodes go straight to OFF then cache. Never live-hit providers per keystroke;
+  never ship API keys in the APK. Since the 2026-07 food-search restructure:
+  - **Local matching is token-AND + trigram fallback**: each query word must appear (any order —
+    "ground turkey" finds "Turkey, ground"); when that comes up thin, a `pg_trgm` similarity
+    query (GIN index `ix_foods_name_trgm`) catches typos/plurals ("chiken breast" still finds
+    "Chicken breast, raw").
+  - **External supplement runs on a per-query TTL** (`search_queries` table,
+    `external_refetch_ttl_hours`), replacing the old "full local page → never fetch again"
+    shortcut that let an early thin cache permanently shadow richer data. Fresh query → local
+    only; stale + well-served locally (`external_supplement_threshold`) → local returned
+    immediately, USDA/OFF refreshed in a FastAPI background task (own session/client); stale +
+    thin → blocking fan-out as before. The fetch is marked done only when ≥1 source succeeded.
+  - **Sparse records are kept, not dropped**: kcal stated (or Atwater-derivable from complete
+    macros — `nutrition/constants.atwater_kcal`, shared with the bulk importer) ⇒ missing single
+    macros are imputed as 0 and the row is flagged `macros_incomplete` (badged in the client,
+    demoted at equal rank). Only records with no establishable energy are skipped.
+  - **Named household portions** (`food_portions` table): USDA `foodPortions` ("1 cup, sliced" =
+    240 g) parsed by `usda.parse_fdc_portions` — from the bulk importer (which also has
+    `--backfill-portions` for pre-existing catalogs and stamps `foods.portions_fetched_at`) and,
+    for live-cached foods, lazily via `GET /food/{fdcId}` on the food's **first detail request**
+    (FDC *search* payloads never carry portions; `portions_fetched_at` NULL ⇒ not yet checked,
+    stamped on success, left NULL on transport failure to retry). OFF contributes one portion
+    parsed from its serving label ("30 g (2 cookies)" → "2 cookies"). `cache_foods` persists
+    portions for new rows and heals existing portion-less rows.
+  - **Search `filter` param** (`all|generic|branded|mine`): scopes the local WHERE and the
+    external fan-out (generic → USDA Foundation/SR Legacy only; branded → USDA Branded + OFF;
+    mine → `source='user'` owned by the caller or legacy `created_by IS NULL` — never external).
+  - **Results are relevance-ranked** (`ranking.py`, pure): `rank_foods` orders by
+    max(name-match tier, trigram similarity × 60) — exact → prefix → all-words → substring —
+    with the user's recently-logged foods kept on top and `macros_incomplete` as a demoting
+    tiebreak.
 
 `app/recipes_ext/` (Spoonacular discovery) also lives here; its canonical home moved to Cookbook —
 keep the two in sync only when the shared seam changes.
@@ -53,8 +76,8 @@ keep the two in sync only when the shared seam changes.
 | Domain | Router | Service | Models |
 |---|---|---|---|
 | Auth/users | `auth.py`, `users.py`, `suite_auth.py` | `auth_service`, `user_service`, `suite_auth` | `User` (settings JSON holds `unit_system`) |
-| Food catalog + search | `foods.py` | `food_service` | `Food` |
-| Diary | `log.py` (`POST /log`, `POST /log/batch` multi-select add, quick-add, copy-day) | `log_service` | `FoodLogEntry` |
+| Food catalog + search | `foods.py` (`/search?q=&filter=`, `GET /foods/{id}` = `FoodDetailOut` with portions) | `food_service` | `Food`, `FoodPortion`, `SearchQuery` |
+| Diary | `log.py` (`POST /log`, `POST /log/batch` multi-select add, quick-add, copy-day; `portion_id` logs by named portion) | `log_service` | `FoodLogEntry` |
 | Goals/targets | `goals.py` (`/targets`, `/adaptive`) | `goal_service`, `adaptive_service` (+ `nutrition/targets`, `nutrition/adaptive`) | `UserGoal`, `DailyTarget` |
 | Bodyweight | `metrics.py` | `metric_service` (+ `nutrition/trend`) | `BodyMetric` |
 | Recipes/saved meals | `recipes.py` | `recipe_service`, `recipe_discovery_service` | `Recipe`, `RecipeItem` |
@@ -115,7 +138,7 @@ then legacy HS256; `services/cross_app_token.fetch_cross_app_token` mints RS256 
 
 ### Migrations & tests
 
-Alembic (6 revisions, `0001`–`0006`; `0005` back-fills the goal-rate sign invariant onto existing
+Alembic (7 revisions, `0001`–`0007`; `0005` back-fills the goal-rate sign invariant onto existing
 rows, `0006` adds `restaurants`/`restaurant_components` — components keep their own display
 `name` and a `food_id` SET NULL link, the `recipe_items` semantics, plus a `shared` flag:
 shared restaurants are readable/loggable by **every account on the server** (log entries land
@@ -123,7 +146,13 @@ under the caller), while edit/replace/delete stay owner-only — a chain's menu 
 the household exception to the otherwise strict per-user isolation). **`default_checked` is the
 owner's private "usual order" pre-tick config, not shared menu structure: `_to_out` surfaces it
 only to the owner (`False` for other viewers), so one account's pre-ticks never show up
-pre-checked on another's log sheet.** Migrate-on-boot. 35 pytest files; CI also runs
+pre-checked on another's log sheet.** `0007` (food-search restructure) enables `pg_trgm` + the
+GIN name index, adds `food_portions` (named household measures, unique per
+`(food_id, description)`, CASCADE) and `search_queries` (per-query external-fetch TTL), extends
+`foods` (`serving_label`, `macros_incomplete`, `created_by` SET-NULL FK for "My foods",
+`portions_fetched_at`) and `food_log_entries` (`portion_gram_weight` — the named-portion
+snapshot that keeps quantity edits re-scaling after the portion row changes; `unit` holds the
+portion's label, truncated to 32). Migrate-on-boot. 36 pytest files; CI also runs
 `ruff format --check` (run it locally before pushing). Local recipe (CLAUDE.md "Testing"):
 throwaway Postgres container, `DATABASE_URL` on **127.0.0.1**, `DB_NULLPOOL` — the live
 `server/.env` DB password is deliberately stale for pytest purposes. One env-dependent local-only
@@ -135,7 +164,17 @@ Standard suite MVVM (`ui/` → ViewModel → `data/repository/` → Room `data/l
 `data/remote/`). Feature packages:
 
 - `ui/diary/` — the daily food log (Breakfast/Lunch/Dinner/Snacks), the core surface.
-- `ui/food/` — search (cache-first), portion entry (g and oz both accepted).
+- `ui/food/` — search + portion entry, split per concern since the 2026-07 restructure:
+  `FoodSearchScreen` (screen + All/Generic/Branded/My-foods filter chips → the server `filter`
+  param; chip taps re-search immediately, typing stays debounced), `FoodRow` (per-serving kcal +
+  serving label when known, source badge USDA/OFF/Mine, "incomplete" marker), `RecentFoods`,
+  `BatchAddBar`, `AddFoodDialog`, and `PortionPicker` — a stateless composable over the
+  JVM-tested `PortionPickerState`: named-portion chips (from `GET /foods/{id}`, streamed in
+  after the dialog opens), serving/g/oz, a **converting** unit switch (grams are the pivot —
+  never a value reset), stepper + fraction presets for count-like units, and an
+  imperial/metric-aware default. Logging by a named portion sends `portion_id`; the barcode
+  dialog and recent-foods pre-fill (restored via `last_portion_gram_weight`) reuse the same
+  picker.
 - `ui/scan/` — ML Kit barcode → OFF lookup.
 - `ui/photo/` — photo-a-meal capture → server estimate → **editable confirm screen** (the draft
   contract, client side). The same screen serves the **nutrition-label scan** via a `labelMode`

@@ -2,14 +2,18 @@ package com.plate.ui.scan
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.plate.data.remote.FoodOut
+import com.plate.data.remote.FoodDetailOut
 import com.plate.data.repository.FoodRepository
+import com.plate.util.AppPreferences
 import com.plate.util.UiState
+import com.plate.util.UnitSystem
 import com.plate.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -22,10 +26,16 @@ import javax.inject.Inject
 @HiltViewModel
 class BarcodeScanViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
+    appPreferences: AppPreferences,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow<UiState<FoodOut>>(UiState.Idle)
-    val state: StateFlow<UiState<FoodOut>> = _state
+    // Detail shape: the barcode response carries the product's named portions for the dialog.
+    private val _state = MutableStateFlow<UiState<FoodDetailOut>>(UiState.Idle)
+    val state: StateFlow<UiState<FoodDetailOut>> = _state
+
+    /** Drives the add dialog's imperial/metric-aware default unit. */
+    val unitSystem: StateFlow<UnitSystem> = appPreferences.unitSystem
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UnitSystem.IMPERIAL)
 
     private var lookupJob: Job? = null
 

@@ -45,7 +45,7 @@ private open class FakeRecipeRepo : RecipeRepository {
 private class FakeLogRepo : LogRepository {
     var loggedTo: Pair<String, String>? = null // recipeId, meal
     override suspend fun getDay(date: String) = error("unused")
-    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String) = error("unused")
+    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String, portionId: String?) = error("unused")
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?) = error("unused")
     override suspend fun deleteEntry(id: String) {}
     override suspend fun quickAdd(date: String, meal: String, name: String?, kcal: Double, proteinG: Double, carbsG: Double, fatG: Double) = error("unused")

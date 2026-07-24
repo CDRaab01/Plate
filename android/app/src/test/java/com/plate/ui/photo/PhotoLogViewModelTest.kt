@@ -43,10 +43,14 @@ private class FakeFoodRepository(
     var analyzeCount = 0
     var lastCreate: FoodCreateRequest? = null
 
-    override suspend fun search(query: String) = emptyList<FoodOut>()
+    override suspend fun search(query: String, filter: String?) = emptyList<FoodOut>()
 
     override suspend fun recentFoods(limit: Int) = emptyList<com.plate.data.remote.RecentFoodOut>()
-    override suspend fun lookupBarcode(code: String): FoodOut = throw IllegalStateException()
+    override suspend fun lookupBarcode(code: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
+
+    override suspend fun getFood(id: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
 
     override suspend fun createFood(req: FoodCreateRequest): FoodOut {
         createError?.let { throw it }
@@ -98,6 +102,7 @@ private class FakeLogRepository : LogRepository {
         meal: String,
         quantity: Double,
         unit: String,
+        portionId: String?,
     ): LogEntryOut {
         lastEntry = LogEntryCreate(foodId, date, meal, quantity, unit)
         return LogEntryOut(

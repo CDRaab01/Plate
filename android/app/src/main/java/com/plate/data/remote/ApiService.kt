@@ -44,11 +44,20 @@ interface ApiService {
     // ── Phase 2: food search + manual logging ────────────────────────────────
 
     @GET("foods/search")
-    suspend fun searchFoods(@Query("q") query: String): List<FoodOut>
+    suspend fun searchFoods(
+        @Query("q") query: String,
+        /** Result scope: all | generic | branded | mine. Null = all (older servers). */
+        @Query("filter") filter: String? = null,
+    ): List<FoodOut>
 
-    /** Phase 4: resolve a scanned barcode (local cache → Open Food Facts). 404 if unknown. */
+    /** Food detail with named portions — fetched when the add dialog opens. */
+    @GET("foods/{id}")
+    suspend fun getFood(@Path("id") id: String): FoodDetailOut
+
+    /** Phase 4: resolve a scanned barcode (local cache → Open Food Facts). 404 if unknown.
+     *  Detail shape (with portions) so the scan dialog needs no second call. */
     @GET("foods/barcode/{code}")
-    suspend fun lookupBarcode(@Path("code") code: String): FoodOut
+    suspend fun lookupBarcode(@Path("code") code: String): FoodDetailOut
 
     /** Create a user-defined custom food (used to persist a confirmed photo estimate). */
     @POST("foods")

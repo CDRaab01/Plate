@@ -8,6 +8,8 @@ data class BatchLogItem(
     val foodId: String,
     val quantity: Double,
     val unit: String,
+    /** Log by named portion; `unit` is ignored server-side when set. */
+    val portionId: String? = null,
 )
 
 /** The day's food log: read a day, and create / edit / delete entries. */
@@ -26,6 +28,8 @@ interface LogRepository {
         meal: String,
         quantity: Double,
         unit: String,
+        /** Log by named portion ("2 × 1 cup"); the server stores the portion label as the unit. */
+        portionId: String? = null,
     ): LogEntryOut
 
     /**
@@ -38,7 +42,8 @@ interface LogRepository {
         date: String,
         meal: String,
         items: List<BatchLogItem>,
-    ): List<LogEntryOut> = items.map { addEntry(it.foodId, date, meal, it.quantity, it.unit) }
+    ): List<LogEntryOut> =
+        items.map { addEntry(it.foodId, date, meal, it.quantity, it.unit, it.portionId) }
 
     suspend fun updateEntry(
         id: String,

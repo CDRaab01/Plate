@@ -13,12 +13,65 @@ data class FoodOut(
     val barcode: String? = null,
     @SerialName("serving_size") val servingSize: Double? = null,
     @SerialName("serving_unit") val servingUnit: String? = null,
+    /** Human serving text from the source ("2 cookies (30 g)") — shown on rows + the picker. */
+    @SerialName("serving_label") val servingLabel: String? = null,
+    /** Source record was missing some primary macros (zeros imputed) — badge it. */
+    @SerialName("macros_incomplete") val macrosIncomplete: Boolean = false,
     @SerialName("kcal_per_100g") val kcalPer100g: Double,
     @SerialName("protein_g_per_100g") val proteinGPer100g: Double,
     @SerialName("carbs_g_per_100g") val carbsGPer100g: Double,
     @SerialName("fat_g_per_100g") val fatGPer100g: Double,
     @SerialName("kcal_per_serving") val kcalPerServing: Double? = null,
 )
+
+/** A named household measure ("1 cup, sliced" = 240 g) offered by the portion picker. */
+@Serializable
+data class PortionOut(
+    val id: String,
+    val description: String,
+    @SerialName("gram_weight") val gramWeight: Double,
+)
+
+/**
+ * A single food with its named portions — `GET /foods/{id}` (and the barcode lookup). Fetched
+ * when the add dialog opens; search rows stay the lean [FoodOut]. Flat rather than inheriting
+ * (kotlinx can't extend a serializable data class); [toFoodOut] bridges to FoodOut consumers.
+ */
+@Serializable
+data class FoodDetailOut(
+    val id: String,
+    val source: String,
+    val name: String,
+    val brand: String? = null,
+    val barcode: String? = null,
+    @SerialName("serving_size") val servingSize: Double? = null,
+    @SerialName("serving_unit") val servingUnit: String? = null,
+    @SerialName("serving_label") val servingLabel: String? = null,
+    @SerialName("macros_incomplete") val macrosIncomplete: Boolean = false,
+    @SerialName("kcal_per_100g") val kcalPer100g: Double,
+    @SerialName("protein_g_per_100g") val proteinGPer100g: Double,
+    @SerialName("carbs_g_per_100g") val carbsGPer100g: Double,
+    @SerialName("fat_g_per_100g") val fatGPer100g: Double,
+    @SerialName("kcal_per_serving") val kcalPerServing: Double? = null,
+    val portions: List<PortionOut> = emptyList(),
+) {
+    fun toFoodOut() = FoodOut(
+        id = id,
+        source = source,
+        name = name,
+        brand = brand,
+        barcode = barcode,
+        servingSize = servingSize,
+        servingUnit = servingUnit,
+        servingLabel = servingLabel,
+        macrosIncomplete = macrosIncomplete,
+        kcalPer100g = kcalPer100g,
+        proteinGPer100g = proteinGPer100g,
+        carbsGPer100g = carbsGPer100g,
+        fatGPer100g = fatGPer100g,
+        kcalPerServing = kcalPerServing,
+    )
+}
 
 /**
  * A user-defined custom food (`source='user'`). Used when logging a confirmed photo estimate: the
@@ -43,6 +96,8 @@ data class LogEntryCreate(
     val meal: String,
     val quantity: Double,
     val unit: String,
+    /** Log by named portion: the server resolves it to grams and stores its label as the unit. */
+    @SerialName("portion_id") val portionId: String? = null,
 )
 
 /** Log several foods at once (the food-search multi-select add) — one POST instead of one per food. */
@@ -58,6 +113,8 @@ data class RecentFoodOut(
     @SerialName("last_meal") val lastMeal: String,
     @SerialName("last_quantity") val lastQuantity: Double,
     @SerialName("last_unit") val lastUnit: String,
+    /** Set when the last log used a named portion — restores it in the picker. */
+    @SerialName("last_portion_gram_weight") val lastPortionGramWeight: Double? = null,
 )
 
 @Serializable

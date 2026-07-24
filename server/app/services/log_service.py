@@ -16,8 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.food import Food
 from app.models.food_log_entry import FoodLogEntry
+from app.models.food_portion import FoodPortion
 from app.nutrition.constants import STATIC_DAILY_TARGET
-from app.nutrition.portions import MacroSnapshot, scale_food
+from app.nutrition.portions import MacroSnapshot, portion_grams, scale_food
 from app.nutrition.totals import sum_entries
 from app.services.goal_service import compute_targets_for
 from app.schemas.food import FoodOut
@@ -104,6 +105,7 @@ async def get_recent_foods(
                 last_meal=entry.meal,
                 last_quantity=entry.quantity,
                 last_unit=entry.unit,
+                last_portion_gram_weight=entry.portion_gram_weight,
             )
         )
     return out
@@ -162,14 +164,43 @@ async def copy_day(
     return [_to_out(c, names.get(c.food_id)) for c in copies]
 
 
-async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate) -> LogEntryOut:
-    food = await db.get(Food, req.food_id)
-    if food is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found")
-    try:
-        snap = scale_food(food, req.quantity, req.unit)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+async def _resolve_portion(db: AsyncSession, food: Food, portion_id: uuid.UUID) -> FoodPortion:
+    """The named portion behind a ``portion_id`` request — 400 unless it belongs to ``food``."""
+    portion = await db.get(FoodPortion, portion_id)
+    if portion is None or portion.food_id != food.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Portion not found for this food",
+        )
+    return portion
+
+
+async def _build_entry(
+    db: AsyncSession, user_id: uuid.UUID, food: Food, req: LogEntryCreate
+) -> FoodLogEntry:
+    """Snapshot + construct one log entry from a create request (plain unit or named portion).
+
+    A named portion resolves to grams and snapshots from the per-100g basis — the macro math
+    stays :func:`scale_food`'s alone. The entry stores the portion's display label as its unit
+    and the gram weight as a snapshot, so later quantity edits re-scale correctly even if the
+    portion row changes or disappears.
+    """
+    if req.portion_id is not None:
+        portion = await _resolve_portion(db, food, req.portion_id)
+        try:
+            grams = portion_grams(req.quantity, portion.gram_weight)
+            snap = scale_food(food, grams, "g")
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        unit = portion.description[:32]
+        portion_gram_weight = portion.gram_weight
+    else:
+        try:
+            snap = scale_food(food, req.quantity, req.unit)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        unit = req.unit
+        portion_gram_weight = None
 
     entry = FoodLogEntry(
         user_id=user_id,
@@ -177,9 +208,18 @@ async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate
         date=req.date,
         meal=req.meal,
         quantity=req.quantity,
-        unit=req.unit,
+        unit=unit,
+        portion_gram_weight=portion_gram_weight,
     )
     _apply_snapshot(entry, snap)
+    return entry
+
+
+async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate) -> LogEntryOut:
+    food = await db.get(Food, req.food_id)
+    if food is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found")
+    entry = await _build_entry(db, user_id, food, req)
     db.add(entry)
     await db.commit()
     await db.refresh(entry)
@@ -207,19 +247,7 @@ async def create_entries(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Food not found: {req.food_id}"
             )
-        try:
-            snap = scale_food(food, req.quantity, req.unit)
-        except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-        entry = FoodLogEntry(
-            user_id=user_id,
-            food_id=food.id,
-            date=req.date,
-            meal=req.meal,
-            quantity=req.quantity,
-            unit=req.unit,
-        )
-        _apply_snapshot(entry, snap)
+        entry = await _build_entry(db, user_id, food, req)
         db.add(entry)
         pending.append((entry, food.name))
 
@@ -286,6 +314,27 @@ async def update_entry(
     if entry.food_id is not None:
         food = await db.get(Food, entry.food_id)
         food_name = food.name if food else None
+
+        # Entry was logged by named portion (its unit is the portion's label, which scale_food
+        # can't parse). A pure quantity edit re-scales through the snapshotted gram weight; an
+        # explicit unit change (g/oz/serving) abandons the portion basis and falls through to
+        # the normal path below.
+        if entry.portion_gram_weight is not None and portion_changed and food is not None:
+            if req.unit is None:
+                try:
+                    grams = portion_grams(new_quantity, entry.portion_gram_weight)
+                    snap = scale_food(food, grams, "g")
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+                    ) from exc
+                entry.quantity = new_quantity
+                _apply_snapshot(entry, snap)
+                await db.commit()
+                await db.refresh(entry)
+                return _to_out(entry, food_name)
+            entry.portion_gram_weight = None
+
         if portion_changed and food is not None:
             try:
                 snap = scale_food(food, new_quantity, new_unit)

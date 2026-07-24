@@ -53,8 +53,41 @@ def test_normalize_usda_maps_nutrient_numbers():
     assert food.serving_size == 140.0
 
 
-def test_normalize_usda_skips_records_missing_primary_macros():
+def test_normalize_usda_keeps_sparse_record_with_kcal_and_flags_it():
+    # kcal stated but macros missing → kept with zeros imputed + flagged (used to be dropped).
     raw = {"fdcId": 1, "description": "Mystery", "foodNutrients": [{"nutrientNumber": "208", "value": 100.0}]}
+    food = normalize_usda_food(raw)
+    assert food is not None
+    assert food.kcal_per_100g == 100.0
+    assert food.protein_g_per_100g == 0.0
+    assert food.carbs_g_per_100g == 0.0
+    assert food.fat_g_per_100g == 0.0
+    assert food.macros_incomplete is True
+
+
+def test_normalize_usda_derives_kcal_via_atwater_when_macros_complete():
+    raw = {
+        "fdcId": 2,
+        "description": "No stored energy",
+        "foodNutrients": [
+            {"nutrientNumber": "203", "value": 10.0},
+            {"nutrientNumber": "205", "value": 20.0},
+            {"nutrientNumber": "204", "value": 5.0},
+        ],
+    }
+    food = normalize_usda_food(raw)
+    assert food is not None
+    assert food.kcal_per_100g == pytest.approx(4 * 10 + 4 * 20 + 9 * 5)
+    assert food.macros_incomplete is False
+
+
+def test_normalize_usda_drops_record_with_no_establishable_energy():
+    # No kcal and an incomplete macro set → energy can't be established → dropped.
+    raw = {
+        "fdcId": 3,
+        "description": "Truly unusable",
+        "foodNutrients": [{"nutrientNumber": "203", "value": 10.0}],
+    }
     assert normalize_usda_food(raw) is None
 
 
@@ -84,8 +117,18 @@ def test_normalize_off_converts_grams_to_mg():
     assert food.serving_size == 15.0
 
 
-def test_normalize_off_skips_missing_macros():
+def test_normalize_off_keeps_sparse_record_with_kcal_and_flags_it():
+    # kcal stated but macros missing → kept with zeros imputed + flagged (used to be dropped).
     product = {"code": "1", "product_name": "Unknown", "nutriments": {"energy-kcal_100g": 100}}
+    food = normalize_off_product(product)
+    assert food is not None
+    assert food.kcal_per_100g == 100.0
+    assert food.protein_g_per_100g == 0.0
+    assert food.macros_incomplete is True
+
+
+def test_normalize_off_drops_record_with_no_establishable_energy():
+    product = {"code": "2", "product_name": "Empty", "nutriments": {"proteins_100g": 5.0}}
     assert normalize_off_product(product) is None
 
 
@@ -203,9 +246,11 @@ def _normalized(name: str, *, barcode: str | None = None, source: str = "off") -
 
 
 async def test_search_returns_local_without_calling_sources(monkeypatch):
-    # A full local page (>= external_search_limit) skips the network. Use a limit of 1 so a single
-    # cached row counts as "full".
+    # A well-served local page (>= external_supplement_threshold) returns immediately without
+    # blocking on external sources (any refresh happens in the background, and never through
+    # injected test sources). Threshold of 1 so a single cached row counts as well-served.
     monkeypatch.setattr(settings, "external_search_limit", 1)
+    monkeypatch.setattr(settings, "external_supplement_threshold", 1)
     unique = f"Localberry {uuid.uuid4().hex[:6]}"
     async with AsyncSessionLocal() as db:
         db.add(
@@ -409,3 +454,149 @@ async def test_barcode_endpoint_returns_cached_food(auth_client):
 async def test_barcode_endpoint_requires_auth(client):
     resp = await client.get(f"/foods/barcode/{uuid.uuid4().hex}")
     assert resp.status_code == 401
+
+
+# ── Fuzzy local search (pg_trgm) ─────────────────────────────────────────────
+
+
+async def test_fuzzy_search_finds_typo_match():
+    # Token-AND misses "chiken" but the trigram fallback finds the cached food anyway.
+    name = "Chicken breast"
+    async with AsyncSessionLocal() as db:
+        food = Food(
+            source="user",
+            name=name,
+            kcal_per_100g=165.0,
+            protein_g_per_100g=31.0,
+            carbs_g_per_100g=0.0,
+            fat_g_per_100g=3.6,
+        )
+        db.add(food)
+        await db.commit()
+        food_id = food.id
+
+    async with AsyncSessionLocal() as db:
+        results = await search_foods(db, "chiken breast")
+    assert any(f.id == food_id for f in results)
+
+
+# ── Per-query TTL throttle (search_queries) ──────────────────────────────────
+
+
+async def test_second_search_within_ttl_skips_external(monkeypatch):
+    monkeypatch.setattr(settings, "external_search_limit", 5)
+    query = f"Ttlberry {uuid.uuid4().hex[:6]}"
+    source = FakeSource("off", [_normalized(query, barcode=uuid.uuid4().hex)])
+
+    async with AsyncSessionLocal() as db:
+        first = await search_foods(db, query, sources=[source])
+    assert source.calls == 1
+    assert any(f.name == query for f in first)
+
+    # Same query again: the seen-table row is fresh → served locally, no second fan-out.
+    async with AsyncSessionLocal() as db:
+        second = await search_foods(db, query, sources=[source])
+    assert source.calls == 1
+    assert any(f.name == query for f in second)
+
+
+async def test_failed_sources_do_not_mark_query_seen():
+    query = f"Outage {uuid.uuid4().hex[:6]}"
+
+    class FailingSource(FoodSource):
+        source_tag = "off"
+
+        def __init__(self):
+            self.calls = 0
+
+        async def search(self, q, *, limit):
+            self.calls += 1
+            raise RuntimeError("USDA is down")
+
+    failing = FailingSource()
+    async with AsyncSessionLocal() as db:
+        await search_foods(db, query, sources=[failing])
+    assert failing.calls == 1
+
+    # The outage didn't stamp the TTL — a later search fans out again and succeeds.
+    working = FakeSource("off", [_normalized(query, barcode=uuid.uuid4().hex)])
+    async with AsyncSessionLocal() as db:
+        results = await search_foods(db, query, sources=[working])
+    assert working.calls == 1
+    assert any(f.name == query for f in results)
+
+
+async def test_background_refresh_caches_and_marks_seen(monkeypatch):
+    from app.services.food_service import _query_recently_fetched, _refresh_from_external
+
+    query = f"Bgberry {uuid.uuid4().hex[:6]}"
+    source = FakeSource("off", [_normalized(query, barcode=uuid.uuid4().hex)])
+    await _refresh_from_external(query, 5, sources=[source])
+    assert source.calls == 1
+
+    async with AsyncSessionLocal() as db:
+        cached = await search_foods(db, query, sources=[source])
+        seen = await _query_recently_fetched(db, query.strip().lower())
+    assert any(f.name == query for f in cached)
+    assert seen
+    assert source.calls == 1  # the follow-up search was served locally (TTL fresh)
+
+
+# ── Search filters ───────────────────────────────────────────────────────────
+
+
+async def test_search_filters_scope_results(auth_client):
+    stem = f"Filterfood {uuid.uuid4().hex[:6]}"
+    async with AsyncSessionLocal() as db:
+        db.add_all(
+            [
+                Food(
+                    source="usda",
+                    name=f"{stem} generic",
+                    kcal_per_100g=100.0,
+                    protein_g_per_100g=5.0,
+                    carbs_g_per_100g=10.0,
+                    fat_g_per_100g=2.0,
+                ),
+                Food(
+                    source="off",
+                    name=f"{stem} branded",
+                    brand="BrandCo",
+                    kcal_per_100g=100.0,
+                    protein_g_per_100g=5.0,
+                    carbs_g_per_100g=10.0,
+                    fat_g_per_100g=2.0,
+                ),
+            ]
+        )
+        await db.commit()
+
+    # A food created through the endpoint is owned by the caller → "mine".
+    created = await auth_client.post(
+        "/foods",
+        json={
+            "name": f"{stem} custom",
+            "kcal_per_100g": 50.0,
+            "protein_g_per_100g": 1.0,
+            "carbs_g_per_100g": 5.0,
+            "fat_g_per_100g": 1.0,
+        },
+    )
+    assert created.status_code == 201
+
+    async def names(filter_: str) -> set[str]:
+        resp = await auth_client.get("/foods/search", params={"q": stem, "filter": filter_})
+        assert resp.status_code == 200, resp.text
+        # The fuzzy fallback may legitimately pull in similarly-named rows from other runs;
+        # scope the assertion to this test's unique stem.
+        return {f["name"] for f in resp.json() if stem in f["name"]}
+
+    assert await names("all") == {f"{stem} generic", f"{stem} branded", f"{stem} custom"}
+    assert await names("generic") == {f"{stem} generic"}
+    assert await names("branded") == {f"{stem} branded"}
+    assert await names("mine") == {f"{stem} custom"}
+
+
+async def test_search_rejects_unknown_filter(auth_client):
+    resp = await auth_client.get("/foods/search", params={"q": "x", "filter": "bogus"})
+    assert resp.status_code == 422

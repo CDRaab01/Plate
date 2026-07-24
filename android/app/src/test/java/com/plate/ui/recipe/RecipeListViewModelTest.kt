@@ -46,7 +46,7 @@ private class FakeRecipeRepository(
 
 private class FakeLogRepository(var loggedRecipe: String? = null, var loggedMeal: String? = null) : LogRepository {
     override suspend fun getDay(date: String): DailyLog = throw IllegalStateException()
-    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String) =
+    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String, portionId: String?) =
         throw IllegalStateException()
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?) =
         throw IllegalStateException()

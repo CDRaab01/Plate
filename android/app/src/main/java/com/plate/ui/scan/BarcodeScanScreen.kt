@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.plate.data.remote.FoodOut
+import com.plate.data.remote.FoodDetailOut
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.ui.food.AddFoodDialog
 import com.plate.util.UiState
@@ -80,12 +80,15 @@ fun BarcodeScanScreen(
         if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    (state as? UiState.Success<FoodOut>)?.let { success ->
+    val unitSystem by scanViewModel.unitSystem.collectAsState()
+    (state as? UiState.Success<FoodDetailOut>)?.let { success ->
         AddFoodDialog(
-            food = success.data,
+            food = success.data.toFoodOut(),
+            portions = success.data.portions,
+            unitSystem = unitSystem,
             onDismiss = { scanViewModel.reset() },
-            onConfirm = { meal, quantity, unit ->
-                diaryViewModel.addEntry(success.data.id, meal, quantity, unit)
+            onConfirm = { meal, args ->
+                diaryViewModel.addEntry(success.data.id, meal, args.quantity, args.unit, args.portionId)
                 onLogged()
             },
         )
@@ -105,7 +108,7 @@ fun BarcodeScanScreen(
 @Composable
 private fun BarcodeScanContent(
     hasPermission: Boolean,
-    state: UiState<FoodOut>,
+    state: UiState<FoodDetailOut>,
     onBack: () -> Unit,
     onBarcode: (String) -> Unit,
     onRetry: () -> Unit,
@@ -179,7 +182,7 @@ private fun CameraPreview(onBarcode: (String) -> Unit, modifier: Modifier = Modi
 /** Stateless status overlay: scanning hint, in-flight spinner, or a retryable lookup error. */
 @Composable
 internal fun ScanStatusBar(
-    state: UiState<FoodOut>,
+    state: UiState<FoodDetailOut>,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

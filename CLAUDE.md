@@ -155,6 +155,31 @@ Dragonfly + Plate when you do). Keep AGP/Kotlin/Compose-BOM aligned with Pulse's
 
 ## Build log
 
+- **2026-07-24 — Food-search restructure (owner: "foods not found / servings hard to adjust /
+  poor options").** Three fronts, one migration (`0007`). **Find-ability:** local matching gains
+  a pg_trgm fuzzy fallback (GIN index; "chiken breast" finds the cached food) and the old
+  "cache has a full page → never hit USDA/OFF again" shortcut is replaced by a per-query TTL
+  (`search_queries`, 72 h): fresh queries stay local-only, a stale-but-well-served query returns
+  instantly and refreshes external sources in a background task, a stale thin query still blocks
+  on the fan-out. Sparse external records are kept instead of silently dropped (kcal stated or
+  Atwater-derived ⇒ zeros imputed + `macros_incomplete` flag, badged and rank-demoted).
+  **Portions:** new `food_portions` table — USDA `foodPortions` household measures ("1 cup,
+  sliced" = 240 g) via the bulk importer (`--backfill-portions` for pre-existing catalogs) and a
+  lazy FDC-detail fetch on a food's first `GET /foods/{id}` (search payloads never carry them;
+  `portions_fetched_at` marker), plus OFF serving-label portions ("30 g (2 cookies)" → "2
+  cookies"). Logging accepts `portion_id` — the server resolves it to grams (macro math stays in
+  `nutrition/`), stores the label as the entry's unit + a `portion_gram_weight` snapshot so
+  quantity edits keep re-scaling. **Client:** `FoodSearchScreen.kt` split into per-concern files;
+  new `PortionPicker`/`PortionPickerState` (named-portion chips streamed from the new detail
+  endpoint, converting unit switch — grams are the pivot, never a value reset — stepper +
+  fraction presets, imperial/metric-aware defaults, `UnitSystem` finally honored in food
+  logging); result rows show per-serving kcal + serving label + a USDA/OFF/Mine source badge;
+  All/Generic/Branded/My-foods filter chips (server `filter` param narrows the WHERE **and** the
+  external fan-out; `foods.created_by` added for "mine"). Barcode returns the detail shape so
+  the scan dialog gets portions free; recent-foods re-log restores the last named portion via
+  `last_portion_gram_weight`. Server 500 tests green; Roborazzi re-recorded (rows/filters
+  changed pixels). On-device pass pending.
+
 - **2026-07-19 — Restaurant add-flow guards (owner: "prevent this happening again").** Two guards
   so a chain that won't parse can't leave a dead-end: (1) **no empty restaurant** —
   `create_restaurant`/`replace_components` 422 on zero components (ownership checked first), and the

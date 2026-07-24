@@ -45,6 +45,17 @@ KCAL_PER_G_PROTEIN = 4.0
 KCAL_PER_G_CARB = 4.0
 KCAL_PER_G_FAT = 9.0
 
+
+def atwater_kcal(protein_g: float, carbs_g: float, fat_g: float) -> float:
+    """USDA general-factor energy: 4·P + 4·C + 9·F.
+
+    Used to derive kcal for external food records that state macros but omit a stored Energy
+    value (USDA's own method for nutrient 208) — the bulk importer and the live USDA/OFF
+    normalizers share this so a record is never dropped just because kcal wasn't spelled out.
+    """
+    return KCAL_PER_G_PROTEIN * protein_g + KCAL_PER_G_CARB * carbs_g + KCAL_PER_G_FAT * fat_g
+
+
 # Protein target (g per kg bodyweight) by goal — higher in a cut to spare lean mass (CLAUDE.md §7).
 PROTEIN_G_PER_KG = {
     "maintain": 1.6,

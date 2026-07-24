@@ -52,3 +52,34 @@ def test_recently_logged_food_stays_on_top():
     # Food 2 is a weaker match but was logged most recently → it leads.
     ranked = [f.id for f in rank_foods(foods, "olives", recent_rank={2: 0})]
     assert ranked[0] == 2
+
+
+def test_similarity_blend_ranks_fuzzy_match():
+    # "chiken brest" shares no whole tokens with either name; the trgm similarity map (as the
+    # DB would supply it) is what lifts the real food above an unrelated one.
+    foods = [_F(1, "Cheddar cheese"), _F(2, "Chicken breast, raw")]
+    ranked = [f.id for f in rank_foods(foods, "chiken brest", similarity={2: 0.55})]
+    assert ranked[0] == 2
+
+
+def test_similarity_never_beats_exact_name_match():
+    foods = [_F(1, "Chicken breast"), _F(2, "Chicken breast, raw")]
+    # Even a perfect similarity (60 after weighting) can't outrank the exact match (100).
+    ranked = [f.id for f in rank_foods(foods, "chicken breast", similarity={2: 1.0})]
+    assert ranked[0] == 1
+
+
+@dataclass
+class _FlaggedFood:
+    id: int
+    name: str
+    macros_incomplete: bool = False
+
+
+def test_incomplete_macros_rank_below_complete_at_equal_score():
+    foods = [
+        _FlaggedFood(1, "Black olives", macros_incomplete=True),
+        _FlaggedFood(2, "Black olives"),
+    ]
+    ranked = [f.id for f in rank_foods(foods, "black olives")]
+    assert ranked == [2, 1]

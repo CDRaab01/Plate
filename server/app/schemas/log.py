@@ -21,6 +21,10 @@ class LogEntryCreate(BaseModel):
     meal: str
     quantity: float
     unit: str
+    # Log by named household portion ("2 × 1 cup, sliced"): when set, the server resolves the
+    # portion to grams, snapshots from the gram basis, and stores the portion's label as the
+    # entry's unit — ``unit`` from the request is ignored.
+    portion_id: uuid.UUID | None = None
 
     @field_validator("meal")
     @classmethod
@@ -200,6 +204,8 @@ class RecentFoodOut(BaseModel):
     last_meal: str
     last_quantity: float
     last_unit: str
+    # Set when the last log used a named portion — lets the picker restore that portion.
+    last_portion_gram_weight: float | None = None
 
 
 class CopyDayRequest(BaseModel):
