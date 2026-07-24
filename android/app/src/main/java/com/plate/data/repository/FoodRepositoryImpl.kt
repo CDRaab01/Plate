@@ -2,6 +2,7 @@ package com.plate.data.repository
 
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.FoodCreateRequest
+import com.plate.data.remote.FoodDetailOut
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.remote.RecentFoodOut
@@ -18,7 +19,10 @@ class FoodRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val blobCache: BlobCache,
 ) : FoodRepository {
-    override suspend fun search(query: String): List<FoodOut> = api.searchFoods(query)
+    override suspend fun search(query: String, filter: String?): List<FoodOut> =
+        api.searchFoods(query, filter?.takeIf { it != "all" })
+
+    override suspend fun getFood(id: String): FoodDetailOut = api.getFood(id)
 
     // Read-through cached (one blob, keyed ignoring [limit] — every caller uses the default), so
     // the one-tap re-log chips survive the server being unreachable. Search stays online-only.
@@ -27,7 +31,7 @@ class FoodRepositoryImpl @Inject constructor(
             api.getRecentFoods(limit)
         }.value
 
-    override suspend fun lookupBarcode(code: String): FoodOut = api.lookupBarcode(code)
+    override suspend fun lookupBarcode(code: String): FoodDetailOut = api.lookupBarcode(code)
 
     override suspend fun createFood(req: FoodCreateRequest): FoodOut = api.createFood(req)
 

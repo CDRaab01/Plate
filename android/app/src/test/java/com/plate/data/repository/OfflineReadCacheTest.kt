@@ -168,7 +168,7 @@ class OfflineReadCacheTest {
 
     @Test
     fun `search is untouched by the cache layer`() = runTest {
-        doAnswer { throw IOException("offline") }.whenever(api).searchFoods(any())
+        doAnswer { throw IOException("offline") }.whenever(api).searchFoods(any(), anyOrNull())
         try {
             FoodRepositoryImpl(api, blobCache).search("oats")
             fail("expected IOException — search is online-only")

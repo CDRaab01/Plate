@@ -1,12 +1,8 @@
 package com.plate.ui.food
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +10,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AddAPhoto
@@ -26,9 +19,6 @@ import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Storefront
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -37,11 +27,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -51,8 +40,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.FoodOut
@@ -60,15 +47,7 @@ import com.plate.data.remote.RecentFoodOut
 import com.plate.data.repository.BatchLogItem
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.util.UiState
-import kotlin.math.roundToInt
-
-private val MEALS = listOf("breakfast", "lunch", "dinner", "snack")
-private val MEAL_LABELS = mapOf(
-    "breakfast" to "Breakfast",
-    "lunch" to "Lunch",
-    "dinner" to "Dinner",
-    "snack" to "Snacks",
-)
+import com.plate.util.UnitSystem
 
 @Composable
 fun FoodSearchScreen(
@@ -85,6 +64,9 @@ fun FoodSearchScreen(
     val query by searchViewModel.query.collectAsState()
     val results by searchViewModel.results.collectAsState()
     val recent by searchViewModel.recent.collectAsState()
+    val filter by searchViewModel.filter.collectAsState()
+    val detail by searchViewModel.selectedDetail.collectAsState()
+    val unitSystem by searchViewModel.unitSystem.collectAsState()
     var selected by remember { mutableStateOf<Selection?>(null) }
 
     // Multi-select add: food id → the chosen FoodOut (kept so we can compute each food's default
@@ -96,14 +78,24 @@ fun FoodSearchScreen(
     }
 
     selected?.let { sel ->
+        // Portions ride on the food detail, fetched when the dialog opens (food tap — never a
+        // keystroke). The dialog renders immediately; portion chips appear when the load lands.
+        LaunchedEffect(sel.food.id) { searchViewModel.loadFoodDetail(sel.food.id) }
+        val portions = (detail as? UiState.Success)?.data
+            ?.takeIf { it.id == sel.food.id }
+            ?.portions
+            .orEmpty()
         AddFoodDialog(
             food = sel.food,
+            portions = portions,
+            unitSystem = unitSystem,
             initialMeal = sel.meal,
             initialUnit = sel.unit,
             initialQuantity = sel.quantity,
+            initialPortionGramWeight = sel.portionGramWeight,
             onDismiss = { selected = null },
-            onConfirm = { meal, quantity, unit ->
-                diaryViewModel.addEntry(sel.food.id, meal, quantity, unit)
+            onConfirm = { meal, args ->
+                diaryViewModel.addEntry(sel.food.id, meal, args.quantity, args.unit, args.portionId)
                 selected = null
                 onLogged()
             },
@@ -115,6 +107,8 @@ fun FoodSearchScreen(
         onQueryChange = searchViewModel::onQueryChange,
         results = results,
         recent = recent,
+        filter = filter,
+        onFilterChange = searchViewModel::onFilterChange,
         onBack = onBack,
         onScan = onScan,
         onPhoto = onPhoto,
@@ -124,7 +118,15 @@ fun FoodSearchScreen(
         // In selection mode a tap toggles selection; otherwise it opens the single-food dialog.
         onPick = { if (batch.isNotEmpty()) toggle(it) else selected = Selection(it) },
         onToggleSelect = { toggle(it) },
-        onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
+        onPickRecent = { r ->
+            selected = Selection(
+                food = r.food,
+                meal = r.lastMeal,
+                quantity = r.lastQuantity,
+                unit = r.lastUnit,
+                portionGramWeight = r.lastPortionGramWeight,
+            )
+        },
         selectedIds = batch.keys.toSet(),
         batchMeal = batchMeal,
         onBatchMealChange = { batchMeal = it },
@@ -148,6 +150,7 @@ private data class Selection(
     val meal: String? = null,
     val quantity: Double? = null,
     val unit: String? = null,
+    val portionGramWeight: Double? = null,
 )
 
 /** The portion the multi-select add uses for each food: one serving when the food defines one, else
@@ -169,6 +172,8 @@ fun FoodSearchContent(
     onPick: (FoodOut) -> Unit,
     recent: List<RecentFoodOut> = emptyList(),
     onPickRecent: (RecentFoodOut) -> Unit = {},
+    filter: SearchFilter = SearchFilter.ALL,
+    onFilterChange: (SearchFilter) -> Unit = {},
     onLabel: () -> Unit = {},
     onVoice: () -> Unit = {},
     onRestaurants: () -> Unit = {},
@@ -242,6 +247,18 @@ fun FoodSearchContent(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (query.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SearchFilter.entries.forEach { f ->
+                        FilterChip(
+                            selected = filter == f,
+                            onClick = { onFilterChange(f) },
+                            label = { Text(f.label) },
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
             SearchResults(
                 results = results,
@@ -306,230 +323,4 @@ private fun Hint(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 32.dp),
     )
-}
-
-/** The "log again" surface shown while the search box is empty: tap a recent food to re-log it
- *  with its last portion pre-filled. */
-@Composable
-private fun RecentFoods(recent: List<RecentFoodOut>, onPick: (RecentFoodOut) -> Unit) {
-    LazyColumn(Modifier.fillMaxSize()) {
-        item {
-            Text(
-                "RECENT",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-            )
-        }
-        items(recent, key = { it.food.id }) { r ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onPick(r) }
-                    .padding(vertical = 12.dp),
-            ) {
-                Text(r.food.name, style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    "Last: ${formatPortion(r.lastQuantity, r.lastUnit)} · " +
-                        (MEAL_LABELS[r.lastMeal] ?: r.lastMeal),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-private fun formatPortion(quantity: Double, unit: String): String {
-    val q = if (quantity % 1.0 == 0.0) quantity.toInt().toString() else quantity.toString()
-    val u = if (unit == "serving") (if (quantity == 1.0) "serving" else "servings") else unit
-    return "$q $u"
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun FoodRow(
-    food: FoodOut,
-    selected: Boolean,
-    selectionMode: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            // Tap = add (or toggle in selection mode); long-press = start/adjust multi-select.
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (selectionMode) {
-            Checkbox(checked = selected, onCheckedChange = { onClick() })
-            Spacer(Modifier.width(8.dp))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(food.name, style = MaterialTheme.typography.bodyLarge)
-            val subtitle = buildString {
-                food.brand?.let { append(it).append(" · ") }
-                append("${food.kcalPer100g.roundToInt()} kcal / 100g")
-            }
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-/** Bottom action bar shown while foods are multi-selected: pick one meal, add them all at once. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun BatchAddBar(
-    count: Int,
-    meal: String,
-    onMealChange: (String) -> Unit,
-    onAdd: () -> Unit,
-    onClear: () -> Unit,
-) {
-    Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "$count selected",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onClear) { Text("Clear") }
-            }
-            Spacer(Modifier.height(4.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MEALS.forEach { m ->
-                    FilterChip(
-                        selected = meal == m,
-                        onClick = { onMealChange(m) },
-                        label = { Text(MEAL_LABELS[m] ?: m) },
-                    )
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
-                Text("Add $count to ${MEAL_LABELS[meal] ?: meal}")
-            }
-        }
-    }
-}
-
-/**
- * Quantity + meal picker for a chosen food. Shows a live kcal estimate so the user sees the
- * impact before logging. Defaults to a 100g portion (or one serving when the food defines one).
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun AddFoodDialog(
-    food: FoodOut,
-    onDismiss: () -> Unit,
-    onConfirm: (meal: String, quantity: Double, unit: String) -> Unit,
-    initialMeal: String? = null,
-    initialUnit: String? = null,
-    initialQuantity: Double? = null,
-) {
-    val hasServing = food.kcalPerServing != null || food.servingSize != null
-    var unit by remember { mutableStateOf(initialUnit ?: if (hasServing) "serving" else "g") }
-    var meal by remember { mutableStateOf(initialMeal ?: "breakfast") }
-    var quantityText by remember {
-        mutableStateOf(
-            initialQuantity?.let {
-                if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
-            } ?: if (unit == "serving") "1" else "100",
-        )
-    }
-
-    val quantity = quantityText.toDoubleOrNull()
-    val estimatedKcal = quantity?.let { estimateKcal(food, it, unit) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(food.name) },
-        text = {
-            Column {
-                Text("Meal", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(4.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MEALS.forEach { m ->
-                        FilterChip(
-                            selected = meal == m,
-                            onClick = { meal = m },
-                            label = { Text(MEAL_LABELS[m] ?: m) },
-                        )
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = quantityText,
-                    onValueChange = { quantityText = it },
-                    label = {
-                        Text(
-                            when (unit) {
-                                "serving" -> "Servings"
-                                "oz" -> "Ounces"
-                                else -> "Grams"
-                            },
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(8.dp))
-                // Grams and ounces are always offered ("most food can be both"); serving too when defined.
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (hasServing) {
-                        FilterChip(
-                            selected = unit == "serving",
-                            onClick = { unit = "serving"; quantityText = "1" },
-                            label = { Text("Serving") },
-                        )
-                    }
-                    FilterChip(
-                        selected = unit == "g",
-                        onClick = { unit = "g"; quantityText = "100" },
-                        label = { Text("Grams") },
-                    )
-                    FilterChip(
-                        selected = unit == "oz",
-                        onClick = { unit = "oz"; quantityText = "4" },
-                        label = { Text("Ounces") },
-                    )
-                }
-                estimatedKcal?.let {
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "≈ ${it.roundToInt()} kcal",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { quantity?.let { onConfirm(meal, it, unit) } },
-                enabled = quantity != null && quantity > 0,
-            ) { Text("Add") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
-}
-
-/** Client-side kcal preview only; the server computes and stores the authoritative snapshot. */
-internal fun estimateKcal(food: FoodOut, quantity: Double, unit: String): Double = when (unit) {
-    "serving" -> when {
-        food.kcalPerServing != null -> food.kcalPerServing * quantity
-        food.servingSize != null -> food.kcalPer100g * (quantity * food.servingSize / 100.0)
-        else -> food.kcalPer100g * quantity
-    }
-    "oz" -> food.kcalPer100g * (com.plate.util.Units.ozToG(quantity) / 100.0)
-    else -> food.kcalPer100g * (quantity / 100.0)
 }

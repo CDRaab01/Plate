@@ -4,6 +4,7 @@ import uuid
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 
 from app.config import settings
 from app.database import AsyncSessionLocal, Base, engine
@@ -38,6 +39,9 @@ def event_loop():
 async def setup_tables():
     """Ensure all tables exist before any test runs (safe to call after alembic)."""
     async with engine.begin() as conn:
+        # Tests build schema via create_all (not Alembic), so the pg_trgm extension migration
+        # 0007 applies in production must be mirrored here for the fuzzy-search tests.
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         await conn.run_sync(Base.metadata.create_all)
     # Empty the pool so the connection opened above (bound to this setup step)
     # isn't later reused by a test running on a different loop.

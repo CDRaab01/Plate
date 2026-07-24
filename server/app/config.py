@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     external_search_limit: int = 25
     # Timeout (seconds) for outbound calls to USDA/OFF.
     external_timeout_seconds: float = 8.0
+    # With at least this many local hits, a stale query refreshes from USDA/OFF in the
+    # *background* (the user gets the local page instantly); below it, the fan-out blocks so a
+    # thin first-time query still returns external results.
+    external_supplement_threshold: int = 10
+    # How long a query's external fetch stays fresh (the `search_queries` per-query throttle).
+    # Repeats inside the TTL are local-only; after it, external sources supplement again — the
+    # cache can no longer *permanently* shadow richer external data.
+    external_refetch_ttl_hours: int = 72
     # Master switch for live external lookups on a cache miss. Disabled in the test suite so CI
     # never reaches the network (CLAUDE.md §10); local-cache search still works with it off.
     food_search_live: bool = True

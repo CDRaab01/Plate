@@ -24,6 +24,7 @@ to our primary storage basis — no rescaling needed.
 
 import argparse
 import asyncio
+import datetime
 import io
 import json
 import logging
@@ -36,12 +37,17 @@ from pathlib import Path
 
 import httpx
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import create_async_engine
 
 # Allow running from the server/ directory without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.models.food import Food  # noqa: E402 — path fixup must come first
+from app.foods.normalize import resolve_primary_macros  # noqa: E402 — path fixup first
+from app.foods.usda import parse_fdc_portions  # noqa: E402
+from app.models.food import Food  # noqa: E402
+from app.models.food_portion import FoodPortion  # noqa: E402
+from app.nutrition.constants import atwater_kcal  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -77,13 +83,8 @@ _NUTRIENT_SODIUM = "307"
 
 _REQUIRED = (_NUTRIENT_KCAL, _NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
 
-# Atwater general factors (kcal per gram) — USDA's own method for deriving Energy (208) when a
-# food record only carries the macro components. Foundation Foods frequently omits a stored energy
-# value entirely, so we compute it from protein/carbs/fat rather than skip an otherwise-complete
-# whole food. Only applied on a true miss; a published 208 always wins.
-_ATWATER_PROTEIN = 4.0
-_ATWATER_CARBS = 4.0
-_ATWATER_FAT = 9.0
+# Energy derivation for records missing a stored 208 uses the shared Atwater helper
+# (app/nutrition/constants.atwater_kcal) — the same policy as the live search normalizer.
 
 
 # ---------------------------------------------------------------------------
@@ -125,35 +126,45 @@ def _nutrients_with_derived_energy(food: dict) -> dict[str, float]:
     if _NUTRIENT_KCAL not in nutrients and all(
         k in nutrients for k in (_NUTRIENT_PROTEIN, _NUTRIENT_CARBS, _NUTRIENT_FAT)
     ):
-        nutrients[_NUTRIENT_KCAL] = (
-            _ATWATER_PROTEIN * nutrients[_NUTRIENT_PROTEIN]
-            + _ATWATER_CARBS * nutrients[_NUTRIENT_CARBS]
-            + _ATWATER_FAT * nutrients[_NUTRIENT_FAT]
+        nutrients[_NUTRIENT_KCAL] = atwater_kcal(
+            nutrients[_NUTRIENT_PROTEIN],
+            nutrients[_NUTRIENT_CARBS],
+            nutrients[_NUTRIENT_FAT],
         )
     return nutrients
 
 
-def _normalize_bulk_food(food: dict) -> dict | None:
-    """Map one FDC bulk record to a dict of Food column values, or None if unusable.
+def _normalize_bulk_food(food: dict) -> tuple[dict, list[dict]] | None:
+    """Map one FDC bulk record to Food column values + portion rows, or None if unusable.
 
-    Mirrors the logic in ``app/foods/usda.py:normalize_usda_food`` but handles
-    the bulk JSON nutrient format and returns a plain dict ready for SQLAlchemy
-    core INSERT (no per-row ORM overhead).
+    Mirrors the logic in ``app/foods/usda.py:normalize_usda_food`` (including the sparse-macro
+    relaxation: zeros imputed + ``macros_incomplete`` flagged when kcal is establishable) but
+    handles the bulk JSON nutrient format and returns plain dicts ready for SQLAlchemy core
+    INSERT (no per-row ORM overhead). Portion dicts reference the food row's pre-generated id.
     """
     name = (food.get("description") or "").strip()
     if not name:
         return None
 
-    nutrients = _nutrients_with_derived_energy(food)
-    if any(k not in nutrients for k in _REQUIRED):
+    nutrients = _bulk_nutrient_map(food)
+    resolved = resolve_primary_macros(
+        nutrients.get(_NUTRIENT_KCAL),
+        nutrients.get(_NUTRIENT_PROTEIN),
+        nutrients.get(_NUTRIENT_CARBS),
+        nutrients.get(_NUTRIENT_FAT),
+    )
+    if resolved is None:
         return None
+    kcal, protein, carbs, fat, incomplete = resolved
 
     fdc_id = food.get("fdcId")
     if fdc_id is None:
         return None
 
+    food_id = uuid.uuid4()
+    serving_label = (food.get("householdServingFullText") or "").strip() or None
     row: dict = {
-        "id": uuid.uuid4(),
+        "id": food_id,
         "source": "usda",
         "source_id": str(fdc_id),
         "name": name,
@@ -161,10 +172,15 @@ def _normalize_bulk_food(food: dict) -> dict | None:
         "barcode": food.get("gtinUpc") or None,
         "serving_size": food.get("servingSize"),
         "serving_unit": food.get("servingSizeUnit"),
-        "kcal_per_100g": nutrients[_NUTRIENT_KCAL],
-        "protein_g_per_100g": nutrients[_NUTRIENT_PROTEIN],
-        "carbs_g_per_100g": nutrients[_NUTRIENT_CARBS],
-        "fat_g_per_100g": nutrients[_NUTRIENT_FAT],
+        "serving_label": serving_label[:64] if serving_label else None,
+        "macros_incomplete": incomplete,
+        "created_by": None,
+        # The bulk record is the authoritative portion source — never re-fetch from the API.
+        "portions_fetched_at": datetime.datetime.now(datetime.timezone.utc),
+        "kcal_per_100g": kcal,
+        "protein_g_per_100g": protein,
+        "carbs_g_per_100g": carbs,
+        "fat_g_per_100g": fat,
         "fiber_g_per_100g": nutrients.get(_NUTRIENT_FIBER),
         "sugar_g_per_100g": nutrients.get(_NUTRIENT_SUGAR),
         "sat_fat_g_per_100g": nutrients.get(_NUTRIENT_SAT_FAT),
@@ -181,16 +197,23 @@ def _normalize_bulk_food(food: dict) -> dict | None:
         "cholesterol_mg_per_serving": None,
         "sodium_mg_per_serving": None,
     }
-    return row
+    portion_rows = [
+        {"id": uuid.uuid4(), "food_id": food_id, **p.model_dump()}
+        for p in parse_fdc_portions(food)
+    ]
+    return row, portion_rows
 
 
 def _missing_required(food: dict) -> list[str]:
     """Return the required nutrient numbers absent from ``food`` (empty ⇒ importable).
 
-    Reflects the same Atwater energy derivation the importer applies, so the diagnostic matches
-    what actually gets skipped rather than the raw on-disk fields.
+    Reflects the importer's actual policy: energy is Atwater-derived on a miss, and missing
+    single macros are imputed (not skip-worthy) as long as energy is establishable — so a
+    record only shows as skipped here when it would really be skipped.
     """
     nutrients = _nutrients_with_derived_energy(food)
+    if _NUTRIENT_KCAL in nutrients:
+        return []
     return [k for k in _REQUIRED if k not in nutrients]
 
 
@@ -278,12 +301,19 @@ async def _load_existing_source_ids(engine) -> set[str]:
         return {row[0] for row in result}
 
 
-async def _insert_batch(engine, rows: list[dict]) -> int:
-    """Bulk-insert a batch of food rows; returns count of rows inserted."""
+async def _insert_batch(engine, rows: list[dict], portion_rows: list[dict]) -> int:
+    """Bulk-insert a batch of food rows + their portions; returns count of foods inserted."""
     if not rows:
         return 0
     async with engine.begin() as conn:
         await conn.execute(Food.__table__.insert(), rows)
+        if portion_rows:
+            await conn.execute(
+                pg_insert(FoodPortion.__table__).on_conflict_do_nothing(
+                    constraint="uq_food_portions_food_desc"
+                ),
+                portion_rows,
+            )
     return len(rows)
 
 
@@ -293,6 +323,7 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
     log.info("%s: %d records to process", dataset_name, total)
 
     batch: list[dict] = []
+    portion_batch: list[dict] = []
     inserted = 0
     skipped_missing_macros = 0
     skipped_existing = 0
@@ -308,28 +339,87 @@ async def _import_dataset(engine, foods: list[dict], dataset_name: str, existing
             skipped_existing += 1
             continue
 
-        row = _normalize_bulk_food(raw)
-        if row is None:
+        normalized = _normalize_bulk_food(raw)
+        if normalized is None:
             skipped_missing_macros += 1
             continue
+        row, portion_rows = normalized
 
         batch.append(row)
+        portion_batch.extend(portion_rows)
         existing.add(fdc_id)  # prevent duplicates across both datasets
 
         if len(batch) >= _BATCH_SIZE:
-            inserted += await _insert_batch(engine, batch)
+            inserted += await _insert_batch(engine, batch, portion_batch)
             batch = []
+            portion_batch = []
             log.info(
                 "  %s: %d / %d processed, %d inserted so far",
                 dataset_name, i + 1, total, inserted,
             )
 
     if batch:
-        inserted += await _insert_batch(engine, batch)
+        inserted += await _insert_batch(engine, batch, portion_batch)
 
     log.info(
         "%s: done. inserted=%d  skipped_existing=%d  skipped_incomplete=%d  skipped_empty=%d",
         dataset_name, inserted, skipped_existing, skipped_missing_macros, skipped_empty,
+    )
+    return inserted
+
+
+async def _backfill_portions(engine, foods: list[dict], dataset_name: str) -> int:
+    """Insert portions for already-imported ``source='usda'`` rows that predate the portions
+    feature (the import skips existing records wholesale, so a pre-0007 catalog never gets
+    portions without this). Idempotent: existing (food_id, description) pairs are left alone,
+    and every matched food is stamped ``portions_fetched_at`` so the live detail path never
+    re-fetches what the bulk data already answered.
+    """
+    async with engine.connect() as conn:
+        result = await conn.execute(
+            text("SELECT source_id, id FROM foods WHERE source = 'usda' AND source_id IS NOT NULL")
+        )
+        id_by_source: dict[str, uuid.UUID] = {row[0]: row[1] for row in result}
+
+    portion_rows: list[dict] = []
+    matched_food_ids: list[uuid.UUID] = []
+    for raw in foods:
+        if not isinstance(raw, dict):
+            continue
+        food_id = id_by_source.get(str(raw.get("fdcId", "")))
+        if food_id is None:
+            continue
+        matched_food_ids.append(food_id)
+        portion_rows.extend(
+            {"id": uuid.uuid4(), "food_id": food_id, **p.model_dump()}
+            for p in parse_fdc_portions(raw)
+        )
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    inserted = 0
+    for start in range(0, len(portion_rows), _BATCH_SIZE):
+        chunk = portion_rows[start : start + _BATCH_SIZE]
+        async with engine.begin() as conn:
+            result = await conn.execute(
+                pg_insert(FoodPortion.__table__).on_conflict_do_nothing(
+                    constraint="uq_food_portions_food_desc"
+                ),
+                chunk,
+            )
+        inserted += result.rowcount or 0
+    for start in range(0, len(matched_food_ids), _BATCH_SIZE):
+        chunk = matched_food_ids[start : start + _BATCH_SIZE]
+        async with engine.begin() as conn:
+            await conn.execute(
+                text(
+                    "UPDATE foods SET portions_fetched_at = :now"
+                    " WHERE id = ANY(:ids) AND portions_fetched_at IS NULL"
+                ),
+                {"now": now, "ids": chunk},
+            )
+    log.info(
+        "%s: backfill matched %d foods, inserted %d portion rows",
+        dataset_name, len(matched_food_ids), inserted,
     )
     return inserted
 
@@ -349,7 +439,44 @@ def _run_dump_skipped() -> None:
     _dump_skipped(payload.get("SRLegacyFoods", []), "SR Legacy")
 
 
-async def main() -> None:
+def _dump_portions(foods: list[dict], dataset_name: str, sample: int = 20) -> None:
+    """Diagnostic: print the parsed portions for the first ``sample`` records that have any,
+    plus a dataset-wide tally — verify the parser against real data before a full run."""
+    with_portions = 0
+    total_portions = 0
+    dumped = 0
+    for raw in foods:
+        if not isinstance(raw, dict):
+            continue
+        portions = parse_fdc_portions(raw)
+        if not portions:
+            continue
+        with_portions += 1
+        total_portions += len(portions)
+        if dumped < sample:
+            dumped += 1
+            name = (raw.get("description") or "?").strip()
+            log.info("--- %s (fdcId=%s)", name, raw.get("fdcId"))
+            for p in portions:
+                log.info("      %-40s = %g g", p.description, p.gram_weight)
+    log.info(
+        "%s: %d/%d records have portions (%d portion rows total)",
+        dataset_name, with_portions, len(foods), total_portions,
+    )
+
+
+def _run_dump_portions() -> None:
+    """Download Foundation + SR Legacy and print parsed-portion diagnostics — no DB access."""
+    raw_zip = _download_zip(_FDC_FOUNDATION_URL)
+    payload = _extract_json(raw_zip)
+    _dump_portions(payload.get("FoundationFoods", []), "Foundation Foods")
+
+    raw_zip = _download_zip(_FDC_SR_LEGACY_URL)
+    payload = _extract_json(raw_zip)
+    _dump_portions(payload.get("SRLegacyFoods", []), "SR Legacy")
+
+
+async def main(*, backfill_portions: bool = False) -> None:
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
         # Fall back to the app's settings so running inside the server env works without
@@ -366,6 +493,20 @@ async def main() -> None:
     engine = create_async_engine(db_url, echo=False, pool_pre_ping=True)
 
     try:
+        if backfill_portions:
+            raw_zip = _download_zip(_FDC_FOUNDATION_URL)
+            payload = _extract_json(raw_zip)
+            total = await _backfill_portions(
+                engine, payload.get("FoundationFoods", []), "Foundation Foods"
+            )
+
+            raw_zip = _download_zip(_FDC_SR_LEGACY_URL)
+            payload = _extract_json(raw_zip)
+            total += await _backfill_portions(engine, payload.get("SRLegacyFoods", []), "SR Legacy")
+
+            log.info("Portion backfill complete. Total portion rows inserted: %d", total)
+            return
+
         log.info("Loading existing USDA source_ids from DB…")
         existing = await _load_existing_source_ids(engine)
         log.info("  %d already imported", len(existing))
@@ -397,9 +538,23 @@ if __name__ == "__main__":
         help="Diagnostic only: download the datasets and print why records get skipped "
         "(which required nutrient is missing + a dump of sample records). No DB writes.",
     )
+    parser.add_argument(
+        "--dump-portions",
+        action="store_true",
+        help="Diagnostic only: download the datasets and print the household portions the "
+        "parser extracts (sample per dataset + tally). No DB writes.",
+    )
+    parser.add_argument(
+        "--backfill-portions",
+        action="store_true",
+        help="Insert portions for already-imported USDA rows (a catalog imported before the "
+        "portions feature never gets them otherwise). Idempotent; no new foods are added.",
+    )
     args = parser.parse_args()
 
     if args.dump_skipped:
         _run_dump_skipped()
+    elif args.dump_portions:
+        _run_dump_portions()
     else:
-        asyncio.run(main())
+        asyncio.run(main(backfill_portions=args.backfill_portions))

@@ -1,12 +1,16 @@
 package com.plate.ui.scan
 
 import com.plate.data.remote.FoodCreateRequest
+import com.plate.data.remote.FoodDetailOut
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.PhotoEstimateResponse
 import com.plate.data.repository.FoodRepository
+import com.plate.util.AppPreferences
 import com.plate.util.MainDispatcherRule
 import com.plate.util.UiState
+import com.plate.util.UnitSystem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -15,10 +19,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import retrofit2.HttpException
 import retrofit2.Response
 
-private fun food(id: String = "1", name: String = "Oat Milk") = FoodOut(
+private fun food(id: String = "1", name: String = "Oat Milk") = FoodDetailOut(
     id = id,
     source = "off",
     name = name,
@@ -34,7 +40,7 @@ private fun httpException(code: Int) = HttpException(
 )
 
 private class FakeFoodRepository(
-    private val result: FoodOut? = null,
+    private val result: FoodDetailOut? = null,
     private val failWith: Exception? = null,
 ) : FoodRepository {
     var lookupCount = 0
@@ -42,9 +48,12 @@ private class FakeFoodRepository(
 
     override suspend fun recentFoods(limit: Int) = emptyList<com.plate.data.remote.RecentFoodOut>()
 
-    override suspend fun search(query: String): List<FoodOut> = emptyList()
+    override suspend fun search(query: String, filter: String?): List<FoodOut> = emptyList()
 
-    override suspend fun lookupBarcode(code: String): FoodOut {
+    override suspend fun getFood(id: String): FoodDetailOut =
+        throw IllegalStateException("not used")
+
+    override suspend fun lookupBarcode(code: String): FoodDetailOut {
         lookupCount++
         lastCode = code
         failWith?.let { throw it }
@@ -69,10 +78,13 @@ class BarcodeScanViewModelTest {
 
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
+    private fun prefs(): AppPreferences =
+        mock { whenever(it.unitSystem).thenReturn(flowOf(UnitSystem.IMPERIAL)) }
+
     @Test
     fun `scanned barcode resolves to Success`() = runTest {
         val repo = FakeFoodRepository(result = food())
-        val vm = BarcodeScanViewModel(repo)
+        val vm = BarcodeScanViewModel(repo, prefs())
 
         vm.onBarcodeScanned(" 222 ")
         advanceUntilIdle()
@@ -86,7 +98,7 @@ class BarcodeScanViewModelTest {
     @Test
     fun `404 surfaces a friendly not-found error`() = runTest {
         val repo = FakeFoodRepository(failWith = httpException(404))
-        val vm = BarcodeScanViewModel(repo)
+        val vm = BarcodeScanViewModel(repo, prefs())
 
         vm.onBarcodeScanned("000")
         advanceUntilIdle()
@@ -99,7 +111,7 @@ class BarcodeScanViewModelTest {
     @Test
     fun `repeated scans are ignored once a lookup succeeds`() = runTest {
         val repo = FakeFoodRepository(result = food())
-        val vm = BarcodeScanViewModel(repo)
+        val vm = BarcodeScanViewModel(repo, prefs())
 
         vm.onBarcodeScanned("222")
         advanceUntilIdle()
@@ -114,7 +126,7 @@ class BarcodeScanViewModelTest {
     @Test
     fun `blank scan is ignored`() = runTest {
         val repo = FakeFoodRepository(result = food())
-        val vm = BarcodeScanViewModel(repo)
+        val vm = BarcodeScanViewModel(repo, prefs())
 
         vm.onBarcodeScanned("   ")
         advanceUntilIdle()
@@ -126,7 +138,7 @@ class BarcodeScanViewModelTest {
     @Test
     fun `reset returns to Idle so the user can scan again`() = runTest {
         val repo = FakeFoodRepository(failWith = httpException(500))
-        val vm = BarcodeScanViewModel(repo)
+        val vm = BarcodeScanViewModel(repo, prefs())
 
         vm.onBarcodeScanned("222")
         advanceUntilIdle()

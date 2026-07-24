@@ -81,7 +81,8 @@ class LogRepositoryImpl @Inject constructor(
         meal: String,
         quantity: Double,
         unit: String,
-    ): LogEntryOut = api.createLogEntry(LogEntryCreate(foodId, date, meal, quantity, unit))
+        portionId: String?,
+    ): LogEntryOut = api.createLogEntry(LogEntryCreate(foodId, date, meal, quantity, unit, portionId))
         .also { markLoggedToday() }
 
     override suspend fun addEntries(
@@ -89,7 +90,9 @@ class LogRepositoryImpl @Inject constructor(
         meal: String,
         items: List<BatchLogItem>,
     ): List<LogEntryOut> = api.createLogEntriesBatch(
-        LogEntryBatchCreate(items.map { LogEntryCreate(it.foodId, date, meal, it.quantity, it.unit) }),
+        LogEntryBatchCreate(
+            items.map { LogEntryCreate(it.foodId, date, meal, it.quantity, it.unit, it.portionId) },
+        ),
     ).also { markLoggedToday() }
 
     override suspend fun updateEntry(

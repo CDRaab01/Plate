@@ -124,10 +124,16 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
-    fun addEntry(foodId: String, meal: String, quantity: Double, unit: String) {
+    fun addEntry(
+        foodId: String,
+        meal: String,
+        quantity: Double,
+        unit: String,
+        portionId: String? = null,
+    ) {
         viewModelScope.launch {
             try {
-                logRepository.addEntry(foodId, _date.value, meal, quantity, unit)
+                logRepository.addEntry(foodId, _date.value, meal, quantity, unit, portionId)
                 load()
             } catch (e: Exception) {
                 _day.value = UiState.Error(e.message ?: "Couldn't log that food")

@@ -88,9 +88,13 @@ private class EditFakeRestaurantRepository : RestaurantRepository {
 }
 
 private class EditFakeFoodRepository : FoodRepository {
-    override suspend fun search(query: String): List<FoodOut> = emptyList()
+    override suspend fun search(query: String, filter: String?): List<FoodOut> = emptyList()
     override suspend fun recentFoods(limit: Int): List<RecentFoodOut> = emptyList()
-    override suspend fun lookupBarcode(code: String): FoodOut = throw IllegalStateException()
+    override suspend fun lookupBarcode(code: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
+
+    override suspend fun getFood(id: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
     override suspend fun createFood(req: FoodCreateRequest): FoodOut = throw IllegalStateException()
     override suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse =
         throw IllegalStateException()

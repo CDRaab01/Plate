@@ -44,8 +44,12 @@ private class EditFakeRecipeRepository : RecipeRepository {
 private class EditFakeFoodRepository(private val results: List<FoodOut>) : FoodRepository {
     override suspend fun recentFoods(limit: Int) = emptyList<com.plate.data.remote.RecentFoodOut>()
 
-    override suspend fun search(query: String): List<FoodOut> = results
-    override suspend fun lookupBarcode(code: String): FoodOut = throw IllegalStateException()
+    override suspend fun search(query: String, filter: String?): List<FoodOut> = results
+    override suspend fun lookupBarcode(code: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
+
+    override suspend fun getFood(id: String): com.plate.data.remote.FoodDetailOut =
+        throw IllegalStateException()
     override suspend fun createFood(req: FoodCreateRequest): FoodOut = throw IllegalStateException()
     override suspend fun estimatePhoto(image: ByteArray, mimeType: String): PhotoEstimateResponse =
         throw IllegalStateException()

@@ -144,9 +144,12 @@ explain itself.
    accuracy is vibes.
 2. **Food-cache staleness policy.** OFF/USDA rows are cached forever on first fetch; products
    get reformulated. Add a `fetched_at` + lazy re-fetch TTL (6–12 months) on barcode hits.
-3. **USDA bulk import as a documented operator step.** `scripts/import_usda_bulk.py` exists —
-   make sure the deployed DB actually ran it and record that in deploy/README (search quality
-   silently degrades to live-API-with-key or OFF-only without it).
+   *Partially addressed 2026-07-24:* the food-search restructure's `search_queries` TTL means
+   text-search results keep refreshing from external sources (and portion-less cached rows heal
+   on re-fetch), but a *barcode* hit still serves the frozen row — the barcode TTL remains open.
+3. **USDA bulk import as a documented operator step.** ✓ *Documented 2026-07-24* in
+   deploy/README.md ("USDA bulk catalog + household portions"), including the new
+   `--backfill-portions` pass. Remaining: confirm the deployed DB actually ran the import.
 4. ✓ **Weekly summary → suite digest — SHIPPED 2026-07-16.** Delivered as the cross-app
    `GET /cross-app/summary?start=&end=` window read (see Cross-app work #4) rather than exposing
    `/log/summary` directly — the digest gets aggregates only, no raw diary.

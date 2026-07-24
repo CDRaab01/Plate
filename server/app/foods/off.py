@@ -10,13 +10,17 @@ OFF reports energy in kcal per 100g and macros in grams per 100g; sodium and cho
 """
 
 import logging
+import re
 
 import httpx
 
 from app.foods.base import FoodSource
-from app.foods.normalize import NormalizedFood
+from app.foods.normalize import NormalizedFood, NormalizedPortion, resolve_primary_macros
 
 log = logging.getLogger(__name__)
+
+# The household text inside an OFF serving label: "30 g (2 cookies)" → "2 cookies".
+_SERVING_PARENTHETICAL = re.compile(r"\(([^)]+)\)")
 
 # Only the nutriments we persist — keeps OFF responses small and within rate-limit etiquette.
 _FIELDS = "code,product_name,brands,nutriments,serving_size,serving_quantity"
@@ -39,23 +43,48 @@ def _mg(value) -> float | None:
     return None if grams is None else grams * _G_TO_MG
 
 
+def _off_portion(serving_label: str | None, serving_qty: float | None) -> list[NormalizedPortion]:
+    """One named portion from OFF's serving data, when it's usable.
+
+    ``serving_size`` is a free-text label like ``"30 g (2 cookies)"`` and ``serving_quantity``
+    the numeric size. The parenthetical is the household measure; without one, the whole label
+    is the best name we have. Note OFF's ``serving_quantity`` is assumed to be grams — a
+    pre-existing approximation (ml ≈ g for liquids) shared with ``serving_size`` storage.
+    """
+    if serving_label is None or serving_qty is None or serving_qty <= 0:
+        return []
+    match = _SERVING_PARENTHETICAL.search(serving_label)
+    description = (match.group(1) if match else serving_label).strip()
+    if not description:
+        return []
+    return [NormalizedPortion(description=description[:64], gram_weight=serving_qty, source="off")]
+
+
 def normalize_off_product(product: dict) -> NormalizedFood | None:
-    """Map one OFF product to a :class:`NormalizedFood`, or ``None`` if the macros are missing."""
+    """Map one OFF product to a :class:`NormalizedFood`, or ``None`` if unusable.
+
+    Sparse records are kept when energy is stated or Atwater-derivable (missing single macros
+    imputed as zero + flagged); only records whose energy can't be established are dropped.
+    """
     name = (product.get("product_name") or "").strip()
     if not name:
         return None
     nutriments = product.get("nutriments") or {}
 
-    kcal = _num(nutriments.get("energy-kcal_100g"))
-    protein = _num(nutriments.get("proteins_100g"))
-    carbs = _num(nutriments.get("carbohydrates_100g"))
-    fat = _num(nutriments.get("fat_100g"))
-    if None in (kcal, protein, carbs, fat):
+    resolved = resolve_primary_macros(
+        _num(nutriments.get("energy-kcal_100g")),
+        _num(nutriments.get("proteins_100g")),
+        _num(nutriments.get("carbohydrates_100g")),
+        _num(nutriments.get("fat_100g")),
+    )
+    if resolved is None:
         return None
+    kcal, protein, carbs, fat, incomplete = resolved
 
     brands = product.get("brands")
     brand = brands.split(",")[0].strip() if brands else None
     serving_qty = _num(product.get("serving_quantity"))
+    serving_label = (product.get("serving_size") or "").strip() or None
 
     return NormalizedFood(
         source="off",
@@ -65,6 +94,9 @@ def normalize_off_product(product: dict) -> NormalizedFood | None:
         barcode=(product.get("code") or None),
         serving_size=serving_qty,
         serving_unit="g" if serving_qty is not None else None,
+        serving_label=serving_label[:64] if serving_label else None,
+        macros_incomplete=incomplete,
+        portions=_off_portion(serving_label, serving_qty),
         kcal_per_100g=kcal,
         protein_g_per_100g=protein,
         carbs_g_per_100g=carbs,

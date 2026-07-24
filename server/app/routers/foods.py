@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     HTTPException,
     Query,
@@ -15,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.limiter import limiter
-from app.schemas.food import FoodCreate, FoodOut
+from app.schemas.food import FoodCreate, FoodDetailOut, FoodOut
 from app.schemas.photo import PhotoEstimateResponse
 from app.schemas.voice import VoiceParseRequest
 from app.security import CurrentUser
@@ -23,7 +24,7 @@ from app.services.ai.vision import estimate_label, estimate_photo
 from app.services.ai.voice import parse_voice_log
 from app.services.food_service import (
     create_custom_food,
-    get_food,
+    get_food_detail,
     lookup_barcode,
     search_foods,
 )
@@ -37,27 +38,40 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 async def search(
     current_user: CurrentUser,
     db: DbSession,
+    background_tasks: BackgroundTasks,
     q: Annotated[str, Query(min_length=1, description="Search text")],
+    filter: Annotated[  # noqa: A002 — the wire name; the service takes search_filter
+        str, Query(pattern="^(all|generic|branded|mine)$", description="Result scope")
+    ] = "all",
 ):
-    """Local-cache-first food search, ranked with the user's recently-logged foods first.
-    External sources are hit only on a cache miss."""
-    return await search_foods(db, q, user_id=current_user.id)
+    """Local-first food search (token-AND + trigram fuzzy), ranked with the user's
+    recently-logged foods first. External sources supplement on a per-query TTL —
+    a stale-but-well-served query refreshes in the background after responding."""
+    return await search_foods(
+        db,
+        q,
+        user_id=current_user.id,
+        search_filter=filter,
+        background_tasks=background_tasks,
+    )
 
 
-@router.get("/barcode/{code}", response_model=FoodOut)
+@router.get("/barcode/{code}", response_model=FoodDetailOut)
 async def read_barcode(
     code: str,
     current_user: CurrentUser,
     db: DbSession,
 ):
-    """Scan path: resolve a barcode via local cache → Open Food Facts, caching on first fetch."""
+    """Scan path: resolve a barcode via local cache → Open Food Facts, caching on first fetch.
+    Returns the detail shape (with portions) so the scan dialog needs no second call."""
     food = await lookup_barcode(db, code)
     if food is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No product found for this barcode",
         )
-    return food
+    # Reload through the detail path — the portions relationship is lazy="raise".
+    return await get_food_detail(db, food.id)
 
 
 @router.post("", response_model=FoodOut, status_code=status.HTTP_201_CREATED)
@@ -67,7 +81,7 @@ async def create_food(
     db: DbSession,
 ):
     """Create a user-defined custom food for items not found in USDA/OFF."""
-    return await create_custom_food(db, req.model_dump())
+    return await create_custom_food(db, req.model_dump(), user_id=current_user.id)
 
 
 async def _read_validated_image(image: UploadFile) -> tuple[bytes, str]:
@@ -146,13 +160,15 @@ async def parse_from_voice(
     return await parse_voice_log(body.text, db, current_user.id)
 
 
-@router.get("/{food_id}", response_model=FoodOut)
+@router.get("/{food_id}", response_model=FoodDetailOut)
 async def read_food(
     food_id: uuid.UUID,
     current_user: CurrentUser,
     db: DbSession,
 ):
-    food = await get_food(db, food_id)
+    """Food detail with named portions — the add-dialog payload. First detail request for a
+    cached USDA food lazily fetches its household measures from the FDC detail endpoint."""
+    food = await get_food_detail(db, food_id)
     if food is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found")
     return food

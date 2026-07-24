@@ -8,6 +8,8 @@ import re
 
 from pydantic import BaseModel
 
+from app.nutrition.constants import atwater_kcal
+
 # Collapses any run of whitespace; used by normalized_name for dedup keys.
 _WHITESPACE = re.compile(r"\s+")
 
@@ -21,6 +23,42 @@ def normalized_name(name: str) -> str:
     return _WHITESPACE.sub(" ", name.strip().lower())
 
 
+def resolve_primary_macros(
+    kcal: float | None, protein: float | None, carbs: float | None, fat: float | None
+) -> tuple[float, float, float, float, bool] | None:
+    """Fill out the four primary macros from a possibly-sparse external record.
+
+    Rules (the "keep more foods" policy — records used to be dropped on *any* missing primary):
+
+    * All four present → returned as-is, complete.
+    * kcal missing but all three macros present → kcal derived via Atwater (USDA's own method
+      for a missing Energy value) — still complete.
+    * kcal present but some macros missing → missing macros imputed as ``0.0`` and the record
+      flagged ``macros_incomplete`` so the client can badge it and ranking can demote it.
+    * kcal absent **and** any macro absent → ``None`` (energy can't be established without
+      guessing; such a record is useless for a calorie tracker).
+
+    Returns ``(kcal, protein, carbs, fat, macros_incomplete)`` or ``None``.
+    """
+    macros = (protein, carbs, fat)
+    if kcal is None:
+        if any(m is None for m in macros):
+            return None
+        return atwater_kcal(protein, carbs, fat), protein, carbs, fat, False
+    incomplete = any(m is None for m in macros)
+    return kcal, protein or 0.0, carbs or 0.0, fat or 0.0, incomplete
+
+
+class NormalizedPortion(BaseModel):
+    """A named household measure ("1 cup, sliced" = 240 g), ready to persist as a
+    :class:`~app.models.food_portion.FoodPortion` child row."""
+
+    description: str  # ≤64 chars, already trimmed
+    gram_weight: float
+    sort_order: int = 0
+    source: str  # usda | off | user
+
+
 class NormalizedFood(BaseModel):
     """A source-agnostic nutrition record, ready to persist as a :class:`Food`."""
 
@@ -31,6 +69,9 @@ class NormalizedFood(BaseModel):
     barcode: str | None = None
     serving_size: float | None = None
     serving_unit: str | None = None
+    serving_label: str | None = None
+    macros_incomplete: bool = False
+    portions: list[NormalizedPortion] = []
 
     # Per 100g (primary basis; always populated)
     kcal_per_100g: float
@@ -65,4 +106,5 @@ class NormalizedFood(BaseModel):
         return f"name:{normalized_name(self.name)}|{normalized_name(self.brand or '')}"
 
     def to_food_kwargs(self) -> dict:
-        return self.model_dump()
+        # Portions are persisted as FoodPortion child rows, not Food columns.
+        return self.model_dump(exclude={"portions"})

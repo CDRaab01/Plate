@@ -57,20 +57,40 @@ def relevance_score(name: str, query: str) -> float:
     return 5.0 * partial / len(query_tokens)
 
 
-def rank_foods(foods, query, recent_rank=None):
+# A perfect trigram similarity (1.0) scores like an all-words match (60) — high enough that a
+# fuzzy hit ("chiken breast" → "Chicken breast, raw") surfaces, low enough that it never beats
+# an exact or prefix name match.
+_SIMILARITY_WEIGHT = 60.0
+
+
+def rank_foods(foods, query, recent_rank=None, similarity=None):
     """Order ``foods`` best-match-first for ``query``.
 
     A user's recently-logged foods (``recent_rank``: ``{food_id: rank}``, lower = more recent) stay
     on top — the quick-log ergonomic — then by name relevance, then shorter names, then
     alphabetically so ordering is stable and deterministic.
+
+    ``similarity`` (``{food_id: trigram_similarity}``, 0..1, from the caller's pg_trgm fallback
+    query) blends in as an alternative score — ``max(relevance, similarity·60)`` — so a fuzzy
+    match with no token overlap still ranks sensibly. Foods flagged ``macros_incomplete`` sort
+    below complete foods at equal score.
     """
     recent_rank = recent_rank or {}
+    similarity = similarity or {}
     not_recent = len(recent_rank) + 1
+
+    def score(f) -> float:
+        return max(
+            relevance_score(f.name, query),
+            similarity.get(f.id, 0.0) * _SIMILARITY_WEIGHT,
+        )
+
     return sorted(
         foods,
         key=lambda f: (
             recent_rank.get(f.id, not_recent),
-            -relevance_score(f.name, query),
+            -score(f),
+            getattr(f, "macros_incomplete", False) or False,
             len(f.name),
             f.name.lower(),
         ),

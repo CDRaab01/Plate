@@ -31,6 +31,10 @@ class FoodLogEntry(Base):
     meal: Mapped[str] = mapped_column(String(20))  # breakfast | lunch | dinner | snack
     quantity: Mapped[float] = mapped_column(Float)
     unit: Mapped[str] = mapped_column(String(32))
+    # Gram weight of the named portion this entry was logged with (NULL for plain g/oz/serving
+    # entries). Snapshotted so quantity edits keep re-scaling correctly even if the portion row
+    # later changes or disappears; ``unit`` holds the portion's display label in that case.
+    portion_gram_weight: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Correlation tag for entries created by a sister app (Cookbook) on behalf of the user, so it
     # can adjust (delete-by-ref + re-log) or retract (delete-by-ref) that meal. NULL for entries
     # Plate logs itself.

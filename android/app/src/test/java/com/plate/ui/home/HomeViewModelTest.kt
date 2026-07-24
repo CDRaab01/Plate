@@ -60,7 +60,7 @@ private class FakeMetricRepository(
 private class FakeLog(private val day: DailyLog, private val dayAsOfMs: Long? = null) : LogRepository {
     override suspend fun getDay(date: String) = day
     override suspend fun getDayStale(date: String) = Stale(day, dayAsOfMs)
-    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String) = error("unused")
+    override suspend fun addEntry(foodId: String, date: String, meal: String, quantity: Double, unit: String, portionId: String?) = error("unused")
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?) = error("unused")
     override suspend fun deleteEntry(id: String) {}
     override suspend fun quickAdd(date: String, meal: String, name: String?, kcal: Double, proteinG: Double, carbsG: Double, fatG: Double) = error("unused")

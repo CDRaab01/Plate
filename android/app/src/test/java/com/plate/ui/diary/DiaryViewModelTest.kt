@@ -64,6 +64,7 @@ private class FakeLogRepository(
         meal: String,
         quantity: Double,
         unit: String,
+        portionId: String?,
     ): LogEntryOut {
         added++
         return LogEntryOut("e", foodId, "Food", date, meal, quantity, unit, 100.0, 5.0, 10.0, 2.0)

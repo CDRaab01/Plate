@@ -207,3 +207,28 @@ powershell -ExecutionPolicy Bypass -File .\deploy\redeploy.ps1 -Ref 1a2b3c4   # 
 ./deploy/redeploy.sh               # deploy origin/main  (Linux/macOS)
 ./deploy/redeploy.sh 1a2b3c4       # roll back
 ```
+
+## USDA bulk catalog + household portions (operator step)
+
+Search quality leans on a locally imported USDA catalog: without it, generic-food coverage
+degrades to live-API-with-key or OFF-only. The importer is idempotent and safe to re-run
+(known `(source, source_id)` rows are skipped; portions upsert on conflict):
+
+```powershell
+# from the repo root, against the live DB (or run inside the server container)
+cd server
+$env:DATABASE_URL = "postgresql+asyncpg://…"   # the live DB URL
+python scripts/import_usda_bulk.py             # full Foundation + SR Legacy import (with portions)
+```
+
+A catalog imported **before** the 2026-07 food-search restructure has no household portions
+("1 cup", "1 medium") — backfill them once; this also stamps `portions_fetched_at` so the live
+path never re-fetches what the bulk data already answered:
+
+```powershell
+python scripts/import_usda_bulk.py --backfill-portions
+```
+
+Diagnostics (no DB writes): `--dump-portions` prints the parsed household measures for sample
+records per dataset (sanity-check the parser against a new annual FDC release before a full
+run); `--dump-skipped` explains records the importer would skip.

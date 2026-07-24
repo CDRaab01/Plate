@@ -73,6 +73,21 @@ def _from_basis(food, suffix: str, factor: float) -> MacroSnapshot:
     )
 
 
+def portion_grams(quantity: float, gram_weight: float) -> float:
+    """Grams for ``quantity`` × a named portion of ``gram_weight`` grams each.
+
+    The portion-logging path resolves a named household measure ("1 cup, sliced" = 240 g) to
+    grams here, then snapshots via :func:`scale_food`'s gram basis — so portion math never
+    grows a second macro-scaling code path. Raises :class:`ValueError` when either input is
+    non-positive.
+    """
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    if gram_weight <= 0:
+        raise ValueError("portion gram weight must be positive")
+    return quantity * gram_weight
+
+
 def scale_food(food: FoodLike, quantity: float, unit: str) -> MacroSnapshot:
     """Compute the macro snapshot for logging ``quantity`` ``unit`` of ``food``.
 
