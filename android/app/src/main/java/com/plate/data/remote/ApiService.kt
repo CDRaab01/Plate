@@ -71,6 +71,10 @@ interface ApiService {
     @POST("log")
     suspend fun createLogEntry(@Body body: LogEntryCreate): LogEntryOut
 
+    /** Log several foods in one call — the food-search multi-select add. All-or-nothing server-side. */
+    @POST("log/batch")
+    suspend fun createLogEntriesBatch(@Body body: LogEntryBatchCreate): List<LogEntryOut>
+
     @GET("log")
     suspend fun getDay(@Query("date") date: String? = null): DailyLog
 

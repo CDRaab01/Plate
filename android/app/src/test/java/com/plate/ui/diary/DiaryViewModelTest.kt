@@ -5,6 +5,7 @@ import com.plate.data.remote.DailyLog
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.MealGroup
 import com.plate.data.remote.TotalsOut
+import com.plate.data.repository.BatchLogItem
 import com.plate.data.repository.LogRepository
 import com.plate.data.repository.Stale
 import com.plate.util.MainDispatcherRule
@@ -66,6 +67,22 @@ private class FakeLogRepository(
     ): LogEntryOut {
         added++
         return LogEntryOut("e", foodId, "Food", date, meal, quantity, unit, 100.0, 5.0, 10.0, 2.0)
+    }
+
+    var batchAdded = 0
+    var lastBatchMeal: String? = null
+    var lastBatchSize = 0
+    override suspend fun addEntries(
+        date: String,
+        meal: String,
+        items: List<BatchLogItem>,
+    ): List<LogEntryOut> {
+        batchAdded++
+        lastBatchMeal = meal
+        lastBatchSize = items.size
+        return items.map {
+            LogEntryOut("e", it.foodId, "Food", date, meal, it.quantity, it.unit, 100.0, 5.0, 10.0, 2.0)
+        }
     }
 
     override suspend fun updateEntry(id: String, quantity: Double?, unit: String?, meal: String?): LogEntryOut {
@@ -135,6 +152,40 @@ class DiaryViewModelTest {
 
         assertEquals(1, repo.added)
         assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `addEntries batch-logs the selection to one meal then reloads and calls onDone`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        var done = false
+        vm.addEntries(
+            listOf(BatchLogItem("f1", 1.0, "serving"), BatchLogItem("f2", 100.0, "g")),
+            "dinner",
+        ) { done = true }
+        advanceUntilIdle()
+
+        assertEquals(1, repo.batchAdded)
+        assertEquals("dinner", repo.lastBatchMeal)
+        assertEquals(2, repo.lastBatchSize)
+        assertTrue(done)
+        assertTrue(vm.day.value is UiState.Success)
+    }
+
+    @Test
+    fun `addEntries with an empty selection is a no-op`() = runTest {
+        val repo = FakeLogRepository()
+        val vm = DiaryViewModel(repo, fakeApi)
+        advanceUntilIdle()
+
+        var done = false
+        vm.addEntries(emptyList(), "lunch") { done = true }
+        advanceUntilIdle()
+
+        assertEquals(0, repo.batchAdded)
+        assertTrue(!done)
     }
 
     @Test

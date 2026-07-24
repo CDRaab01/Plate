@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
+import com.plate.data.repository.BatchLogItem
 import com.plate.data.repository.LogRepository
 import com.plate.util.PendingDiaryDate
 import com.plate.util.UiState
@@ -130,6 +131,24 @@ class DiaryViewModel @Inject constructor(
                 load()
             } catch (e: Exception) {
                 _day.value = UiState.Error(e.message ?: "Couldn't log that food")
+            }
+        }
+    }
+
+    /**
+     * Multi-select add: log several foods into one meal at once (each at its default portion —
+     * picked on the search screen; the user edits any of them from the diary afterward). Reloads
+     * the day on success. [onDone] fires only on success so the caller can pop back / clear.
+     */
+    fun addEntries(items: List<BatchLogItem>, meal: String, onDone: () -> Unit = {}) {
+        if (items.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                logRepository.addEntries(_date.value, meal, items)
+                load()
+                onDone()
+            } catch (e: Exception) {
+                _day.value = UiState.Error(e.message ?: "Couldn't log those foods")
             }
         }
     }

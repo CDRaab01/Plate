@@ -45,6 +45,12 @@ data class LogEntryCreate(
     val unit: String,
 )
 
+/** Log several foods at once (the food-search multi-select add) — one POST instead of one per food. */
+@Serializable
+data class LogEntryBatchCreate(
+    val entries: List<LogEntryCreate>,
+)
+
 /** A recently-logged food + the last portion used, for one-tap re-logging. */
 @Serializable
 data class RecentFoodOut(

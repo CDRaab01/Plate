@@ -6,15 +6,17 @@ their results, persist the new ones, and return them — so the next identical s
 """
 
 import logging
+import re
 
 import httpx
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.foods.base import FoodSource
 from app.foods.normalize import NormalizedFood, normalized_name
 from app.foods.off import OpenFoodFactsSource
+from app.foods.ranking import rank_foods
 from app.foods.usda import UsdaFoodSource
 from app.models.food import Food
 from app.models.food_log_entry import FoodLogEntry
@@ -34,31 +36,25 @@ async def _recent_food_rank(db: AsyncSession, user_id) -> dict:
     return {food_id: rank for rank, (food_id, _) in enumerate(result.all())}
 
 
-async def _search_local(db: AsyncSession, query: str, limit: int, user_id=None) -> list[Food]:
-    """Case-insensitive substring match on the cached ``foods`` table.
+def _local_where(query: str):
+    """Case-insensitive **token-AND** match on the cached ``foods`` table.
 
-    Recipe-ingredient foods (``source='spoonacular'``, created by recipe import) are excluded — they
-    carry recipe-specific per-serving nutrition and would be confusing as standalone search hits.
-
-    When ``user_id`` is given, matches the user has logged are surfaced first (most-recent first),
-    then the rest alphabetically — so re-logging a staple is a top hit, not buried alphabetically.
-    A generous fetch cap ensures a recent-but-alphabetically-late food isn't dropped before ranking.
+    Each whitespace-separated query word must appear somewhere in the name, in any order — so
+    "ground turkey" matches "Turkey, ground, raw" (a plain contiguous ``%ground turkey%`` substring
+    would miss it). Recipe-ingredient foods (``source='spoonacular'``) are excluded — they carry
+    recipe-specific per-serving nutrition and would be confusing as standalone hits.
     """
-    pattern = f"%{query}%"
-    fetch = limit if user_id is None else max(limit * 5, 100)
-    result = await db.execute(
-        select(Food)
-        .where(Food.name.ilike(pattern), Food.source != "spoonacular")
-        .order_by(Food.name)
-        .limit(fetch)
-    )
-    matches = list(result.scalars().all())
-    if user_id is None:
-        return matches[:limit]
+    tokens = [tok for tok in re.split(r"\s+", query.strip()) if tok] or [query.strip()]
+    return and_(Food.source != "spoonacular", *[Food.name.ilike(f"%{tok}%") for tok in tokens])
 
-    rank = await _recent_food_rank(db, user_id)
-    matches.sort(key=lambda f: (rank.get(f.id, len(rank) + 1), f.name.lower()))
-    return matches[:limit]
+
+async def _search_local(db: AsyncSession, query: str, limit: int) -> list[Food]:
+    """Candidate cached foods matching every query token. Returned unranked (the caller ranks by
+    relevance + recency); a generous fetch cap keeps a strong match from being cut before ranking."""
+    result = await db.execute(
+        select(Food).where(_local_where(query)).order_by(Food.name).limit(max(limit * 5, 100))
+    )
+    return list(result.scalars().all())
 
 
 def _build_live_sources(client: httpx.AsyncClient) -> list[FoodSource]:
@@ -166,9 +162,12 @@ async def search_foods(
         return []
 
     limit = settings.external_search_limit
-    local = await _search_local(db, q, limit, user_id=user_id)
+    recent_rank = await _recent_food_rank(db, user_id) if user_id is not None else {}
+    local = await _search_local(db, q, limit)
     if len(local) >= limit:
-        return local  # cache already has a full page — no need to hit the network
+        # Cache already has a full page — no need to hit the network. Rank by relevance so the best
+        # name match leads (with the user's recently-logged foods still on top).
+        return rank_foods(local, q, recent_rank)[:limit]
 
     # Supplement with external sources. When there's nothing to query (live disabled, no injected
     # source), fall back to whatever the local cache had.
@@ -178,18 +177,20 @@ async def search_foods(
         async with httpx.AsyncClient(timeout=settings.external_timeout_seconds) as client:
             items = await _gather(_build_live_sources(client), q, limit)
     else:
-        return local
+        return rank_foods(local, q, recent_rank)[:limit]
 
     cached = await cache_foods(db, items)
 
-    # Merge local + external, deduped by id, local first, capped at the page limit.
+    # Merge local + external (deduped by id), then rank the whole set by relevance so the literal
+    # food outranks a branded item that only mentions the query in a long description — external
+    # sources return their own order, which is otherwise what a first-time query would show.
     merged = list(local)
     seen = {f.id for f in local}
     for food in cached:
         if food.id not in seen:
             seen.add(food.id)
             merged.append(food)
-    return merged[:limit]
+    return rank_foods(merged, q, recent_rank)[:limit]
 
 
 async def _fetch_barcode(source: FoodSource, code: str) -> NormalizedFood | None:

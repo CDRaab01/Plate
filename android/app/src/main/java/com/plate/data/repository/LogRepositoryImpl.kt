@@ -5,6 +5,7 @@ import com.plate.data.local.db.DiaryDao
 import com.plate.data.local.db.PendingQuickAddEntity
 import com.plate.data.remote.ApiService
 import com.plate.data.remote.DailyLog
+import com.plate.data.remote.LogEntryBatchCreate
 import com.plate.data.remote.LogEntryCreate
 import com.plate.data.remote.LogEntryOut
 import com.plate.data.remote.LogEntryUpdate
@@ -82,6 +83,14 @@ class LogRepositoryImpl @Inject constructor(
         unit: String,
     ): LogEntryOut = api.createLogEntry(LogEntryCreate(foodId, date, meal, quantity, unit))
         .also { markLoggedToday() }
+
+    override suspend fun addEntries(
+        date: String,
+        meal: String,
+        items: List<BatchLogItem>,
+    ): List<LogEntryOut> = api.createLogEntriesBatch(
+        LogEntryBatchCreate(items.map { LogEntryCreate(it.foodId, date, meal, it.quantity, it.unit) }),
+    ).also { markLoggedToday() }
 
     override suspend fun updateEntry(
         id: String,

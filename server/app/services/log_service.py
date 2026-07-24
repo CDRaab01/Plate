@@ -186,6 +186,51 @@ async def create_entry(db: AsyncSession, user_id: uuid.UUID, req: LogEntryCreate
     return _to_out(entry, food.name)
 
 
+async def create_entries(
+    db: AsyncSession, user_id: uuid.UUID, reqs: list[LogEntryCreate]
+) -> list[LogEntryOut]:
+    """Log several foods in one call — the multi-select add from food search.
+
+    Each entry is snapshotted exactly like :func:`create_entry`; the whole batch commits once (the
+    restaurant/recipe-log precedent). It's all-or-nothing: an unknown ``food_id`` 404s and a
+    portion that can't be scaled 400s **before** anything is committed, so the client is never left
+    with a partially-applied batch.
+    """
+    ids = {req.food_id for req in reqs}
+    foods = {
+        food.id: food for food in (await db.execute(select(Food).where(Food.id.in_(ids)))).scalars()
+    }
+    pending: list[tuple[FoodLogEntry, str]] = []
+    for req in reqs:
+        food = foods.get(req.food_id)
+        if food is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Food not found: {req.food_id}"
+            )
+        try:
+            snap = scale_food(food, req.quantity, req.unit)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        entry = FoodLogEntry(
+            user_id=user_id,
+            food_id=food.id,
+            date=req.date,
+            meal=req.meal,
+            quantity=req.quantity,
+            unit=req.unit,
+        )
+        _apply_snapshot(entry, snap)
+        db.add(entry)
+        pending.append((entry, food.name))
+
+    await db.commit()
+    out: list[LogEntryOut] = []
+    for entry, food_name in pending:
+        await db.refresh(entry)
+        out.append(_to_out(entry, food_name))
+    return out
+
+
 async def create_quick_add(
     db: AsyncSession, user_id: uuid.UUID, req: QuickAddCreate
 ) -> LogEntryOut:

@@ -11,6 +11,7 @@ from app.database import get_db
 from app.schemas.log import (
     CopyDayRequest,
     DailyLog,
+    LogEntryBatchCreate,
     LogEntryCreate,
     LogEntryOut,
     LogEntryUpdate,
@@ -21,6 +22,7 @@ from app.schemas.log import (
 from app.security import CurrentUser
 from app.services.log_service import (
     copy_day,
+    create_entries,
     create_entry,
     create_quick_add,
     delete_entry,
@@ -46,6 +48,16 @@ async def create(
     db: DbSession,
 ):
     return await create_entry(db, current_user.id, req)
+
+
+@router.post("/batch", response_model=list[LogEntryOut], status_code=status.HTTP_201_CREATED)
+async def create_batch(
+    req: LogEntryBatchCreate,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """Log several foods in one call — the food-search multi-select add. All-or-nothing."""
+    return await create_entries(db, current_user.id, req.entries)
 
 
 @router.get("", response_model=DailyLog)

@@ -35,6 +35,23 @@ class LogEntryCreate(BaseModel):
         return v
 
 
+class LogEntryBatchCreate(BaseModel):
+    """Log several foods at once — the food-search multi-select add. Each entry is a normal
+    ``LogEntryCreate`` (its own food, portion, unit, and meal), so callers can add a handful of
+    foods (all to the same meal, or not) in a single round-trip instead of one POST per food."""
+
+    entries: list[LogEntryCreate]
+
+    @field_validator("entries")
+    @classmethod
+    def non_empty(cls, v: list[LogEntryCreate]) -> list[LogEntryCreate]:
+        if not v:
+            raise ValueError("entries must not be empty")
+        if len(v) > 50:
+            raise ValueError("too many entries (max 50)")
+        return v
+
+
 class LogEntryUpdate(BaseModel):
     """Partial update — only the provided fields change. Quantity/unit changes re-snapshot macros."""
 

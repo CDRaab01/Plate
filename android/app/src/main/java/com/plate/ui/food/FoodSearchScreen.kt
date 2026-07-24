@@ -1,16 +1,20 @@
 package com.plate.ui.food
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
@@ -23,6 +27,8 @@ import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -31,14 +37,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.plate.data.remote.FoodOut
 import com.plate.data.remote.RecentFoodOut
+import com.plate.data.repository.BatchLogItem
 import com.plate.ui.diary.DiaryViewModel
 import com.plate.util.UiState
 import kotlin.math.roundToInt
@@ -77,6 +87,14 @@ fun FoodSearchScreen(
     val recent by searchViewModel.recent.collectAsState()
     var selected by remember { mutableStateOf<Selection?>(null) }
 
+    // Multi-select add: food id → the chosen FoodOut (kept so we can compute each food's default
+    // portion when the batch is committed). Non-empty ⇒ the screen is in selection mode.
+    val batch = remember { mutableStateMapOf<String, FoodOut>() }
+    var batchMeal by rememberSaveable { mutableStateOf("breakfast") }
+    fun toggle(food: FoodOut) {
+        if (batch.containsKey(food.id)) batch.remove(food.id) else batch[food.id] = food
+    }
+
     selected?.let { sel ->
         AddFoodDialog(
             food = sel.food,
@@ -103,8 +121,24 @@ fun FoodSearchScreen(
         onLabel = onLabel,
         onVoice = onVoice,
         onRestaurants = onRestaurants,
-        onPick = { selected = Selection(it) },
+        // In selection mode a tap toggles selection; otherwise it opens the single-food dialog.
+        onPick = { if (batch.isNotEmpty()) toggle(it) else selected = Selection(it) },
+        onToggleSelect = { toggle(it) },
         onPickRecent = { r -> selected = Selection(r.food, r.lastMeal, r.lastQuantity, r.lastUnit) },
+        selectedIds = batch.keys.toSet(),
+        batchMeal = batchMeal,
+        onBatchMealChange = { batchMeal = it },
+        onClearSelection = { batch.clear() },
+        onAddSelected = {
+            val items = batch.values.map { food ->
+                val (quantity, unit) = defaultPortion(food)
+                BatchLogItem(food.id, quantity, unit)
+            }
+            diaryViewModel.addEntries(items, batchMeal) {
+                batch.clear()
+                onLogged()
+            }
+        },
     )
 }
 
@@ -115,6 +149,12 @@ private data class Selection(
     val quantity: Double? = null,
     val unit: String? = null,
 )
+
+/** The portion the multi-select add uses for each food: one serving when the food defines one, else
+ *  100 g — the same defaults the single-food dialog opens with. Portions are editable from the diary
+ *  afterward, so the batch add stays a fast "add these" without a portion step per food. */
+internal fun defaultPortion(food: FoodOut): Pair<Double, String> =
+    if (food.kcalPerServing != null || food.servingSize != null) 1.0 to "serving" else 100.0 to "g"
 
 /** Stateless search body — rendered by [FoodSearchScreen] in the app and by screenshot tests. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,6 +172,12 @@ fun FoodSearchContent(
     onLabel: () -> Unit = {},
     onVoice: () -> Unit = {},
     onRestaurants: () -> Unit = {},
+    onToggleSelect: (FoodOut) -> Unit = {},
+    selectedIds: Set<String> = emptySet(),
+    batchMeal: String = "breakfast",
+    onBatchMealChange: (String) -> Unit = {},
+    onClearSelection: () -> Unit = {},
+    onAddSelected: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -176,6 +222,17 @@ fun FoodSearchContent(
                 },
             )
         },
+        bottomBar = {
+            if (selectedIds.isNotEmpty()) {
+                BatchAddBar(
+                    count = selectedIds.size,
+                    meal = batchMeal,
+                    onMealChange = onBatchMealChange,
+                    onAdd = onAddSelected,
+                    onClear = onClearSelection,
+                )
+            }
+        },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp)) {
             OutlinedTextField(
@@ -191,6 +248,8 @@ fun FoodSearchContent(
                 recent = recent,
                 onPick = onPick,
                 onPickRecent = onPickRecent,
+                onToggleSelect = onToggleSelect,
+                selectedIds = selectedIds,
             )
         }
     }
@@ -202,7 +261,10 @@ private fun SearchResults(
     recent: List<RecentFoodOut>,
     onPick: (FoodOut) -> Unit,
     onPickRecent: (RecentFoodOut) -> Unit,
+    onToggleSelect: (FoodOut) -> Unit,
+    selectedIds: Set<String>,
 ) {
+    val selectionMode = selectedIds.isNotEmpty()
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         when (results) {
             // Query empty: offer recent foods for one-tap re-log, else the search hint.
@@ -222,7 +284,13 @@ private fun SearchResults(
             } else {
                 LazyColumn(Modifier.fillMaxSize()) {
                     items(results.data, key = { it.id }) { food ->
-                        FoodRow(food = food, onClick = { onPick(food) })
+                        FoodRow(
+                            food = food,
+                            selected = food.id in selectedIds,
+                            selectionMode = selectionMode,
+                            onClick = { onPick(food) },
+                            onLongClick = { onToggleSelect(food) },
+                        )
                     }
                 }
             }
@@ -278,24 +346,78 @@ private fun formatPortion(quantity: Double, unit: String): String {
     return "$q $u"
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun FoodRow(food: FoodOut, onClick: () -> Unit) {
-    Column(
+private fun FoodRow(
+    food: FoodOut,
+    selected: Boolean,
+    selectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Row(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            // Tap = add (or toggle in selection mode); long-press = start/adjust multi-select.
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(food.name, style = MaterialTheme.typography.bodyLarge)
-        val subtitle = buildString {
-            food.brand?.let { append(it).append(" · ") }
-            append("${food.kcalPer100g.roundToInt()} kcal / 100g")
+        if (selectionMode) {
+            Checkbox(checked = selected, onCheckedChange = { onClick() })
+            Spacer(Modifier.width(8.dp))
         }
-        Text(
-            subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(Modifier.weight(1f)) {
+            Text(food.name, style = MaterialTheme.typography.bodyLarge)
+            val subtitle = buildString {
+                food.brand?.let { append(it).append(" · ") }
+                append("${food.kcalPer100g.roundToInt()} kcal / 100g")
+            }
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** Bottom action bar shown while foods are multi-selected: pick one meal, add them all at once. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BatchAddBar(
+    count: Int,
+    meal: String,
+    onMealChange: (String) -> Unit,
+    onAdd: () -> Unit,
+    onClear: () -> Unit,
+) {
+    Surface(tonalElevation = 3.dp, shadowElevation = 8.dp) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "$count selected",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onClear) { Text("Clear") }
+            }
+            Spacer(Modifier.height(4.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MEALS.forEach { m ->
+                    FilterChip(
+                        selected = meal == m,
+                        onClick = { onMealChange(m) },
+                        label = { Text(MEAL_LABELS[m] ?: m) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
+                Text("Add $count to ${MEAL_LABELS[meal] ?: meal}")
+            }
+        }
     }
 }
 

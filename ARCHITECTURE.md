@@ -35,9 +35,15 @@ boundary) plus **two pure domain packages** that are the heart of the app:
   Pure functions, table-driven tests, no I/O. **Clients display, never compute targets** — if a
   number is wrong on the phone, the bug is here or in what feeds it, not in Kotlin.
 - **`app/foods/`** — external food data: `base.py` (provider seam), `usda.py`, `off.py`
-  (Open Food Facts), `normalize.py`. Resolution order is **local `foods` cache → USDA → OFF**;
-  barcodes go straight to OFF then cache. Rows are cached forever on first fetch (staleness TTL
-  is a known roadmap item). Never live-hit providers per keystroke; never ship API keys in the APK.
+  (Open Food Facts), `normalize.py`, `ranking.py`. Resolution order is **local `foods` cache →
+  USDA → OFF**; barcodes go straight to OFF then cache. Rows are cached forever on first fetch
+  (staleness TTL is a known roadmap item). Never live-hit providers per keystroke; never ship API
+  keys in the APK. **Results are relevance-ranked** (`ranking.py`, pure): external sources return
+  their own order, so on a first-time query the raw source order is what the user sees — a branded
+  item that only *mentions* the query in a long name would otherwise outrank the literal food.
+  `rank_foods` orders by name match (exact → prefix → all-words → substring), with the user's
+  recently-logged foods kept on top. Local matching is **token-AND** (each query word must appear,
+  any order) so "ground turkey" finds "Turkey, ground".
 
 `app/recipes_ext/` (Spoonacular discovery) also lives here; its canonical home moved to Cookbook —
 keep the two in sync only when the shared seam changes.
@@ -48,7 +54,7 @@ keep the two in sync only when the shared seam changes.
 |---|---|---|---|
 | Auth/users | `auth.py`, `users.py`, `suite_auth.py` | `auth_service`, `user_service`, `suite_auth` | `User` (settings JSON holds `unit_system`) |
 | Food catalog + search | `foods.py` | `food_service` | `Food` |
-| Diary | `log.py` | `log_service` | `FoodLogEntry` |
+| Diary | `log.py` (`POST /log`, `POST /log/batch` multi-select add, quick-add, copy-day) | `log_service` | `FoodLogEntry` |
 | Goals/targets | `goals.py` (`/targets`, `/adaptive`) | `goal_service`, `adaptive_service` (+ `nutrition/targets`, `nutrition/adaptive`) | `UserGoal`, `DailyTarget` |
 | Bodyweight | `metrics.py` | `metric_service` (+ `nutrition/trend`) | `BodyMetric` |
 | Recipes/saved meals | `recipes.py` | `recipe_service`, `recipe_discovery_service` | `Recipe`, `RecipeItem` |
